@@ -5,16 +5,18 @@
 # magical init file that makes everything work!
 # 
 
+from easyargs import EasyArgs
+from easyconfig import EasyConfig
+from cv_keys import Key
+from cv_flags import CVFlag
 from buff_cap import BuffCap
-from buff_cap import SplitCapture
-from buff_cap import SplitBuffCap
+from split_cap import SplitCapture
+from split_buff_cap import SplitBuffCap
 from dataset import Dataset
 from buff_dataset import Buffset
-from cv_keys import Key
+from xmlset import Xmlset
 from mem_dataset import Memset
-from cv_flags import CVFlag
-from easyconfig import EasyConfig
 from viconsocket import ViconSocket
 from sleeper import Sleeper
-from easyargs import EasyArgs
 from marker_tool import marker_tool
+from mapping_func import Mapper
