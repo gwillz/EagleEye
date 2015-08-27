@@ -1,7 +1,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Kin Kuen, Liu
-ver = '1.3.19'
+ver = '1.3.20'
 # Last Updated: 2015-08-27
 # 
 # Camera Calibration and Image Undistortion using OpenCV standard pinhole camera functions.
@@ -279,14 +279,14 @@ def intWriter(path, camMat, distCoe, calibError={}):
         print 'Intrinsic calibration has been generated successfully.'
     except Exception as e:
         print 'Error occurred in writing intrinsic XML file.'
-        sys.exit(1)
+        exit(1)
 
 '''
 Prints versions of Python and OpenCV.
 '''
 def version():
     print 'Camera Calibration Script Version: ', ver
-    print 'Script is tested using Python 2.7.8 & OpenCV 2.4.11 & NumPy 1.9.0 \n'
+    print 'Script is tested using Python 2.7.8 & OpenCV 3.0.0 & NumPy 1.9.0 \n'
     
     print 'Running versions:'
     print 'Python:', sys.version
@@ -299,8 +299,8 @@ Prints usage of stdcalib.py
 def usage():
     print 'usage: stdcalib.py -output <file path> <multiple jpg files> {-chess_size <pattern: def. 9,6> | -square_size <in mm: def. 1.0> | -preview <preview file folder> | -config <file>}'
 
-if __name__ == '__main__':
-    args = EasyArgs()
+def main(sysargs):
+    args = EasyArgs(sysargs)
     cfg = EasyConfig(args.config, group="calib")
     
     # argument sanity checks
@@ -341,4 +341,9 @@ if __name__ == '__main__':
         undistort(args.preview, args._noops[1:], cam_mat, dist)
     
     print '--------------------------------------'
-    print 'stdcalib.py has completed successfully!'
+    print 'Intrinsic Calibration has completed successfully!'
+    exit(0)
+
+if __name__ == '__main__':
+    main(sys.argv)
+
