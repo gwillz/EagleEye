@@ -4,21 +4,24 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.2
+# version 0.1.3
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffCap, Xmlset, EasyArgs, CVFlag, Key
+from eagleeye import BuffCap, Xmlset, EasyArgs, EasyConfig, CVFlag, Key
 
 def usage():
     print "usage: python2 compare.py <video file> <xml dataset> <xml dataset>"
     exit(1)
 
 args = EasyArgs()
-buffer_size = 50 # move to config?
+config = EasyConfig(args.config, group="compare")
+buffer_size = config.buffer_size or 50
+xml1_colour = config.xml1_colour or (255,255,255)
+xml2_colour = config.xml2_colour or (255,255,255)
 
 window_name = "EagleEye Comparator"
 cv2.namedWindow(window_name)
@@ -43,8 +46,8 @@ if args.verifyLen(4):
             
             centre = (int(float(obj['centre']['x'])), int(float(obj['centre']['y'])))
             
-            cv2.rectangle(frame, pt1, pt2, (255,255,255), 1)
-            cv2.circle(frame, centre, 1, (255,255,255), 2)
+            cv2.rectangle(frame, pt1, pt2, xml1_colour, 1)
+            cv2.circle(frame, centre, 1, xml1_colour, 2)
         
         cv2.imshow(window_name, frame)
         key = cv2.waitKey(0)

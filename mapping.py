@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.3
+# version 0.2.4
 # 
 # Runs mapping routines on multiple CSV files and combines them into a single XML format.
 #
@@ -12,8 +12,7 @@
 
 import sys, os
 from elementtree.SimpleXMLWriter import XMLWriter
-from eagleeye import Dataset, EasyArgs
-from mapping_func import *
+from eagleeye import Dataset, EasyArgs, Mapper
 
 def usage():
     print "python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> {<multiple csv files>}"
