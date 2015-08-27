@@ -1,0 +1,15 @@
+<!ELEMENT dataset (frameInformation*)>
+  <!ELEMENT frameInformation (frame, object*)>
+    <!ELEMENT frame EMPTY>
+      <!ATTLIST frame number CDATA #REQUIRED>
+    <!ELEMENT object (boxinfo?, centroid?)>
+      <!ATTLIST object id CDATA #REQUIRED>
+      <!ATTLIST object name CDATA #REQUIRED>
+      <!ELEMENT boxinfo EMPTY>
+        <!ATTLIST boxinfo x CDATA #REQUIRED>
+        <!ATTLIST boxinfo y CDATA #REQUIRED>
+        <!ATTLIST boxinfo height CDATA #REQUIRED>
+        <!ATTLIST boxinfo width CDATA #REQUIRED>
+      <!ELEMENT centroid EMPTY>
+        <!ATTLIST centroid x CDATA #REQUIRED>
+        <!ATTLIST centroid y CDATA #REQUIRED>
