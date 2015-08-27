@@ -301,7 +301,7 @@ def usage():
 
 if __name__ == '__main__':
     args = EasyArgs()
-    cfg = EasyConfig(args.config)
+    cfg = EasyConfig(args.config, group="calib")
     
     # argument sanity checks
     if args.usage:

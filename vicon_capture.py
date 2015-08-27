@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.9.21
+# version 0.9.22
 #
 # Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
@@ -20,15 +20,16 @@ import csv, sys, os
 args = EasyArgs()
 cfg = EasyConfig(args.config, group="capture")
 time = args.time or cfg.default_time
-outpath = os.path.join(args.output or cfg.default_output, datetime.now().strftime(cfg.date_format))
+output_folder = args.output or cfg.default_output
+outpath = os.path.join(output_folder, datetime.now().strftime(cfg.date_format))
 
 num_frames = int(time * cfg.framerate) + (cfg.flash_delay * 2)
 flash_at = [cfg.flash_delay, num_frames - cfg.flash_delay]
 sleeper = Sleeper(1.0 / cfg.framerate)
 
 # data directory sanity check
-if not os.path.exists(cfg.output_folder):
-    os.makedirs(cfg.output_folder)
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
 
 # start the serial listener
 if cfg.run_serial:
@@ -73,12 +74,13 @@ for c in range(0, num_frames):
     
     # run flash
     flash = "."
-    if cfg.run_serial and c in flash_at:
-        serial.setRTS(1)
-        flash = "F"
-        sys.stdout.write("\r - - - - - - - Flash!\r")
-    else: 
-        serial.setRTS(0)
+    if cfg.run_serial:
+        if c in flash_at:
+            serial.setRTS(1)
+            flash = "F"
+            sys.stdout.write("\r - - - - - - - Flash!\r")
+        else: 
+            serial.setRTS(0)
     
     all = client.get("getAll")
     

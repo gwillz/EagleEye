@@ -10,8 +10,8 @@ from easyconfig import EasyConfig
 from cv_keys import Key
 from cv_flags import CVFlag
 from buff_cap import BuffCap
+from buff_split_cap import BuffSplitCap
 from split_cap import SplitCapture
-from split_buff_cap import SplitBuffCap
 from dataset import Dataset
 from buff_dataset import Buffset
 from xmlset import Xmlset
