@@ -1,7 +1,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Kin Kuen, Liu
-ver = '1.3.20'
+ver = '1.3.21'
 # Last Updated: 2015-08-27
 # 
 # Camera Calibration and Image Undistortion using OpenCV standard pinhole camera functions.
@@ -76,11 +76,7 @@ def stdCalib(imagesArr, patternSize=(9,6), squareSize=1.0, preview_path=False):
     img_found = [] # array of images with pattern found
     num_found = 0 # number of pattern found
     total_time = 0 # Total time to process images
-
-    if len(imagesArr) == 0:
-        print 'Calibration Failed: No images have been found.'
-        exit(1)
-
+    
     for fname in imagesArr:
         print 'Processing', os.path.basename(fname), 
         start = time.clock() # Measure time needed to process an image
@@ -132,11 +128,11 @@ def stdCalib(imagesArr, patternSize=(9,6), squareSize=1.0, preview_path=False):
 
     print 'Time taken to detect pattern from', len(imagesArr), 'images:', "{:.2f}".format(total_time), 'seconds.'
     
-    if (num_found == 0):
+    if num_found == 0:
         print 'Camera Calibration failed : No chessboard pattern size of', p_size, 'has been found.'
         print 'Please check if size of chessboard pattern is correct.'
-        exit(1)
-    elif (num_found < 10):
+        raise Exception("No chessboards found")
+    elif num_found < 10:
         print 'OpenCV requires at least 10 patterns found for an accurate calibration, please consider taking more images.'
         print 'Chessboard pattern found in %d out of %d images.' % (num_found, len(imagesArr)), ' ({:.2%})'.format(num_found / float(len(imagesArr)))
     else: # >= 10
@@ -275,11 +271,11 @@ def intWriter(path, camMat, distCoe, calibError={}):
                 w.element('Error', rms=str(calibError['rms']), total=str(calibError['tot_err']), arth=str(calibError['arth_err']))
             
             w.close(root)
-
         print 'Intrinsic calibration has been generated successfully.'
+        
     except Exception as e:
-        print 'Error occurred in writing intrinsic XML file.'
-        exit(1)
+        print 'ERROR: occurred in writing intrinsic XML file.'
+        raise e # keep it bubbling up, to catch in main()
 
 '''
 Prints versions of Python and OpenCV.
@@ -306,18 +302,18 @@ def main(sysargs):
     # argument sanity checks
     if args.usage:
         usage()
-        exit(0)
+        return 0
     elif args.version:
         version()
-        exit(0)
+        return 0
     elif not args.verifyLen(11):
         print "Requires a minimum 10 chessboard images."
         usage()
-        exit(1)
+        return 0
     elif not args.verifyOpts('output'):
         print "Requires an output path."
         usage()
-        exit(1)
+        return 0
     
     # default args
     s_size = args.square_size or cfg.default_squares
@@ -330,20 +326,22 @@ def main(sysargs):
     if args.preview and not os.path.exists(args.preview):
         os.makedirs(args.preview)
     
-    # calibration
-    cam_mat, dist, err = stdCalib(args._noops[1:], p_size, s_size, args.preview)
+    try: # calibration
+        cam_mat, dist, err = stdCalib(args._noops[1:], p_size, s_size, args.preview)
+        # XML Output
+        intWriter(args.output, cam_mat, dist, err)
+    except:
+        print "Aborting."
+        return 1
     
-    # XML Output
-    intWriter(args.output, cam_mat, dist, err)
-
     # Rectify
     if args.preview:
         undistort(args.preview, args._noops[1:], cam_mat, dist)
     
     print '--------------------------------------'
     print 'Intrinsic Calibration has completed successfully!'
-    exit(0)
+    return 0
 
 if __name__ == '__main__':
-    main(sys.argv)
+    exit(main(sys.argv))
 

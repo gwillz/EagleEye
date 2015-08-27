@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.9.21
+# version 0.9.22
 #
 # Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
@@ -39,7 +39,7 @@ def main(sysargs):
             serial.setRTS(0) # set at zero
         except OSError:
             print "Couldn't open serial device", cfg.serial_device
-            quit(1)
+            return 1
     else:
         print "Not listening to serial"
 
@@ -100,7 +100,7 @@ def main(sysargs):
     client.close()
         
     print "\nComplete."
-    exit(0)
+    return 0
 
 if __name__ == '__main__':
-    main(sys.argv)
+    exit(main(sys.argv))

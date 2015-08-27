@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.3.17
+# version 0.3.18
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -33,7 +33,6 @@ from elementtree.SimpleXMLWriter import XMLWriter
 
 def usage():
     print "usage: python2 trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out> | --clicks <num_clicks> | --config <file>}"
-    exit(1)
 
 def main(sysargs):
     # settings
@@ -50,15 +49,18 @@ def main(sysargs):
         
         # test integer-ness
         try: int(mark_in) and int(mark_out)
-        except: usage()
+        except: 
+            usage()
+            return 1
         
     elif args.verifyLen(4):
         ret, mark_in, mark_out = marker_tool(args[1], cfg.buffer_size, window_name)
         if not ret:
             print "Not processing - exiting."
-            exit(1)
+            return 1
     else:
         usage()
+        return 1
 
     ## clicking time!
     cropped_total = mark_out - mark_in
@@ -184,7 +186,7 @@ def main(sysargs):
     out_xml.close(doc)
 
     print "\nDone."
-    exit(0)
+    return 0
 
 if __name__ == '__main__':
-    main(sys.argv)
+    exit(main(sys.argv))

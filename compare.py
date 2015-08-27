@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.5
+# version 0.1.6
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
@@ -25,7 +25,7 @@ def main(sysargs):
     
     if not args.verifyLen(4):
         usage()
-        exit(1)
+        return 1
     else:
         vid = BuffCap(args[1], buff_max=config.buffer_size)
         xml1 = Xmlset(args[2])
@@ -54,7 +54,7 @@ def main(sysargs):
             
             if key == Key.esc:
                 print "exiting."
-                exit(1)
+                return 1
             elif key == Key.right:
                 if vid.next():
                     xml1.next()
@@ -67,7 +67,7 @@ def main(sysargs):
         vid.release()
         cv2.destroyAllWindows()
         
-    exit(0)
+    return 0
     
 if __name__ == '__main__':
-    main(sys.argv)
+    exit(main(sys.argv))

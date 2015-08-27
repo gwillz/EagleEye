@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.2
+# version 0.1.3
 # 
 # Processes a video and extracts singular frames for calibration.
 # 
@@ -21,7 +21,7 @@ def main(sysargs):
     cfg = EasyConfig(args.config, group="chessboard_extract")
     if not args.verifyLen(3):
         usage()
-        exit(1)
+        return 1
 
     # video settings, etc
     window_name = "Chessboard Extractor"
@@ -65,7 +65,7 @@ def main(sysargs):
     cv2.destroyAllWindows()
 
     print "\nDone."
-    exit(0)
+    return 0
 
 if __name__ == '__main__':
-    main(sys.argv)
+    exit(main(sys.argv))
