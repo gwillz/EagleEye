@@ -3,8 +3,8 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # 
-# Gwilyn Saunders & Kin Kuen Liu
-# version 0.2.13
+# Gwilyn Saunders
+# version 0.3.16
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -14,7 +14,7 @@
 #
 # Process 2:
 #  Left click to mark wand centre
-#  Right click to skip frame
+#  Left/right arrow keys to navigate the video
 #  ESC to quit
 # 
 # Note:
@@ -28,7 +28,7 @@
 #   - 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffCap, Memset, CVFlag, Key, EasyConfig, EasyArgs
+from eagleeye import BuffCap, Memset, CVFlag, Key, EasyConfig, EasyArgs, marker_tool
 from elementtree.SimpleXMLWriter import XMLWriter
 
 def usage():
@@ -37,12 +37,10 @@ def usage():
 
 # settings
 args = EasyArgs()
-cfg = EasyConfig(args.config, group='trainer')
+cfg = EasyConfig(args.config, group="trainer")
 max_clicks = args.clicks or cfg.default_clicks
 font = CVFlag.FONT_HERSHEY_SIMPLEX
-
 window_name = "EagleEye Trainer"
-cv2.namedWindow(window_name)
 
 # grab marks from args
 if args.verifyLen(6):
@@ -54,39 +52,10 @@ if args.verifyLen(6):
     except: usage()
     
 elif args.verifyLen(4):
-    cap = BuffCap(args[1], buff_max=cfg.buffer_size)
-    mark_in = 0
-    mark_out = cap.total
-
-    while cap.isOpened():
-        frame = cap.frame()
-        cv2.putText(frame, \
-                    cap.status() + " in: {0} out: {1}".format(mark_in, mark_out), 
-                    (5,15), CVFlag.FONT_HERSHEY_SIMPLEX, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
-        
-        # display and wait
-        cv2.imshow(window_name, frame)
-        key = cv2.waitKey(0)
-        
-        # controls
-        if key == Key.esc:
-            cap.release()
-            cv2.destroyAllWindows()
-            print "Not processing - exiting."
-            exit(1)
-        elif key == Key.enter:
-            break
-        elif key == Key.right:
-            cap.next()
-        elif key == Key.left:
-            cap.back()
-        elif Key.char(key, '['):
-            mark_in = cap.at()
-        elif Key.char(key, ']'):
-            mark_out = cap.at()
-
-    # clean up
-    cap.release()
+    ret, mark_in, mark_out = marker_tool(args[1], cfg.buffer_size, window_name)
+    if not ret:
+        print "Not processing - exiting."
+        exit(1)
 else:
     usage()
 
@@ -107,7 +76,15 @@ def on_mouse(event, x, y, flags, params):
         params['status'] = 2
 
 # load video (again)
-in_vid  = cv2.VideoCapture(args[1])
+in_vid = BuffCap(args[1], cfg.buffer_size)
+cv2.namedWindow(window_name)
+
+# status: 
+#   0 = exit (break loop)
+#   1 = left click (record pos)
+#   2 = right click or key (skip forward frame)
+#   3 = left key (skip back frame)
+#   5 = wait for input
 params = {'count':0, 'status': 2, 'pos': None}
 cv2.setMouseCallback(window_name, on_mouse, params)
 
@@ -134,36 +111,44 @@ print ""
 count = 0
 while in_vid.isOpened():
     count += 1
-    ret, frame = in_vid.read()
     
     # restrict to flash marks
-    if count <= mark_in: continue
+    if count <= mark_in: 
+        in_vid.next()
+        continue
     if count > mark_out: 
         print "end of video."
         break
+    
+    # load frame
+    frame = in_vid.frame()
     
     # add CSV data and show
     textrow = "{:.3f}".format(float(in_csv.row()[0]))
     for cell in in_csv.row()[2:]: 
         textrow += ", {:.4f}".format(float(cell))
     cv2.putText(frame, textrow,
-                (5,15), font, cfg.font_size, font_colour, cfg.font_thick, CVFlag.LINE_AA)
+                (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
     
     textstatus = "{}/{} clicks".format(params['count'], max_clicks)
     cv2.putText(frame, textstatus,
-                (5,35), font, cfg.font_size, font_colour, cfg.font_thick, CVFlag.LINE_AA)
+                (5,35), font, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
     
     cv2.imshow(window_name, frame)
     
     # pause for input
-    while params['status'] > 2:
-        if cv2.waitKey(10) == Key.esc:
-            print "process aborted!\nNo data was written."
-            params['status'] = -1
-        # the click input will change the status to 1 or 2 - left or right
-    
+    while params['status'] >= 5:
+        key = cv2.waitKey(10)
+        if key == Key.esc:
+            print "process aborted!\nData was still written."
+            params['status'] = 0
+        elif key == Key.right:
+            params['status'] = 2
+        elif key == Key.left:
+            params['status'] = 3
+        
     # catch exit status
-    if params['status'] < 0: break
+    if params['status'] <= 0: break
     
     # print data
     if params['status'] == 1:
@@ -184,8 +169,13 @@ while in_vid.isOpened():
         break
     
     # load next csv frame
-    params['status'] = 3
-    in_csv.next()
+    if params['status'] in (1, 2):
+        if in_vid.next():
+            in_csv.next()
+    elif params['status'] == 3:
+        if in_vid.back():
+            in_csv.back()
+    params['status'] = 5
 
 # clean up
 cv2.destroyAllWindows()
