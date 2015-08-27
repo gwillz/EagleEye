@@ -13,20 +13,20 @@ import sys, cv2, os
 from eagleeye import EasyArgs, BuffSplitCap, Key, CVFlag, EasyConfig
 
 def usage():
-    print "usage: python2 extract_frames.py <video file> <output image folder> [-prefix <output name>]"
+    print "usage: python2 extract_frames.py <video file> <output image folder> {-prefix <output name> | --config <file>}"
 
 
 # test args
 args = EasyArgs()
-config = EasyConfig(args.config, group="calib")
+cfg = EasyConfig(args.config, group="calib")
 if not args.verifyLen(3):
     usage()
     exit(1)
 
 # video settings, etc
 window_name = "Chessboard Extractor"
-side = BuffSplitCap.__dict__[config.side]
-rotate = BuffSplitCap.__dict__[config.rotate]
+side = BuffSplitCap.__dict__[cfg.side]
+rotate = BuffSplitCap.__dict__[cfg.rotate]
 font = CVFlag.FONT_HERSHEY_SIMPLEX
 
 # image stuff
@@ -35,7 +35,7 @@ if not os.path.exists(args[2]):
     os.makedirs(args[2])
 
 cv2.namedWindow(window_name)
-cap = BuffSplitCap(args[1], side=side, rotate=rotate, buff_max=config.buffer_size)
+cap = BuffSplitCap(args[1], side=side, rotate=rotate, buff_max=cfg.buffer_size)
 
 # loop video file
 while cap.isOpened():
@@ -44,7 +44,7 @@ while cap.isOpened():
     # display status
     textframe = frame.copy()
     cv2.putText(textframe, cap.status(),
-                (5,15), font, config.font_size, config.font_colour, config.font_thick, CVFlag.LINE_AA)
+                (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
     cv2.imshow(window_name, textframe)
     
     # controls

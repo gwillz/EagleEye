@@ -1,8 +1,8 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Kin Kuen, Liu
-ver = '1.3.17'
-# Last Updated: 2015-08-26
+ver = '1.3.19'
+# Last Updated: 2015-08-27
 # 
 # Camera Calibration and Image Undistortion using OpenCV standard pinhole camera functions.
 # Rational model flag is enabled to compensate radial and tangential effect present in fish-eye lens
@@ -20,7 +20,7 @@ ver = '1.3.17'
 import sys, glob, time, os, cv2, numpy as np, ast
 from datetime import datetime
 from elementtree.SimpleXMLWriter import XMLWriter
-from eagleeye import EasyArgs
+from eagleeye import EasyArgs, EasyConfig, CVFlag
 
 '''
 Camera Calibration (Standard Pinhole Camera)
@@ -95,8 +95,7 @@ def stdCalib(imagesArr, patternSize=(9,6), squareSize=1.0, preview_path=False):
         grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Detect chessboard pattern
-        adaptive_thresh = cv2.cv.CV_CALIB_CB_ADAPTIVE_THRESH if 'cv' in cv2.__dict__ else cv2.CALIB_CB_ADAPTIVE_THRESH
-        found, corners = cv2.findChessboardCorners(grey, p_size, adaptive_thresh)
+        found, corners = cv2.findChessboardCorners(grey, p_size, CVFlag.CALIB_CB_ADAPTIVE_THRESH)
 
         if found == True:
             print ' *** Pattern found *** ',
@@ -298,26 +297,34 @@ def version():
 Prints usage of stdcalib.py
 '''
 def usage():
-    print 'USAGE: stdcalib.py -o <file path> <multiple jpg files> [-c <size of pattern def. 9,6> | -s <size of squares in mm def. 1.0> | -p <preview file directory>]'
+    print 'usage: stdcalib.py -output <file path> <multiple jpg files> {-chess_size <pattern: def. 9,6> | -square_size <in mm: def. 1.0> | -preview <preview file folder> | -config <file>}'
 
 if __name__ == '__main__':
     args = EasyArgs()
+    cfg = EasyConfig(args.config)
     
     # argument sanity checks
-    if not args.verifyOpts('output') or not args.verifyLen(11):
-        print "requires a minimum 10 chessboard images."
-        usage()
-        exit(1)
-    elif args.usage:
+    if args.usage:
         usage()
         exit(0)
     elif args.version:
         version()
         exit(0)
+    elif not args.verifyLen(11):
+        print "Requires a minimum 10 chessboard images."
+        usage()
+        exit(1)
+    elif not args.verifyOpts('output'):
+        print "Requires an output path."
+        usage()
+        exit(1)
     
     # default args
-    s_size = args.square_size or 1.0
-    p_size = ast.literal_eval("({})".format(args.chess_size)) or (9,6)
+    s_size = args.square_size or cfg.default_squares
+    if args.chess_size:
+        p_size = ast.literal_eval("({})".format(args.chess_size))
+    else:
+        p_size = cfg.default_chess
     
     # create preview folder if specified
     if args.preview and not os.path.exists(args.preview):

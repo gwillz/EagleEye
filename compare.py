@@ -14,7 +14,7 @@ import sys, cv2, numpy as np, time, os
 from eagleeye import BuffCap, Xmlset, EasyArgs, EasyConfig, CVFlag, Key
 
 def usage():
-    print "usage: python2 compare.py <video file> <xml dataset> <xml dataset>"
+    print "usage: python2 compare.py <video file> <xml dataset> <xml dataset> {--config <file>}"
     exit(1)
 
 args = EasyArgs()

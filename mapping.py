@@ -15,7 +15,7 @@ from elementtree.SimpleXMLWriter import XMLWriter
 from eagleeye import Dataset, EasyArgs, Mapper
 
 def usage():
-    print "python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> {<multiple csv files>}"
+    print "python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> [<multiple csv files>] {--config <file>}"
 
 args = EasyArgs()
 

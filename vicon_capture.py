@@ -8,7 +8,7 @@
 # Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
 #
-# usage: python2 vicon_capture.py {--time <in minutes> | --config <file>}
+# usage: python2 vicon_capture.py {--output <folder> | --time <in minutes> | --config <file>}
 #
 
 from eagleeye import ViconSocket, Sleeper, EasyConfig, EasyArgs
@@ -18,9 +18,9 @@ import csv, sys, os
 
 # set arguments
 args = EasyArgs()
-time = args.time or 180
-cfg = EasyConfig(args.config)
-outpath = os.path.join(cfg.output_folder, datetime.now().strftime(cfg.date_format))
+cfg = EasyConfig(args.config, group="capture")
+time = args.time or cfg.default_time
+outpath = os.path.join(args.output or cfg.default_output, datetime.now().strftime(cfg.date_format))
 
 num_frames = int(time * cfg.framerate) + (cfg.flash_delay * 2)
 flash_at = [cfg.flash_delay, num_frames - cfg.flash_delay]

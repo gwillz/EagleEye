@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.2.12
+# version 0.2.13
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -37,10 +37,9 @@ def usage():
 
 # settings
 args = EasyArgs()
-max_clicks = args.clicks or 20
-cfg = EasyConfig(args.config)
+cfg = EasyConfig(args.config, group='trainer')
+max_clicks = args.clicks or cfg.default_clicks
 font = CVFlag.FONT_HERSHEY_SIMPLEX
-font_colour = cfg.font_colour
 
 window_name = "EagleEye Trainer"
 cv2.namedWindow(window_name)
@@ -63,7 +62,7 @@ elif args.verifyLen(4):
         frame = cap.frame()
         cv2.putText(frame, \
                     cap.status() + " in: {0} out: {1}".format(mark_in, mark_out), 
-                    (5,15), CVFlag.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1, CVFlag.LINE_AA)
+                    (5,15), CVFlag.FONT_HERSHEY_SIMPLEX, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
         
         # display and wait
         cv2.imshow(window_name, frame)
