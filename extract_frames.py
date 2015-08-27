@@ -4,43 +4,38 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1
+# version 0.1.1
 # 
 # Processes a video and extracts singular frames for calibration.
 # 
 
 import sys, cv2, os
-from eagleeye import EasyArgs, BuffSplitCap, Key, CVFlag
+from eagleeye import EasyArgs, BuffSplitCap, Key, CVFlag, EasyConfig
 
 def usage():
-    print "usage: python2 extract_frames.py <video file> <output image folder> [-prefix <output name> -side <left|right|both> -rotate <r0|r90|r180|r270>]"
+    print "usage: python2 extract_frames.py <video file> <output image folder> [-prefix <output name>]"
 
 
 # test args
 args = EasyArgs()
+config = EasyConfig(args.config, group="calib")
 if not args.verifyLen(3):
     usage()
     exit(1)
 
 # video settings, etc
 window_name = "Chessboard Extractor"
-buffer_size = args.buffer_size or 50
-side = BuffSplitCap.__dict__[args.side or 'right']
-rotate = BuffSplitCap.__dict__[args.rotate or 'r270']
+side = BuffSplitCap.__dict__[config.side]
+rotate = BuffSplitCap.__dict__[config.rotate]
+font = CVFlag.FONT_HERSHEY_SIMPLEX
 
 # image stuff
 image_path = os.path.join(args[2], args.prefix or 'frame_')
 if not os.path.exists(args[2]):
     os.makedirs(args[2])
 
-# font stuff
-font = CVFlag.FONT_HERSHEY_SIMPLEX
-font_colour = (255,255,255)
-font_thick = 1
-font_size = 0.4
-
 cv2.namedWindow(window_name)
-cap = BuffSplitCap(args[1], side=side, rotate=rotate, buff_max=buffer_size)
+cap = BuffSplitCap(args[1], side=side, rotate=rotate, buff_max=config.buffer_size)
 
 # loop video file
 while cap.isOpened():
@@ -49,7 +44,7 @@ while cap.isOpened():
     # display status
     textframe = frame.copy()
     cv2.putText(textframe, cap.status(),
-                (5,15), font, font_size, font_colour, font_thick, CVFlag.LINE_AA)
+                (5,15), font, config.font_size, config.font_colour, config.font_thick, CVFlag.LINE_AA)
     cv2.imshow(window_name, textframe)
     
     # controls
