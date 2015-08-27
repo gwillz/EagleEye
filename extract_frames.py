@@ -18,14 +18,14 @@ def usage():
 
 # test args
 args = EasyArgs()
-cfg = EasyConfig(args.config, group="calib")
+cfg = EasyConfig(args.config, group="chessboard_extract")
 if not args.verifyLen(3):
     usage()
     exit(1)
 
 # video settings, etc
 window_name = "Chessboard Extractor"
-side = BuffSplitCap.__dict__[cfg.side]
+side = BuffSplitCap.__dict__[cfg.split_side]
 rotate = BuffSplitCap.__dict__[cfg.rotate]
 font = CVFlag.FONT_HERSHEY_SIMPLEX
 
@@ -35,7 +35,7 @@ if not os.path.exists(args[2]):
     os.makedirs(args[2])
 
 cv2.namedWindow(window_name)
-cap = BuffSplitCap(args[1], side=side, rotate=rotate, buff_max=cfg.buffer_size)
+cap = BuffSplitCap(args[1], side=side, rotate=rotate, crop=cfg.crop, buff_max=cfg.buffer_size)
 
 # loop video file
 while cap.isOpened():
