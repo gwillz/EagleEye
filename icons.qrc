@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="calibrate">icons/calibrate_trim.png</file>
+        <file alias="annotate">icons/annotate_trim.png</file>
+        <file alias="capture">icons/capture_trim.png</file>
+        <file alias="comparison">icons/comparison_trim.png</file>
+        <file alias="convert">icons/convert_trim.png</file>
+        <file alias="format">icons/format_trim.png</file>
+        <file alias="mapping">icons/mapping_trim.png</file>
+        <file alias="training">icons/training_trim.png</file>
+    </qresource>
+</RCC>

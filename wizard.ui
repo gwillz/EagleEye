@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>569</width>
+    <height>733</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>EagleEye Wizard</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="2,1,1,1,9,9,9,1">
+    <property name="leftMargin">
+     <number>20</number>
+    </property>
+    <property name="rightMargin">
+     <number>30</number>
+    </property>
+    <property name="horizontalSpacing">
+     <number>4</number>
+    </property>
+    <item row="1" column="0" colspan="2">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>&lt;h3&gt;Calibration Tool&lt;/h3&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+      </property>
+      <property name="indent">
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="11" column="0" colspan="2">
+     <widget class="QLabel" name="label_5">
+      <property name="text">
+       <string>&lt;h3&gt;Mapping Tool&lt;/h3&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+      </property>
+      <property name="indent">
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="2">
+     <widget class="QLabel" name="label_8">
+      <property name="text">
+       <string>&lt;h1&gt;EagleEye Wizard&lt;/h1&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" rowspan="16">
+     <spacer name="horizontalSpacer_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="1" column="3" colspan="5">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>&lt;h4&gt;Outputs&lt;/h4&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+      </property>
+      <property name="indent">
+       <number>12</number>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="3" colspan="5">
+     <widget class="HighlightEdit" name="calibration_edit">
+      <property name="placeholderText">
+       <string>calibration.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" colspan="2">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>&lt;h3&gt;Training Tool&lt;/h3&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+      </property>
+      <property name="indent">
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="13" column="0" colspan="2">
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>&lt;h3&gt;Annotation Tool&lt;/h3&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+      </property>
+      <property name="indent">
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="15" column="0" colspan="2">
+     <widget class="QLabel" name="label_7">
+      <property name="text">
+       <string>&lt;h3&gt;Comparison Tool&lt;/h3&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+      </property>
+      <property name="indent">
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="0" colspan="2">
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>&lt;h3&gt;Capture Tool&lt;/h3&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+      </property>
+      <property name="indent">
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="3" colspan="5">
+     <widget class="HighlightEdit" name="trainer_mov_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>trainer.mov</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2" colspan="2">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::MinimumExpanding</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="12" column="3" colspan="5">
+     <widget class="HighlightEdit" name="dataset_map_edit">
+      <property name="placeholderText">
+       <string>dataset.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="3" colspan="5">
+     <widget class="HighlightEdit" name="trainer_xml_edit">
+      <property name="placeholderText">
+       <string>training_set.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="3" colspan="5">
+     <widget class="HighlightEdit" name="dataset_ann_edit">
+      <property name="placeholderText">
+       <string>dataset.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="3" colspan="5">
+     <widget class="HighlightEdit" name="evaluation_edit">
+      <property name="placeholderText">
+       <string>evaluation.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0" colspan="2">
+     <widget class="QPushButton" name="trainer_mov_button">
+      <property name="text">
+       <string>Import Trainer...</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="3" colspan="5">
+     <widget class="HighlightEdit" name="dataset_mov_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>dataset.mov</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="3" colspan="4">
+     <widget class="HighlightEdit" name="chessboard_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>chessboards/</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="0" colspan="2">
+     <widget class="QPushButton" name="dataset_mov_button">
+      <property name="text">
+       <string>Import Video...</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="3" colspan="5">
+     <widget class="HighlightEdit" name="trainer_csv_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>trainer.csv</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="5" colspan="3">
+     <widget class="QLineEdit" name="dataset_name_edit">
+      <property name="minimumSize">
+       <size>
+        <width>120</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="placeholderText">
+       <string>Dataset name</string>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="0" colspan="2">
+     <widget class="HoverButton" name="comparison_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Comparison</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="4">
+     <widget class="QLabel" name="label_9">
+      <property name="text">
+       <string>Dataset Name:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="7">
+     <widget class="QLabel" name="num_chessboards">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="text">
+       <string>0</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="3" colspan="4">
+     <widget class="HighlightEdit" name="vicondata_edit">
+      <property name="placeholderText">
+       <string>vicon_dataset/</string>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="7">
+     <widget class="QLabel" name="num_vicondata">
+      <property name="text">
+       <string>0</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0" colspan="2">
+     <widget class="HoverButton" name="calibration_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Calibration</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QPushButton" name="chessboard_button">
+      <property name="text">
+       <string>Extract Chessboards</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="0" colspan="2">
+     <widget class="HoverButton" name="trainer_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Training</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0" colspan="2">
+     <widget class="QPushButton" name="capture_training_button">
+      <property name="text">
+       <string>Capture Training</string>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="0" colspan="2">
+     <widget class="QPushButton" name="capture_button">
+      <property name="text">
+       <string>Capture Data</string>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="0" colspan="2">
+     <widget class="HoverButton" name="mapping_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Mapping</string>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="0" colspan="2">
+     <widget class="HoverButton" name="annotation_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Annotation</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>569</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionNew"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSave_As"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoad_Config"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuLaunch">
+    <property name="title">
+     <string>Launch</string>
+    </property>
+    <addaction name="actionCalibration_Tool"/>
+    <addaction name="actionTraining_Tool"/>
+    <addaction name="actionCapture_Tool"/>
+    <addaction name="actionMapping_Tool"/>
+    <addaction name="actionAnnotation_Tool"/>
+    <addaction name="actionComparison_Tool"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionAbout_QT"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuLaunch"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSave_As">
+   <property name="text">
+    <string>Save As...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="actionAbout_QT">
+   <property name="text">
+    <string>About QT</string>
+   </property>
+  </action>
+  <action name="actionCalibration_Tool">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/calibrate</normaloff>:/calibrate</iconset>
+   </property>
+   <property name="text">
+    <string>Calibration Tool</string>
+   </property>
+  </action>
+  <action name="actionTraining_Tool">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/training</normaloff>:/training</iconset>
+   </property>
+   <property name="text">
+    <string>Training Tool</string>
+   </property>
+  </action>
+  <action name="actionCapture_Tool">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/capture</normaloff>:/capture</iconset>
+   </property>
+   <property name="text">
+    <string>Capture Tool</string>
+   </property>
+  </action>
+  <action name="actionMapping_Tool">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/mapping</normaloff>:/mapping</iconset>
+   </property>
+   <property name="text">
+    <string>Mapping Tool</string>
+   </property>
+  </action>
+  <action name="actionAnnotation_Tool">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/annotate</normaloff>:/annotate</iconset>
+   </property>
+   <property name="text">
+    <string>Annotation Tool</string>
+   </property>
+  </action>
+  <action name="actionComparison_Tool">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/comparison</normaloff>:/comparison</iconset>
+   </property>
+   <property name="text">
+    <string>Comparison Tool</string>
+   </property>
+  </action>
+  <action name="actionLoad_Config">
+   <property name="text">
+    <string>Load Config...</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HoverButton</class>
+   <extends>QPushButton</extends>
+   <header>custom_widgets/hover_button.h</header>
+   <slots>
+    <signal>hovered(bool)</signal>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>HighlightEdit</class>
+   <extends>QLineEdit</extends>
+   <header>custom_widgets/highlight_edit.h</header>
+   <slots>
+    <slot>highlight(bool)</slot>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>dataset_name_edit</tabstop>
+  <tabstop>chessboard_button</tabstop>
+  <tabstop>calibration_button</tabstop>
+  <tabstop>capture_training_button</tabstop>
+  <tabstop>trainer_mov_button</tabstop>
+  <tabstop>trainer_button</tabstop>
+  <tabstop>capture_button</tabstop>
+  <tabstop>dataset_mov_button</tabstop>
+  <tabstop>mapping_button</tabstop>
+  <tabstop>annotation_button</tabstop>
+  <tabstop>comparison_button</tabstop>
+  <tabstop>chessboard_edit</tabstop>
+  <tabstop>calibration_edit</tabstop>
+  <tabstop>trainer_csv_edit</tabstop>
+  <tabstop>trainer_mov_edit</tabstop>
+  <tabstop>trainer_xml_edit</tabstop>
+  <tabstop>vicondata_edit</tabstop>
+  <tabstop>dataset_mov_edit</tabstop>
+  <tabstop>dataset_map_edit</tabstop>
+  <tabstop>dataset_ann_edit</tabstop>
+  <tabstop>evaluation_edit</tabstop>
+ </tabstops>
+ <resources>
+  <include location="../icons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>actionExit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>327</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>calibration_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>chessboard_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>192</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>467</x>
+     <y>152</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trainer_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>trainer_csv_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>349</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>270</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trainer_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>trainer_mov_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>349</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>309</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapping_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>vicondata_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>546</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>467</x>
+     <y>427</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapping_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>trainer_xml_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>151</x>
+     <y>546</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>348</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mapping_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>calibration_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>125</x>
+     <y>546</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>annotation_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>dataset_mov_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>625</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>466</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comparison_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>dataset_map_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>160</x>
+     <y>704</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>545</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comparison_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>dataset_ann_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>150</x>
+     <y>704</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>624</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comparison_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>dataset_mov_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>161</x>
+     <y>704</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>466</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
