@@ -5,7 +5,7 @@ set PYTHON=
 for %%i in (pythonw.exe) do (set PYTHON=%%~$PATH:i)
 
 echo Set oWS = WScript.CreateObject("WScript.Shell") > CreateShortcut.vbs
-echo sLinkFile = "AllTools.lnk" >> CreateShortcut.vbs
+echo sLinkFile = "EagleEye Wizard.lnk" >> CreateShortcut.vbs
 echo Set oLink = oWS.CreateShortcut(sLinkFile) >> CreateShortcut.vbs
 echo oLink.TargetPath = "!PYTHON!" >> CreateShortcut.vbs
 echo oLink.Arguments = "wizard.py" >> CreateShortcut.vbs

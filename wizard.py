@@ -6,12 +6,11 @@ from PyQt4.QtCore import QProcess, pyqtSlot
 import sys, os, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
 from elementtree.SimpleXMLWriter import XMLWriter
 from custom_widgets import *
-import capture_ui, training_ui, calibrate_ui, mapping_ui
 
 class Wizard(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
-        uic.loadUi('ui/wizard.ui', self)
+        uic.loadUi('wizard.ui', self)
         
         # process for annotation tool
         self.annotation_process = QProcess()
@@ -60,14 +59,6 @@ class Wizard(QMainWindow):
         self.dataset_mov_edit.editingFinished.connect(self.check_compare_enable)
         self.dataset_map_edit.editingFinished.connect(self.check_compare_enable)
         self.dataset_ann_edit.editingFinished.connect(self.check_compare_enable)
-        
-        # launch menu events
-        self.actionCalibration_Tool.triggered.connect(self.launch_calibration)
-        self.actionTraining_Tool.triggered.connect(self.launch_training)
-        self.actionCapture_Tool.triggered.connect(self.launch_capture)
-        self.actionMapping_Tool.triggered.connect(self.launch_mapping)
-        self.actionAnnotation_Tool.triggered.connect(self.launch_annotate)
-        self.actionComparison_Tool.triggered.connect(self.launch_comparison)
         
         # buttons and junk
         self.chessboard_button.clicked.connect(self.chessboard_extract)
@@ -390,48 +381,53 @@ class Wizard(QMainWindow):
     ## button event slots
     @pyqtSlot()
     def run_calibration(self):
-        self.launch_calibration(
-                        {'args': self.chessboards,
-                         'output': self.default_name('chessboard_edit')})
+        #self.launch_calibration(
+        #                {'args': self.chessboards,
+        #                 'output': self.default_name('chessboard_edit')})
         
         # after successful calib
         #self.check_mapping_enable()
+        pass
     
     @pyqtSlot()
     def run_capture_training(self):
-        self.launch_capture()
+        #self.launch_capture()
                         #{'args': self.chessboards,
                          #'output': self.default_name('chessboard_edit')})
         
         # after successful training capture
         #self.check_trainer_enable()
+        pass
     
     @pyqtSlot()
     def run_training(self):
-        self.launch_training()
+        #self.launch_training()
                         #{'args': self.chessboards,
                         # 'output': self.default_name('chessboard_edit')})
         
         # after successful training
         #self.check_mapping_enable()
+        pass
     
     @pyqtSlot()
     def run_capture(self):
-        self.launch_capture()
+        #self.launch_capture()
                         #{'args': self.chessboards,
                          #'output': self.default_name('chessboard_edit')})
         
         # after successful capture
         #self.load_vicondata()
+        pass
     
     @pyqtSlot()
     def run_mapping(self):
-        self.launch_mapping()
+        #self.launch_mapping()
                         #{'args': self.chessboards,
                         # 'output': self.default_name('chessboard_edit')})
         
         # after successful mapping
         #self.check_comparison_enable()
+        pass
     
     @pyqtSlot()
     def run_annotation(self):
@@ -574,49 +570,6 @@ class Wizard(QMainWindow):
             self.vicondata = []
         
         self.num_vicondata.setText(str(len(self.vicondata)))
-    
-    
-    ## tool launchers
-    @pyqtSlot()
-    def launch_capture(self, params={}):
-        if 'cap' not in self.__dict__ or not self.cap.isVisible():
-            self.cap = capture_ui.Capture()
-            self.cap.show()
-            print "capture"
-        
-    @pyqtSlot()
-    def launch_training(self, params={}):
-        if 'train' not in self.__dict__ or not self.train.isVisible():
-            self.train = training_ui.Training()
-            self.train.show()
-            print "training"
-        
-    @pyqtSlot()
-    def launch_mapping(self, params={}):
-        if 'mapp' not in self.__dict__ or not self.mapp.isVisible():
-            self.mapp = mapping_ui.Mapping()
-            self.mapp.show()
-            print "mapping"
-        
-    @pyqtSlot()
-    def launch_calibration(self, params={}):
-        if 'calib' not in self.__dict__ or not self.calib.isVisible():
-            self.calib = calibrate_ui.Calibration()
-            self.calib.show()
-            print "calibration"
-        
-    @pyqtSlot()
-    def launch_annotate(self, params={}):
-        if self.annotation_process.state() == QProcess.NotRunning:
-            print "annotate"
-            args = ["tools/annotation.py"]
-            print "launching: ", " ".join(args)
-            self.annotation_process.start(sys.executable, args)
-        
-    @pyqtSlot()
-    def launch_comparison(self, params={}):
-        print "comparison"
-    
     
     ## various other stuff
     def default_path(self, edit_name):

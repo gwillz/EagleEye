@@ -378,7 +378,7 @@
      <x>0</x>
      <y>0</y>
      <width>569</width>
-     <height>29</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -391,20 +391,7 @@
     <addaction name="actionSave"/>
     <addaction name="actionSave_As"/>
     <addaction name="separator"/>
-    <addaction name="actionLoad_Config"/>
-    <addaction name="separator"/>
     <addaction name="actionExit"/>
-   </widget>
-   <widget class="QMenu" name="menuLaunch">
-    <property name="title">
-     <string>Launch</string>
-    </property>
-    <addaction name="actionCalibration_Tool"/>
-    <addaction name="actionTraining_Tool"/>
-    <addaction name="actionCapture_Tool"/>
-    <addaction name="actionMapping_Tool"/>
-    <addaction name="actionAnnotation_Tool"/>
-    <addaction name="actionComparison_Tool"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -413,8 +400,17 @@
     <addaction name="actionAbout"/>
     <addaction name="actionAbout_QT"/>
    </widget>
+   <widget class="QMenu" name="menuConfig">
+    <property name="title">
+     <string>Config</string>
+    </property>
+    <addaction name="actionOpen_Config"/>
+    <addaction name="actionEdit_Config"/>
+    <addaction name="separator"/>
+    <addaction name="action_config_status"/>
+   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuLaunch"/>
+   <addaction name="menuConfig"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -465,7 +461,7 @@
   </action>
   <action name="actionCalibration_Tool">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="icons.qrc">
      <normaloff>:/calibrate</normaloff>:/calibrate</iconset>
    </property>
    <property name="text">
@@ -474,7 +470,7 @@
   </action>
   <action name="actionTraining_Tool">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="icons.qrc">
      <normaloff>:/training</normaloff>:/training</iconset>
    </property>
    <property name="text">
@@ -483,7 +479,7 @@
   </action>
   <action name="actionCapture_Tool">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="icons.qrc">
      <normaloff>:/capture</normaloff>:/capture</iconset>
    </property>
    <property name="text">
@@ -492,7 +488,7 @@
   </action>
   <action name="actionMapping_Tool">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="icons.qrc">
      <normaloff>:/mapping</normaloff>:/mapping</iconset>
    </property>
    <property name="text">
@@ -501,7 +497,7 @@
   </action>
   <action name="actionAnnotation_Tool">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="icons.qrc">
      <normaloff>:/annotate</normaloff>:/annotate</iconset>
    </property>
    <property name="text">
@@ -510,7 +506,7 @@
   </action>
   <action name="actionComparison_Tool">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="icons.qrc">
      <normaloff>:/comparison</normaloff>:/comparison</iconset>
    </property>
    <property name="text">
@@ -525,6 +521,27 @@
   <action name="actionNew">
    <property name="text">
     <string>New</string>
+   </property>
+  </action>
+  <action name="actionOpen_Config">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionEdit_Config">
+   <property name="text">
+    <string>Edit...</string>
+   </property>
+  </action>
+  <action name="action_config_status">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>_status_</string>
    </property>
   </action>
  </widget>
@@ -570,7 +587,7 @@
   <tabstop>evaluation_edit</tabstop>
  </tabstops>
  <resources>
-  <include location="../icons.qrc"/>
+  <include location="icons.qrc"/>
  </resources>
  <connections>
   <connection>
