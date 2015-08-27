@@ -7,6 +7,14 @@ import sys, os, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, 
 from elementtree.SimpleXMLWriter import XMLWriter
 from custom_widgets import *
 
+# tool imports
+from vicon_capture import main as capture_main
+from extract_frames import main as chess_extract_main
+from stdcalib import main as calib_main
+from trainer import main as trainer_main
+from mapping import main as mapping_main
+from compare import main as compare_main
+
 class Wizard(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
@@ -21,6 +29,10 @@ class Wizard(QMainWindow):
         self.save_date = None
         self._original_title = self.windowTitle() # for newaction
         self._working_title = self.windowTitle()
+        
+        # config stuff
+        self.config_path = "eagleeye.cfg"
+        #TODO loading config files, editing and junk
         
         # save/open events
         self.actionSave.triggered.connect(self.save_file)
@@ -378,79 +390,110 @@ class Wizard(QMainWindow):
         
         return True
     
-    ## button event slots
+    ## tool launcher slots
+    @pyqtSlot()
+    def chessboard_extract(self):
+        if self.chessboard_edit.text() == "":
+            QMessageBox.warning(self, "Missing output", "Please specify an output")
+            self.chessboard_edit.setFocus()
+            return
+        
+        # find a chessboard video
+        path = QFileDialog.getOpenFileName(self, "Open Chessboard Video", "./", 
+                                           "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
+        if path == "": return
+        
+        res = chess_extract_main(["wizard", 
+                                str(path),
+                                str(self.chessboard_edit.text()),
+                                "-config", self.config_path])
+        
+        if res == 0:
+            self.load_chessboards()
+    
     @pyqtSlot()
     def run_calibration(self):
-        #self.launch_calibration(
-        #                {'args': self.chessboards,
-        #                 'output': self.default_name('chessboard_edit')})
+        if self.calibration_edit.text() == "":
+            QMessageBox.warning(self, "Missing output", "Please specify an output")
+            self.calibration_edit.setFocus()
+            return
         
-        # after successful calib
-        #self.check_mapping_enable()
-        pass
-    
+        calib_main(["wizard", 
+                    "-output", str(self.chessboard_edit.text()),
+                    "-config", self.config_path] +\
+                    self.chessboards)
+        
     @pyqtSlot()
     def run_capture_training(self):
-        #self.launch_capture()
-                        #{'args': self.chessboards,
-                         #'output': self.default_name('chessboard_edit')})
+        if self.trainer_csv_edit.text() == "":
+            QMessageBox.warning(self, "Missing output", "Please specify an output")
+            self.trainer_csv_edit.setFocus()
+            return
         
-        # after successful training capture
-        #self.check_trainer_enable()
-        pass
-    
+        #TODO need to add trainer mode to vicon_capture
+        capture_main(["wizard", 
+                    "-trainer", str(self.trainer_csv_edit.text()),
+                    "-config", self.config_path])
+        
     @pyqtSlot()
     def run_training(self):
-        #self.launch_training()
-                        #{'args': self.chessboards,
-                        # 'output': self.default_name('chessboard_edit')})
+        if self.training_xml_edit.text() == "":
+            QMessageBox.warning(self, "Missing output", "Please specify an output")
+            self.training_xml_edit.setFocus()
+            return
         
-        # after successful training
-        #self.check_mapping_enable()
-        pass
-    
+        trainer_main(["wizard", 
+                    str(self.training_mov_edit.text()),
+                    str(self.training_csv_edit.text()),
+                    str(self.training_xml_edit.text()),
+                    "-config", self.config_path])
+        
     @pyqtSlot()
     def run_capture(self):
-        #self.launch_capture()
-                        #{'args': self.chessboards,
-                         #'output': self.default_name('chessboard_edit')})
+        if self.vicondata_edit.text() == "":
+            QMessageBox.warning(self, "Missing output", "Please specify an output")
+            self.vicondata_edit.setFocus()
+            return
         
-        # after successful capture
-        #self.load_vicondata()
-        pass
-    
+        capture_main(["wizard", 
+                    "-output", str(self.vicondata_edit.text()),
+                    "-config", self.config_path])
+        
     @pyqtSlot()
     def run_mapping(self):
-        #self.launch_mapping()
-                        #{'args': self.chessboards,
-                        # 'output': self.default_name('chessboard_edit')})
+        if self.dataset_map_edit.text() == "":
+            QMessageBox.warning(self, "Missing output", "Please specify an output")
+            self.dataset_map_edit.setFocus()
+            return
         
-        # after successful mapping
-        #self.check_comparison_enable()
-        pass
-    
+        mapping_main(["wizard", 
+                    "-calib", str(self.calibration_edit.text()),
+                    "-trainer", str(self.trainer_xml_edit.text()),
+                    "-output", str(self.dataset_map_edit.text()),
+                    "-config", self.config_path])
+        
     @pyqtSlot()
     def run_annotation(self):
-        self.launch_annotate()
-                        #{'args': self.chessboards,
-                        # 'output': self.default_name('chessboard_edit')})
-        
-        # after successful annotation
-        #self.check_comparison_enable()
+        print "annotation tool stub"
+        # something with QProcess
+        pass
     
     @pyqtSlot()
     def run_comparison(self):
-        self.launch_comparison()
-                        #{'args': self.chessboards,
-                        # 'output': self.default_name('chessboard_edit')})
+        # comparisontool isn't complete enough to have evaluation outputs
         
-        # after - maybe prompt to save the dataset to file?
+        #if self.evaluation_edit.text() == "":
+        #    QMessageBox.warning(self, "Missing output", "Please specify an output")
+        #    self.evaluation_edit.setFocus()
+        #    return
         
-    @pyqtSlot()
-    def chessboard_extract(self):
-        print "extractor tool"
-        #self.load_chessboards()
-        
+        compare_main(["wizard", 
+                    str(self.dataset_mov_edit.text()),
+                    str(self.dataset_map_edit.text()),
+                    str(self.dataset_ann_edit.text()),
+                    "-config", self.config_path])
+    
+    ## File dialog slots
     @pyqtSlot()
     def browse_chessboards(self):
         path = QFileDialog.getExistingDirectory(self, "Folder of Chessboard Images", self.chessboard_edit.text())
