@@ -79,6 +79,8 @@ class Wizard(QMainWindow):
         self.calibration_button.clicked.connect(self.run_calibration)
         self.calibration_edit.clicked.connect(self.browse_calibration)
         
+        self.capture_trainer_button.clicked.connect(self.run_capture_training)
+        self.trainer_button.clicked.connect(self.run_training)
         self.trainer_csv_edit.clicked.connect(self.browse_trainer_csv)
         self.trainer_mov_button.clicked.connect(self.browse_trainer_mov)
         self.trainer_mov_edit.clicked.connect(self.browse_trainer_mov)
@@ -299,38 +301,38 @@ class Wizard(QMainWindow):
             self.save_date = root.attrib["date"]
             
             calib = root.find("calibration")
-            training = root.find("trainer")
+            training = root.find("training")
             raw_data = root.find("rawData")
             evaluation = root.find("evaluation")
             mapping = root.find("datasets/mapping")
             annotation = root.find("datasets/annotation")
             
-            if calib:
+            if calib is not None:
                 self.calibration_edit.setText(os.path.join(temp_dir, calib.find("xml").text))
-                if calib.find("chessboards"):
+                if calib.find("chessboards") is not None:
                     self.chessboard_edit.setText(os.path.join(temp_dir, calib.find("chessboards").attrib["path"]))
             
-            if training:
-                if training.find("xml"):
-                    self.training_xml_edit.setText(os.path.join(temp_dir, training.find("xml").text))
-                    if training.find("csv"):
-                        self.training_csv_edit.setText(os.path.join(temp_dir, training.find("csv").text))
-                    if training.find("video"):
-                        self.training_mov_edit.setText(os.path.join(temp_dir, training.find("video").text))
+            if training is not None:
+                if training.find("xml") is not None:
+                    self.trainer_xml_edit.setText(os.path.join(temp_dir, training.find("xml").text))
+                    if training.find("csv") is not None:
+                        self.trainer_csv_edit.setText(os.path.join(temp_dir, training.find("csv").text))
+                    if training.find("video") is not None:
+                        self.trainer_mov_edit.setText(os.path.join(temp_dir, training.find("video").text))
             
-            if raw_data:
-                if raw_data.find("video"):
+            if raw_data is not None:
+                if raw_data.find("video") is not None:
                     self.dataset_mov_edit.setText(os.path.join(temp_dir, raw_data.find("video").text))
-                    if calib.find("vicon"):
-                        self.vicondata_edit.setText(os.path.join(temp_dir, calib.find("vicon").attrib["path"]))
+                    if raw_data.find("vicon") is not None:
+                        self.vicondata_edit.setText(os.path.join(temp_dir, raw_data.find("vicon").attrib["path"]))
             
-            if evaluation:
+            if evaluation is not None:
                 self.evaluation_edit.setText(os.path.join(temp_dir, evaluation.text))
             
-            if mapping:
+            if mapping is not None:
                 self.dataset_map_edit.setText(os.path.join(temp_dir, mapping.text))
             
-            if annotation:
+            if annotation is not None:
                 self.annotation_edit.setText(os.path.join(temp_dir, annotation.text))
             
             # now extract everything else
@@ -388,6 +390,8 @@ class Wizard(QMainWindow):
             worker.finished.connect(worker.deleteLater)
             worker.finished.connect(self.enable_tools)
             worker.destroyed.connect(self.destroy_worker)
+            
+            print "exec:", " ".join(args)
             worker.start()
             self.disable_tools()
         else:
@@ -449,16 +453,16 @@ class Wizard(QMainWindow):
         
     @pyqtSlot()
     def run_training(self):
-        if self.training_xml_edit.text() == "":
+        if self.trainer_xml_edit.text() == "":
             QMessageBox.warning(self, "Missing output", "Please specify an output")
-            self.training_xml_edit.setFocus()
+            self.trainer_xml_edit.setFocus()
             return
         
         self.statusbar.showMessage("Running Trainer.")
         self.run_tool(trainer_main, ["wizard", 
-                        str(self.training_mov_edit.text()),
-                        str(self.training_csv_edit.text()),
-                        str(self.training_xml_edit.text()),
+                        str(self.trainer_mov_edit.text()),
+                        str(self.trainer_csv_edit.text()),
+                        str(self.trainer_xml_edit.text()),
                         "-config", self.config_path])
 
         
@@ -488,7 +492,8 @@ class Wizard(QMainWindow):
                         "-calib", str(self.calibration_edit.text()),
                         "-trainer", str(self.trainer_xml_edit.text()),
                         "-output", str(self.dataset_map_edit.text()),
-                        "-config", self.config_path])
+                        "-config", self.config_path] +\
+                        self.vicondata)
 
     @pyqtSlot()
     def run_annotation(self):
@@ -567,7 +572,7 @@ class Wizard(QMainWindow):
                                            "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
         if path != "":
             self.dataset_mov_edit.setText(path)
-            self.check_comparison_enable()
+            self.check_compare_enable()
             self.check_annotation_enable()
         
     @pyqtSlot()
@@ -576,7 +581,7 @@ class Wizard(QMainWindow):
                                            self.dataset_map_edit.text(), "XML File (*.xml)")
         if path != "":
             self.dataset_map_edit.setText(path)
-            self.check_comparison_enable()
+            self.check_compare_enable()
     
     @pyqtSlot()
     def browse_annotation_data(self):
@@ -584,7 +589,7 @@ class Wizard(QMainWindow):
                                            self.dataset_ann_edit.text(), "XML File (*.xml)")
         if path != "":
             self.dataset_ann_edit.setText(path)
-            self.check_comparison_enable()
+            self.check_compare_enable()
     
     ## button checker dealios (to ensure a correct pipeline workflow)
     @pyqtSlot()
@@ -657,7 +662,7 @@ class Wizard(QMainWindow):
         self.chessboard_button.setEnabled(set)
         self.calibration_button.setEnabled(set)
         self.trainer_button.setEnabled(set)
-        self.capture_training_button.setEnabled(set)
+        self.capture_trainer_button.setEnabled(set)
         self.capture_button.setEnabled(set)
         self.mapping_button.setEnabled(set)
         self.annotation_button.setEnabled(set)
