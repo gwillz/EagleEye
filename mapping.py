@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.6
+# version 0.2.7
 # 
 # Runs mapping routines on multiple CSV files and combines them into a single XML format.
 #
@@ -18,7 +18,7 @@ def usage():
     print "python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> [<multiple csv files>] {--config <file>}"
 
 def main(sysargs):
-    args = EasyArgs()
+    args = EasyArgs(sysargs)
 
     if not args.verifyOpts("calib", "trainer", "output"):
         print "Must specify: -calib, -trainer, -output files"

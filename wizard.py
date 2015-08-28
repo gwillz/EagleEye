@@ -96,6 +96,8 @@ class Wizard(QMainWindow):
         
         self.annotation_button.clicked.connect(self.run_annotation)
         self.dataset_ann_edit.clicked.connect(self.browse_annotation_data)
+        
+        self.comparison_button.clicked.connect(self.run_comparison)
     
     ## save, open, load stuff
     @pyqtSlot()
@@ -384,7 +386,7 @@ class Wizard(QMainWindow):
     
     ## Runs a tool in a separate thread, if the worker is not already occupied
     def run_tool(self, tool_func, args):
-        if 'worker' not in self.__dict__ or self.worker.isRunning():
+        if 'worker' not in self.__dict__ or self.worker.isFinished():
             worker = ThreadWorker(tool_func, args)
             worker.finished.connect(self.reset_statusbar)
             worker.finished.connect(worker.deleteLater)
