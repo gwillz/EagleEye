@@ -2,7 +2,7 @@
 
 from PyQt4 import uic
 from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, qApp
-from PyQt4.QtCore import QProcess, pyqtSlot
+from PyQt4.QtCore import QProcess, QObject, QThread, pyqtSlot, pyqtSignal
 import sys, os, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
 from elementtree.SimpleXMLWriter import XMLWriter
 from custom_widgets import *
@@ -22,6 +22,7 @@ class Wizard(QMainWindow):
         
         # process for annotation tool
         self.annotation_process = QProcess()
+        self.reset_statusbar()
         
         # current directory, save status
         self.saved = True # new session is empty, doesn't need saving
@@ -93,17 +94,6 @@ class Wizard(QMainWindow):
         
         self.annotation_button.clicked.connect(self.run_annotation)
         self.dataset_ann_edit.clicked.connect(self.browse_annotation_data)
-    
-    
-    @pyqtSlot()
-    def set_unsaved(self):
-        self.saved = False
-        self.setWindowTitle(self._working_title + "*")
-    
-    @pyqtSlot('QString')
-    def update_working_title(self, text):
-        self._working_title = "{} - {}".format(self._original_title, text)
-        self.setWindowTitle(self._working_title)
     
     ## save, open, load stuff
     @pyqtSlot()
@@ -390,6 +380,25 @@ class Wizard(QMainWindow):
         
         return True
     
+    ## Runs a tool in a separate thread, if the worker is not already occupied
+    def run_tool(self, tool_func, args):
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            worker = ThreadWorker(tool_func, args)
+            worker.finished.connect(self.reset_statusbar)
+            worker.finished.connect(worker.deleteLater)
+            worker.finished.connect(self.enable_tools)
+            worker.destroyed.connect(self.destroy_worker)
+            worker.start()
+            self.disable_tools()
+        else:
+            QMessageBox.warning(self, "Already running", "A tool is already running")
+        
+        self.worker = worker
+        return self.worker
+    
+    def destroy_worker(self, obj):
+        del self.worker
+    
     ## tool launcher slots
     @pyqtSlot()
     def chessboard_extract(self):
@@ -403,14 +412,14 @@ class Wizard(QMainWindow):
                                            "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
         if path == "": return
         
-        res = chess_extract_main(["wizard", 
-                                str(path),
-                                str(self.chessboard_edit.text()),
-                                "-config", self.config_path])
+        self.statusbar.showMessage("Running Chessboard Extractor.")
+        worker = self.run_tool(chess_extract_main, ["wizard", 
+                                    str(path),
+                                    str(self.chessboard_edit.text()),
+                                    "-config", self.config_path])
         
-        if res == 0:
-            self.load_chessboards()
-    
+        worker.finished.connect(self.load_chessboards)
+        
     @pyqtSlot()
     def run_calibration(self):
         if self.calibration_edit.text() == "":
@@ -418,11 +427,12 @@ class Wizard(QMainWindow):
             self.calibration_edit.setFocus()
             return
         
-        calib_main(["wizard", 
-                    "-output", str(self.chessboard_edit.text()),
-                    "-config", self.config_path] +\
-                    self.chessboards)
-        
+        self.statusbar.showMessage("Running Calibration.")
+        self.run_tool(calib_main, ["wizard", 
+                        "-output", str(self.calibration_edit.text()),
+                        "-config", self.config_path] +\
+                        self.chessboards)
+
     @pyqtSlot()
     def run_capture_training(self):
         if self.trainer_csv_edit.text() == "":
@@ -431,9 +441,11 @@ class Wizard(QMainWindow):
             return
         
         #TODO need to add trainer mode to vicon_capture
-        capture_main(["wizard", 
-                    "-trainer", str(self.trainer_csv_edit.text()),
-                    "-config", self.config_path])
+        self.statusbar.showMessage("Running Training Capture.")
+        self.run_tool(capture_main, ["wizard", 
+                        "-trainer", str(self.trainer_csv_edit.text()),
+                        "-config", self.config_path])
+
         
     @pyqtSlot()
     def run_training(self):
@@ -442,11 +454,13 @@ class Wizard(QMainWindow):
             self.training_xml_edit.setFocus()
             return
         
-        trainer_main(["wizard", 
-                    str(self.training_mov_edit.text()),
-                    str(self.training_csv_edit.text()),
-                    str(self.training_xml_edit.text()),
-                    "-config", self.config_path])
+        self.statusbar.showMessage("Running Trainer.")
+        self.run_tool(trainer_main, ["wizard", 
+                        str(self.training_mov_edit.text()),
+                        str(self.training_csv_edit.text()),
+                        str(self.training_xml_edit.text()),
+                        "-config", self.config_path])
+
         
     @pyqtSlot()
     def run_capture(self):
@@ -455,9 +469,12 @@ class Wizard(QMainWindow):
             self.vicondata_edit.setFocus()
             return
         
-        capture_main(["wizard", 
-                    "-output", str(self.vicondata_edit.text()),
-                    "-config", self.config_path])
+        self.statusbar.showMessage("Running Data Capture.")
+        worker = self.run_tool(capture_main, ["wizard", 
+                                "-output", str(self.vicondata_edit.text()),
+                                "-config", self.config_path])
+        
+        worker.finished.connect(self.load_vicondata)
         
     @pyqtSlot()
     def run_mapping(self):
@@ -466,12 +483,13 @@ class Wizard(QMainWindow):
             self.dataset_map_edit.setFocus()
             return
         
-        mapping_main(["wizard", 
-                    "-calib", str(self.calibration_edit.text()),
-                    "-trainer", str(self.trainer_xml_edit.text()),
-                    "-output", str(self.dataset_map_edit.text()),
-                    "-config", self.config_path])
-        
+        self.statusbar.showMessage("Running Mapping.")
+        self.run_tool(mapping_main, ["wizard", 
+                        "-calib", str(self.calibration_edit.text()),
+                        "-trainer", str(self.trainer_xml_edit.text()),
+                        "-output", str(self.dataset_map_edit.text()),
+                        "-config", self.config_path])
+
     @pyqtSlot()
     def run_annotation(self):
         print "annotation tool stub"
@@ -480,19 +498,20 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def run_comparison(self):
-        # comparisontool isn't complete enough to have evaluation outputs
+        #TODO comparisontool isn't complete enough to have evaluation outputs
         
         #if self.evaluation_edit.text() == "":
         #    QMessageBox.warning(self, "Missing output", "Please specify an output")
         #    self.evaluation_edit.setFocus()
         #    return
         
-        compare_main(["wizard", 
+        self.statusbar.showMessage("Running Comparison.")
+        self.run_tool(compare_main, ["wizard", 
                     str(self.dataset_mov_edit.text()),
                     str(self.dataset_map_edit.text()),
                     str(self.dataset_ann_edit.text()),
                     "-config", self.config_path])
-    
+        
     ## File dialog slots
     @pyqtSlot()
     def browse_chessboards(self):
@@ -570,28 +589,32 @@ class Wizard(QMainWindow):
     ## button checker dealios (to ensure a correct pipeline workflow)
     @pyqtSlot()
     def check_trainer_enable(self):
-        self.trainer_button.setEnabled(
-                    self.trainer_csv_edit.text() != "" and 
-                    self.trainer_mov_edit.text() != "")
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.trainer_button.setEnabled(
+                        self.trainer_csv_edit.text() != "" and 
+                        self.trainer_mov_edit.text() != "")
     
     @pyqtSlot()
     def check_mapping_enable(self):
-        self.mapping_button.setEnabled(
-                    self.calibration_edit.text() != "" and 
-                    self.trainer_xml_edit.text() != "" and 
-                    self.vicondata_edit.text() != "")
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.mapping_button.setEnabled(
+                        self.calibration_edit.text() != "" and 
+                        self.trainer_xml_edit.text() != "" and 
+                        self.vicondata_edit.text() != "")
     
     @pyqtSlot()
     def check_annotate_enable(self):
-        self.annotation_button.setEnabled(
-                    self.dataset_mov_edit.text() != "")
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.annotation_button.setEnabled(
+                        self.dataset_mov_edit.text() != "")
     
     @pyqtSlot()
     def check_compare_enable(self):
-        self.comparison_button.setEnabled(
-                    self.dataset_mov_edit.text() != "" and 
-                    self.dataset_map_edit.text() != "" and 
-                    self.dataset_ann_edit.text() != "")
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.comparison_button.setEnabled(
+                        self.dataset_mov_edit.text() != "" and 
+                        self.dataset_map_edit.text() != "" and 
+                        self.dataset_ann_edit.text() != "")
     
     # loads directory of image paths into chessboard list
     @pyqtSlot()
@@ -614,12 +637,53 @@ class Wizard(QMainWindow):
         
         self.num_vicondata.setText(str(len(self.vicondata)))
     
-    ## various other stuff
-    def default_path(self, edit_name):
-        return "{}_{}_{}".format(
-                        self.dataset_name_edit.text().replace(" ", "-"), 
-                        datetime.now().strftime("%m-%d"),
-                        self.__dict__[edit_name].placeholderText())
+    ## Various GUI events
+    @pyqtSlot()
+    def set_unsaved(self):
+        self.saved = False
+        self.setWindowTitle(self._working_title + "*")
+    
+    @pyqtSlot('QString')
+    def update_working_title(self, text):
+        self._working_title = "{} - {}".format(self._original_title, text)
+        self.setWindowTitle(self._working_title + "*")
+    
+    @pyqtSlot()
+    def reset_statusbar(self):
+        self.statusbar.showMessage("Nothing Running.")
+    
+    @pyqtSlot()
+    def enable_tools(self, set=True):
+        self.chessboard_button.setEnabled(set)
+        self.calibration_button.setEnabled(set)
+        self.trainer_button.setEnabled(set)
+        self.capture_training_button.setEnabled(set)
+        self.capture_button.setEnabled(set)
+        self.mapping_button.setEnabled(set)
+        self.annotation_button.setEnabled(set)
+        self.comparison_button.setEnabled(set)
+        self.trainer_mov_button.setEnabled(set)
+        self.dataset_mov_button.setEnabled(set)
+        self.chessboard_edit.setEnabled(set)
+        self.calibration_edit.setEnabled(set)
+        self.trainer_csv_edit.setEnabled(set)
+        self.trainer_mov_edit.setEnabled(set)
+        self.trainer_xml_edit.setEnabled(set)
+        self.dataset_mov_edit.setEnabled(set)
+        self.vicondata_edit.setEnabled(set)
+        self.dataset_map_edit.setEnabled(set)
+        self.dataset_ann_edit.setEnabled(set)
+        self.evaluation_edit.setEnabled(set)
+        self.actionSave.setEnabled(set)
+        self.actionSave_As.setEnabled(set)
+        self.actionOpen.setEnabled(set)
+        self.actionSave.setEnabled(set)
+        self.actionOpen_Config.setEnabled(set)
+        self.actionEdit_Config.setEnabled(set)
+    
+    @pyqtSlot()
+    def disable_tools(self, set=False):
+        self.enable_tools(set)
     
     @pyqtSlot()
     def about(self):
@@ -637,8 +701,26 @@ class Wizard(QMainWindow):
             
             if res == QMessageBox.Save:
                 self.save_file()
+        
         sys.exit(0)
+
+## Worker thread, for running CPU intensive tools
+## so as not to interrupt the ui event loop
+class ThreadWorker(QThread):
+    # only pass tool main() function here
+    # _cannot_ accept Wizard functions (because of clashing event loops, etc)
+    def __init__(self, func, args, parent=None):
+        QThread.__init__(self, parent)
+        self.func = func
+        self.args = args
     
+    def start(self):
+        QThread.start(self)
+
+    def run(self):
+        self.func(self.args)
+
+## Main thread
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     w = Wizard()
