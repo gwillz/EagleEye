@@ -488,7 +488,6 @@ class Wizard(QMainWindow):
                                     str(input_path),
                                     output_path,
                                     "-config", self.config_path])
-        
         if stat:
             worker.finished.connect(self.load_chessboards)
             worker.start()
@@ -700,7 +699,8 @@ class Wizard(QMainWindow):
         
         # run the tool
         self.statusbar.showMessage("Running Comparison.")
-        self.run_tool(compare_main, args)
+        stat, worker = self.run_tool(compare_main, args)
+        if stat: worker.start()
     
     @pyqtSlot()
     def run_evaluation(self):
@@ -729,11 +729,12 @@ class Wizard(QMainWindow):
             if res == QMessageBox.No: return
         
         self.statusbar.showMessage("Running Evaluation.")
-        self.run_tool(evaluate_main, ["wizard", 
-                    str(self.dataset_map_edit.text()),
-                    str(self.dataset_ann_edit.text()),
-                    str(self.evaluation_edit.text()),
-                    "-config", self.config_path])
+        stat, worker = self.run_tool(evaluate_main, ["wizard", 
+                                str(self.dataset_map_edit.text()),
+                                str(self.dataset_ann_edit.text()),
+                                str(self.evaluation_edit.text()),
+                                "-config", self.config_path])
+        if stat: worker.start()
     
     def run_marker(self, path):
         # ask for marks
