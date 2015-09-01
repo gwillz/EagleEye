@@ -594,31 +594,48 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def run_comparison(self):
-        # browse for save path
-        if self.comparison_edit.text() == "":
-            path = QFileDialog.getSaveFileName(self, "Save Comparison Output", "./data",
-                                               "MOV File (*.mov);;AVI File (*.avi);;MP4 File (*.mp4);;Any File (*.*)")
-        else:
-            path = self.comparison_edit.text()
+        # determine comparison mode
+        dialog = QMessageBox(self)
+        dialog.setText("Would you like to export a video or use the interactive comparison?")
+        dialog.setWindowTitle("Comparison Tool Mode")
+        dialog.addButton("Interactive", QMessageBox.ActionRole)
+        dialog.addButton("Export", QMessageBox.AcceptRole)
+        dialog.exec_()
+        res = dialog.buttonRole(dialog.clickedButton())
         
-        # run tests
-        if path == "": return
-        path = os.path.normpath(str(path))
-        self.comparison_edit.setText(path)
+        args = ["wizard", 
+                str(self.dataset_mov_edit.text()),
+                str(self.dataset_map_edit.text()),
+                str(self.dataset_ann_edit.text()),
+                "-config", self.config_path]
         
-        if os.path.isfile(path):
-            res = QMessageBox.question(self, "File Exists", 
-                                        "File Exists.\nDo you want to overwrite it?",
-                                        QMessageBox.Yes, QMessageBox.No)
-            if res == QMessageBox.No: return
+        # cancel if invalid (ESC key)
+        if res == QMessageBox.InvalidRole:
+            return
+        elif res == QMessageBox.AcceptRole:
+            # browse for save path
+            if self.comparison_edit.text() == "":
+                path = QFileDialog.getSaveFileName(self, "Save Comparison Output", "./data",
+                                                "MOV File (*.mov);;AVI File (*.avi);;MP4 File (*.mp4);;Any File (*.*)")
+            else:
+                path = self.comparison_edit.text()
         
+            # run tests
+            if path == "": return
+            path = os.path.normpath(str(path))
+            self.comparison_edit.setText(path)
+            
+            args += ["-export", path]
+            
+            if os.path.isfile(path):
+                res = QMessageBox.question(self, "File Exists", 
+                                            "File Exists.\nDo you want to overwrite it?",
+                                            QMessageBox.Yes, QMessageBox.No)
+                if res == QMessageBox.No: return
+        
+        # run the tool
         self.statusbar.showMessage("Running Comparison.")
-        self.run_tool(compare_main, ["wizard", 
-                    str(self.dataset_mov_edit.text()),
-                    str(self.dataset_map_edit.text()),
-                    str(self.dataset_ann_edit.text()),
-                    "-export", path,
-                    "-config", self.config_path])
+        self.run_tool(compare_main, args)
     
     @pyqtSlot()
     def run_evaluation(self):
@@ -905,7 +922,7 @@ class ThreadWorker(QThread):
         QThread.start(self)
 
     def run(self):
-        return self.func(self.args)
+        self.func(self.args)
 
 ## Main thread
 if __name__ == "__main__":
