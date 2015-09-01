@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>569</width>
-    <height>733</height>
+    <width>583</width>
+    <height>708</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>EagleEye Wizard</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout" columnstretch="2,1,1,1,9,9,9,1">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="2,2,1,1,9,9,9,1">
     <property name="leftMargin">
      <number>20</number>
     </property>
@@ -174,7 +174,7 @@
     <item row="12" column="3" colspan="5">
      <widget class="HighlightEdit" name="dataset_map_edit">
       <property name="placeholderText">
-       <string>dataset.xml</string>
+       <string>dataset_mapped.xml</string>
       </property>
      </widget>
     </item>
@@ -188,14 +188,7 @@
     <item row="14" column="3" colspan="5">
      <widget class="HighlightEdit" name="dataset_ann_edit">
       <property name="placeholderText">
-       <string>dataset.xml</string>
-      </property>
-     </widget>
-    </item>
-    <item row="16" column="3" colspan="5">
-     <widget class="HighlightEdit" name="evaluation_edit">
-      <property name="placeholderText">
-       <string>evaluation.xml</string>
+       <string>dataset_annotated.xml</string>
       </property>
      </widget>
     </item>
@@ -253,16 +246,6 @@
       </property>
       <property name="placeholderText">
        <string>Dataset name</string>
-      </property>
-     </widget>
-    </item>
-    <item row="16" column="0" colspan="2">
-     <widget class="HoverButton" name="comparison_button">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>Run Comparison</string>
       </property>
      </widget>
     </item>
@@ -337,7 +320,7 @@
      </widget>
     </item>
     <item row="5" column="0" colspan="2">
-     <widget class="QPushButton" name="capture_training_button">
+     <widget class="QPushButton" name="capture_trainer_button">
       <property name="text">
        <string>Capture Training</string>
       </property>
@@ -370,6 +353,43 @@
       </property>
      </widget>
     </item>
+    <item row="17" column="0" colspan="2">
+     <widget class="HoverButton" name="evaluation_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Evaluation</string>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="3" colspan="4">
+     <widget class="HighlightEdit" name="comparison_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>compare.mov</string>
+      </property>
+     </widget>
+    </item>
+    <item row="17" column="3" colspan="4">
+     <widget class="HighlightEdit" name="evaluation_edit">
+      <property name="placeholderText">
+       <string>evaluation.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="0" colspan="2">
+     <widget class="HoverButton" name="comparison_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Project Comparison</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -377,7 +397,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>569</width>
+     <width>583</width>
      <height>21</height>
     </rect>
    </property>
@@ -567,7 +587,7 @@
   <tabstop>dataset_name_edit</tabstop>
   <tabstop>chessboard_button</tabstop>
   <tabstop>calibration_button</tabstop>
-  <tabstop>capture_training_button</tabstop>
+  <tabstop>capture_trainer_button</tabstop>
   <tabstop>trainer_mov_button</tabstop>
   <tabstop>trainer_button</tabstop>
   <tabstop>capture_button</tabstop>
@@ -584,7 +604,6 @@
   <tabstop>dataset_mov_edit</tabstop>
   <tabstop>dataset_map_edit</tabstop>
   <tabstop>dataset_ann_edit</tabstop>
-  <tabstop>evaluation_edit</tabstop>
  </tabstops>
  <resources>
   <include location="icons.qrc"/>
@@ -613,12 +632,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>154</x>
-     <y>192</y>
+     <x>174</x>
+     <y>165</y>
     </hint>
     <hint type="destinationlabel">
-     <x>467</x>
-     <y>152</y>
+     <x>524</x>
+     <y>134</y>
     </hint>
    </hints>
   </connection>
@@ -629,12 +648,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>154</x>
-     <y>349</y>
+     <x>174</x>
+     <y>302</y>
     </hint>
     <hint type="destinationlabel">
-     <x>479</x>
-     <y>270</y>
+     <x>538</x>
+     <y>242</y>
     </hint>
    </hints>
   </connection>
@@ -645,12 +664,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>154</x>
-     <y>349</y>
+     <x>174</x>
+     <y>302</y>
     </hint>
     <hint type="destinationlabel">
-     <x>479</x>
-     <y>309</y>
+     <x>538</x>
+     <y>271</y>
     </hint>
    </hints>
   </connection>
@@ -661,12 +680,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>154</x>
-     <y>546</y>
+     <x>174</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
-     <x>467</x>
-     <y>427</y>
+     <x>524</x>
+     <y>380</y>
     </hint>
    </hints>
   </connection>
@@ -677,12 +696,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>151</x>
-     <y>546</y>
+     <x>171</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
-     <x>479</x>
-     <y>348</y>
+     <x>538</x>
+     <y>300</y>
     </hint>
    </hints>
   </connection>
@@ -693,12 +712,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>125</x>
-     <y>546</y>
+     <x>145</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
-     <x>479</x>
-     <y>191</y>
+     <x>538</x>
+     <y>163</y>
     </hint>
    </hints>
   </connection>
@@ -709,12 +728,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>154</x>
-     <y>625</y>
+     <x>174</x>
+     <y>570</y>
     </hint>
     <hint type="destinationlabel">
-     <x>479</x>
-     <y>466</y>
+     <x>538</x>
+     <y>409</y>
     </hint>
    </hints>
   </connection>
@@ -725,12 +744,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>160</x>
-     <y>704</y>
+     <x>110</x>
+     <y>649</y>
     </hint>
     <hint type="destinationlabel">
-     <x>479</x>
-     <y>545</y>
+     <x>538</x>
+     <y>488</y>
     </hint>
    </hints>
   </connection>
@@ -741,12 +760,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>150</x>
-     <y>704</y>
+     <x>110</x>
+     <y>649</y>
     </hint>
     <hint type="destinationlabel">
-     <x>479</x>
-     <y>624</y>
+     <x>538</x>
+     <y>568</y>
     </hint>
    </hints>
   </connection>
@@ -757,12 +776,44 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>161</x>
-     <y>704</y>
+     <x>110</x>
+     <y>649</y>
     </hint>
     <hint type="destinationlabel">
-     <x>479</x>
-     <y>466</y>
+     <x>538</x>
+     <y>409</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>evaluation_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>dataset_map_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>184</x>
+     <y>668</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>328</x>
+     <y>480</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>evaluation_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>dataset_ann_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>161</x>
+     <y>670</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>315</x>
+     <y>556</y>
     </hint>
    </hints>
   </connection>

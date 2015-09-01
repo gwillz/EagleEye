@@ -2,8 +2,9 @@
 
 from PyQt4 import uic
 from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, qApp
-from PyQt4.QtCore import QProcess, pyqtSlot
-import sys, os, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
+from PyQt4.QtCore import QProcess, QObject, QThread, pyqtSlot, pyqtSignal, QT_VERSION_STR
+from PyQt4.Qt import PYQT_VERSION_STR
+import sys, os, cv2, numpy as np, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
 from elementtree.SimpleXMLWriter import XMLWriter
 from custom_widgets import *
 
@@ -22,6 +23,7 @@ class Wizard(QMainWindow):
         
         # process for annotation tool
         self.annotation_process = QProcess()
+        self.reset_statusbar()
         
         # current directory, save status
         self.saved = True # new session is empty, doesn't need saving
@@ -71,6 +73,8 @@ class Wizard(QMainWindow):
         self.dataset_mov_edit.editingFinished.connect(self.check_compare_enable)
         self.dataset_map_edit.editingFinished.connect(self.check_compare_enable)
         self.dataset_ann_edit.editingFinished.connect(self.check_compare_enable)
+        self.dataset_map_edit.editingFinished.connect(self.check_evaluate_enable)
+        self.dataset_ann_edit.editingFinished.connect(self.check_evaluate_enable)
         
         # buttons and junk
         self.chessboard_button.clicked.connect(self.chessboard_extract)
@@ -78,6 +82,8 @@ class Wizard(QMainWindow):
         self.calibration_button.clicked.connect(self.run_calibration)
         self.calibration_edit.clicked.connect(self.browse_calibration)
         
+        self.capture_trainer_button.clicked.connect(self.run_capture_training)
+        self.trainer_button.clicked.connect(self.run_training)
         self.trainer_csv_edit.clicked.connect(self.browse_trainer_csv)
         self.trainer_mov_button.clicked.connect(self.browse_trainer_mov)
         self.trainer_mov_edit.clicked.connect(self.browse_trainer_mov)
@@ -93,17 +99,9 @@ class Wizard(QMainWindow):
         
         self.annotation_button.clicked.connect(self.run_annotation)
         self.dataset_ann_edit.clicked.connect(self.browse_annotation_data)
-    
-    
-    @pyqtSlot()
-    def set_unsaved(self):
-        self.saved = False
-        self.setWindowTitle(self._working_title + "*")
-    
-    @pyqtSlot('QString')
-    def update_working_title(self, text):
-        self._working_title = "{} - {}".format(self._original_title, text)
-        self.setWindowTitle(self._working_title)
+        
+        self.comparison_button.clicked.connect(self.run_comparison)
+        self.evaluation_button.clicked.connect(self.run_evaluation)
     
     ## save, open, load stuff
     @pyqtSlot()
@@ -309,38 +307,42 @@ class Wizard(QMainWindow):
             self.save_date = root.attrib["date"]
             
             calib = root.find("calibration")
-            training = root.find("trainer")
+            training = root.find("training")
             raw_data = root.find("rawData")
             evaluation = root.find("evaluation")
             mapping = root.find("datasets/mapping")
             annotation = root.find("datasets/annotation")
             
-            if calib:
+            if calib is not None:
                 self.calibration_edit.setText(os.path.join(temp_dir, calib.find("xml").text))
-                if calib.find("chessboards"):
-                    self.chessboard_edit.setText(os.path.join(temp_dir, calib.find("chessboards").attrib["path"]))
+                if calib.find("chessboards") is not None:
+                    self.chessboard_edit.setText(os.path.normpath(os.path.join(
+                                                    temp_dir, 
+                                                    calib.find("chessboards").attrib["path"])))
             
-            if training:
-                if training.find("xml"):
-                    self.training_xml_edit.setText(os.path.join(temp_dir, training.find("xml").text))
-                    if training.find("csv"):
-                        self.training_csv_edit.setText(os.path.join(temp_dir, training.find("csv").text))
-                    if training.find("video"):
-                        self.training_mov_edit.setText(os.path.join(temp_dir, training.find("video").text))
+            if training is not None:
+                if training.find("xml") is not None:
+                    self.trainer_xml_edit.setText(os.path.join(temp_dir, training.find("xml").text))
+                    if training.find("csv") is not None:
+                        self.trainer_csv_edit.setText(os.path.join(temp_dir, training.find("csv").text))
+                    if training.find("video") is not None:
+                        self.trainer_mov_edit.setText(os.path.join(temp_dir, training.find("video").text))
             
-            if raw_data:
-                if raw_data.find("video"):
+            if raw_data is not None:
+                if raw_data.find("video") is not None:
                     self.dataset_mov_edit.setText(os.path.join(temp_dir, raw_data.find("video").text))
-                    if calib.find("vicon"):
-                        self.vicondata_edit.setText(os.path.join(temp_dir, calib.find("vicon").attrib["path"]))
+                    if raw_data.find("vicon") is not None:
+                        self.vicondata_edit.setText(os.path.normpath(os.path.join(
+                                                        temp_dir, 
+                                                        raw_data.find("vicon").attrib["path"])))
             
-            if evaluation:
+            if evaluation is not None:
                 self.evaluation_edit.setText(os.path.join(temp_dir, evaluation.text))
             
-            if mapping:
+            if mapping is not None:
                 self.dataset_map_edit.setText(os.path.join(temp_dir, mapping.text))
             
-            if annotation:
+            if annotation is not None:
                 self.annotation_edit.setText(os.path.join(temp_dir, annotation.text))
             
             # now extract everything else
@@ -349,8 +351,15 @@ class Wizard(QMainWindow):
         self.save_path = path
         self.saved = True
         self.setWindowTitle(self._original_title)
-        self.load_vicondata()
+        
+        # run button checks
         self.load_chessboards()
+        self.load_vicondata()
+        self.check_trainer_enable()
+        self.check_mapping_enable()
+        self.check_annotate_enable()
+        self.check_evaluate_enable()
+        self.check_compare_enable()
     
     @pyqtSlot()
     def clear_data(self):
@@ -384,94 +393,199 @@ class Wizard(QMainWindow):
         self.dataset_ann_edit.clear()
         self.evaluation_edit.clear()
         
-        # reset folder storage dealios
+        # re-check the button dealios
         self.load_chessboards()
         self.load_vicondata()
+        self.check_trainer_enable()
+        self.check_mapping_enable()
+        self.check_annotate_enable()
+        self.check_evaluate_enable()
+        self.check_compare_enable()
         
         return True
+    
+    ## Runs a tool in a separate thread, if the worker is not already occupied
+    def run_tool(self, tool_func, args):
+        if 'worker' not in self.__dict__ or self.worker.isFinished():
+            worker = ThreadWorker(tool_func, args)
+            worker.finished.connect(self.reset_statusbar)
+            worker.finished.connect(worker.deleteLater)
+            worker.finished.connect(self.enable_tools)
+            worker.destroyed.connect(self.destroy_worker)
+            
+            print "exec:", " ".join(args)
+            worker.start()
+            self.disable_tools()
+        else:
+            QMessageBox.warning(self, "Already running", "A tool is already running")
+        
+        self.worker = worker
+        return self.worker
+    
+    def destroy_worker(self, obj):
+        del self.worker
     
     ## tool launcher slots
     @pyqtSlot()
     def chessboard_extract(self):
+        # browse for save path
         if self.chessboard_edit.text() == "":
-            QMessageBox.warning(self, "Missing output", "Please specify an output")
-            self.chessboard_edit.setFocus()
-            return
+            self.browse_chessboards()
+        
+        # get path
+        output_path = str(self.chessboard_edit.text())
+        if output_path == "": return
         
         # find a chessboard video
-        path = QFileDialog.getOpenFileName(self, "Open Chessboard Video", "./", 
-                                           "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
-        if path == "": return
+        input_path = QFileDialog.getOpenFileName(self, "Open Chessboard Video", "./", 
+                                                "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
+        if input_path == "": return
         
-        res = chess_extract_main(["wizard", 
-                                str(path),
-                                str(self.chessboard_edit.text()),
-                                "-config", self.config_path])
+        self.statusbar.showMessage("Running Chessboard Extractor.")
+        worker = self.run_tool(chess_extract_main, ["wizard", 
+                                    str(input_path),
+                                    output_path,
+                                    "-config", self.config_path])
         
-        if res == 0:
-            self.load_chessboards()
-    
+        worker.finished.connect(self.load_chessboards)
+        
     @pyqtSlot()
     def run_calibration(self):
+        # browse for save path
         if self.calibration_edit.text() == "":
-            QMessageBox.warning(self, "Missing output", "Please specify an output")
-            self.calibration_edit.setFocus()
-            return
+            QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
+                                                "XML File (*.xml)")
+        else:
+            path = self.calibration_edit.text()
+            
+        # run tests
+        if path == "": return
+        path = os.path.normpath(str(path))
+        if not path.lower().endswith(".xml"):
+            path += ".xml"
+        self.calibration_edit.setText(path)
         
-        calib_main(["wizard", 
-                    "-output", str(self.chessboard_edit.text()),
-                    "-config", self.config_path] +\
-                    self.chessboards)
+        if os.path.isfile(path):
+            res = QMessageBox.question(self, "File Exists", 
+                                        "File Exists.\nDo you want to overwrite it?",
+                                        QMessageBox.Yes, QMessageBox.No)
+            if res == QMessageBox.No: return
         
+        
+        self.statusbar.showMessage("Running Calibration.")
+        self.run_tool(calib_main, ["wizard", 
+                        "-output", path,
+                        "-config", self.config_path] +\
+                        self.chessboards)
+
     @pyqtSlot()
     def run_capture_training(self):
+        # browse for save path
         if self.trainer_csv_edit.text() == "":
-            QMessageBox.warning(self, "Missing output", "Please specify an output")
-            self.trainer_csv_edit.setFocus()
-            return
+            path = QFileDialog.getSaveFileName(self, "Save Trainer CSV", "./data",
+                                                    "CSV File (*.csv)")
+        else:
+            path = self.trainer_csv_edit.text()
+        
+        # run tests
+        if path == "": return
+        path = os.path.normpath(str(path))
+        if not path.lower().endswith(".csv"):
+            path += ".csv"
+        self.trainer_csv_edit.setText(path)
+        
+        if os.path.isfile(path):
+            res = QMessageBox.question(self, "File Exists", 
+                                        "File Exists.\nDo you want to overwrite it?",
+                                        QMessageBox.Yes, QMessageBox.No)
+            if res == QMessageBox.No: return
         
         #TODO need to add trainer mode to vicon_capture
-        capture_main(["wizard", 
-                    "-trainer", str(self.trainer_csv_edit.text()),
-                    "-config", self.config_path])
+        self.statusbar.showMessage("Running Training Capture.")
+        self.run_tool(capture_main, ["wizard", 
+                        "-trainer", path,
+                        "-config", self.config_path])
+
         
     @pyqtSlot()
     def run_training(self):
-        if self.training_xml_edit.text() == "":
-            QMessageBox.warning(self, "Missing output", "Please specify an output")
-            self.training_xml_edit.setFocus()
-            return
+        # browse for save path
+        if self.trainer_xml_edit.text() == "":
+            path = QFileDialog.getSaveFileName(self, "Save Trainer XML", "./data",
+                                                    "XML File (*.xml)")
+        else:
+            path = self.trainer_xml_edit.text()
         
-        trainer_main(["wizard", 
-                    str(self.training_mov_edit.text()),
-                    str(self.training_csv_edit.text()),
-                    str(self.training_xml_edit.text()),
-                    "-config", self.config_path])
+        # run tests
+        if path == "": return
+        path = os.path.normpath(str(path))
+        if not path.lower().endswith(".xml"):
+            path += ".xml"
+        self.trainer_xml_text.setText(path)
+        
+        if os.path.isfile(path):
+            res = QMessageBox.question(self, "File Exists", 
+                                        "File Exists.\nDo you want to overwrite it?",
+                                        QMessageBox.Yes, QMessageBox.No)
+            if res == QMessageBox.No: return
+        
+        
+        
+        self.statusbar.showMessage("Running Trainer.")
+        self.run_tool(trainer_main, ["wizard", 
+                        str(self.trainer_mov_edit.text()),
+                        str(self.trainer_csv_edit.text()),
+                        path,
+                        "-config", self.config_path])
+
         
     @pyqtSlot()
     def run_capture(self):
+        # browse for save path
         if self.vicondata_edit.text() == "":
-            QMessageBox.warning(self, "Missing output", "Please specify an output")
-            self.vicondata_edit.setFocus()
-            return
+            self.browse_vicondata()
         
-        capture_main(["wizard", 
-                    "-output", str(self.vicondata_edit.text()),
-                    "-config", self.config_path])
+        # get path
+        path = str(self.vicondata_edit.text())
+        if path == "": return
+        
+        self.statusbar.showMessage("Running Data Capture.")
+        worker = self.run_tool(capture_main, ["wizard", 
+                                "-output", path,
+                                "-config", self.config_path])
+        
+        worker.finished.connect(self.load_vicondata)
         
     @pyqtSlot()
     def run_mapping(self):
+        # browse for save path
         if self.dataset_map_edit.text() == "":
-            QMessageBox.warning(self, "Missing output", "Please specify an output")
-            self.dataset_map_edit.setFocus()
-            return
+            path = QFileDialog.getSaveFileName(self, "Save Mapping XML", "./data",
+                                                    "XML File (*.xml)")
+        else:
+            path = self.dataset_map_edit.text()
         
-        mapping_main(["wizard", 
-                    "-calib", str(self.calibration_edit.text()),
-                    "-trainer", str(self.trainer_xml_edit.text()),
-                    "-output", str(self.dataset_map_edit.text()),
-                    "-config", self.config_path])
+        # run tests
+        if path == "": return
+        path = os.path.normpath(str(path))
+        if not path.lower().endswith(".xml"):
+            path += ".xml"
+        self.dataset_map_edit.setText(path)
         
+        if os.path.isfile(path):
+            res = QMessageBox.question(self, "File Exists", 
+                                        "File Exists.\nDo you want to overwrite it?",
+                                        QMessageBox.Yes, QMessageBox.No)
+            if res == QMessageBox.No: return
+        
+        self.statusbar.showMessage("Running Mapping.")
+        self.run_tool(mapping_main, ["wizard", 
+                        "-calib", str(self.calibration_edit.text()),
+                        "-trainer", str(self.trainer_xml_edit.text()),
+                        "-output", path,
+                        "-config", self.config_path] +\
+                        self.vicondata)
+
     @pyqtSlot()
     def run_annotation(self):
         print "annotation tool stub"
@@ -480,31 +594,99 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def run_comparison(self):
-        # comparisontool isn't complete enough to have evaluation outputs
+        # determine comparison mode
+        dialog = QMessageBox(self)
+        dialog.setText("Would you like to export a video or use the interactive comparison?")
+        dialog.setWindowTitle("Comparison Tool Mode")
+        dialog.addButton("Interactive", QMessageBox.ActionRole)
+        dialog.addButton("Export", QMessageBox.AcceptRole)
+        dialog.exec_()
+        res = dialog.buttonRole(dialog.clickedButton())
         
-        #if self.evaluation_edit.text() == "":
-        #    QMessageBox.warning(self, "Missing output", "Please specify an output")
-        #    self.evaluation_edit.setFocus()
-        #    return
+        args = ["wizard", 
+                str(self.dataset_mov_edit.text()),
+                str(self.dataset_map_edit.text()),
+                str(self.dataset_ann_edit.text()),
+                "-config", self.config_path]
         
-        compare_main(["wizard", 
-                    str(self.dataset_mov_edit.text()),
+        # cancel if invalid (ESC key)
+        if res == QMessageBox.InvalidRole:
+            return
+        elif res == QMessageBox.AcceptRole:
+            # browse for save path
+            if self.comparison_edit.text() == "":
+                path = QFileDialog.getSaveFileName(self, "Save Comparison Output", "./data",
+                                                "MOV File (*.mov);;AVI File (*.avi);;MP4 File (*.mp4);;Any File (*.*)")
+            else:
+                path = self.comparison_edit.text()
+        
+            # run tests
+            if path == "": return
+            path = os.path.normpath(str(path))
+            self.comparison_edit.setText(path)
+            
+            args += ["-export", path]
+            
+            if os.path.isfile(path):
+                res = QMessageBox.question(self, "File Exists", 
+                                            "File Exists.\nDo you want to overwrite it?",
+                                            QMessageBox.Yes, QMessageBox.No)
+                if res == QMessageBox.No: return
+        
+        # run the tool
+        self.statusbar.showMessage("Running Comparison.")
+        self.run_tool(compare_main, args)
+    
+    @pyqtSlot()
+    def run_evaluation(self):
+        #TODO evaluation isn't complete, returns early
+        QMessageBox.information(self, "Stub function", "This is incomplete at the moment. Soz.")
+        return 
+        
+        # browse for save path
+        if self.evaluation_edit.text() == "":
+            path = QFileDialog.getSaveFileName(self, "Save Evaluation Output", "./data",
+                                               "XML File (*.xml)")
+        else:
+            path = self.evaluation_edit.text()
+        
+        # run tests
+        if path == "": return
+        path = os.path.normpath(str(path))
+        if not path.lower().endswith(".xml"):
+            path += ".xml"
+        self.evaluation_edit.setText(path)
+        
+        if os.path.isfile(path):
+            res = QMessageBox.question(self, "File Exists", 
+                                        "File Exists.\nDo you want to overwrite it?",
+                                        QMessageBox.Yes, QMessageBox.No)
+            if res == QMessageBox.No: return
+        
+        self.statusbar.showMessage("Running Evaluation.")
+        self.run_tool(evaluate_main, ["wizard", 
                     str(self.dataset_map_edit.text()),
                     str(self.dataset_ann_edit.text()),
+                    str(self.evaluation_edit.text()),
                     "-config", self.config_path])
     
     ## File dialog slots
     @pyqtSlot()
     def browse_chessboards(self):
-        path = QFileDialog.getExistingDirectory(self, "Folder of Chessboard Images", self.chessboard_edit.text())
+        path = QFileDialog.getExistingDirectory(self, "Folder of Chessboard Images", 
+                                            self.chessboard_edit.text(), QFileDialog.Options(0))
+        
         if path != "":
+            path = os.path.normpath(str(path))
             self.chessboard_edit.setText(path)
             self.load_chessboards()
         
     @pyqtSlot()
     def browse_calibration(self):
-        path = QFileDialog.getOpenFileName(self, "Open Calibration XML", self.calibration_edit.text(), "XML File (*.xml)")
+        path = QFileDialog.getOpenFileName(self, "Open Calibration XML", 
+                                            self.calibration_edit.text(), "XML File (*.xml)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.calibration_edit.setText(path)
             self.check_mapping_enable()
         
@@ -513,6 +695,7 @@ class Wizard(QMainWindow):
         path = QFileDialog.getOpenFileName(self, "Open Training CSV", 
                                            self.trainer_csv_edit.text(), "CSV File (*.csv)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.trainer_csv_edit.setText(path)
             self.check_trainer_enable()
         
@@ -522,6 +705,7 @@ class Wizard(QMainWindow):
                                            self.trainer_mov_edit.text(), 
                                            "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.trainer_mov_edit.setText(path)
             self.check_trainer_enable()
         
@@ -530,14 +714,16 @@ class Wizard(QMainWindow):
         path = QFileDialog.getOpenFileName(self, "Open Training XML", 
                                            self.trainer_xml_edit.text(), "XML File (*.xml)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.trainer_xml_edit.setText(path)
             self.check_mapping_enable()
     
     @pyqtSlot()
     def browse_vicondata(self):
         path = QFileDialog.getExistingDirectory(self, "Folder of Vicon CSV files", 
-                                                self.vicondata_edit.text())
+                                                self.vicondata_edit.text(), QFileDialog.Options(0))
         if path != "":
+            path = os.path.normpath(str(path))
             self.vicondata_edit.setText(path)
             self.load_vicondata()
         
@@ -547,51 +733,67 @@ class Wizard(QMainWindow):
                                            self.dataset_mov_edit.text(), 
                                            "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.dataset_mov_edit.setText(path)
-            self.check_comparison_enable()
-            self.check_annotation_enable()
+            self.check_compare_enable()
+            self.check_annotate_enable()
         
     @pyqtSlot()
     def browse_mapping_data(self):
         path = QFileDialog.getOpenFileName(self, "Open Dataset XML (Mapped)", 
                                            self.dataset_map_edit.text(), "XML File (*.xml)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.dataset_map_edit.setText(path)
-            self.check_comparison_enable()
+            self.check_compare_enable()
+            self.check_evaluate_enable()
     
     @pyqtSlot()
     def browse_annotation_data(self):
         path = QFileDialog.getOpenFileName(self, "Open Dataset XML (Annotated)", 
                                            self.dataset_ann_edit.text(), "XML File (*.xml)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.dataset_ann_edit.setText(path)
-            self.check_comparison_enable()
+            self.check_compare_enable()
+            self.check_evaluate_enable()
     
     ## button checker dealios (to ensure a correct pipeline workflow)
     @pyqtSlot()
     def check_trainer_enable(self):
-        self.trainer_button.setEnabled(
-                    self.trainer_csv_edit.text() != "" and 
-                    self.trainer_mov_edit.text() != "")
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.trainer_button.setEnabled(
+                        self.trainer_csv_edit.text() != "" and 
+                        self.trainer_mov_edit.text() != "")
     
     @pyqtSlot()
     def check_mapping_enable(self):
-        self.mapping_button.setEnabled(
-                    self.calibration_edit.text() != "" and 
-                    self.trainer_xml_edit.text() != "" and 
-                    self.vicondata_edit.text() != "")
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.mapping_button.setEnabled(
+                        self.calibration_edit.text() != "" and 
+                        self.trainer_xml_edit.text() != "" and 
+                        self.vicondata_edit.text() != "")
     
     @pyqtSlot()
     def check_annotate_enable(self):
-        self.annotation_button.setEnabled(
-                    self.dataset_mov_edit.text() != "")
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.annotation_button.setEnabled(
+                        self.dataset_mov_edit.text() != "")
     
     @pyqtSlot()
     def check_compare_enable(self):
-        self.comparison_button.setEnabled(
-                    self.dataset_mov_edit.text() != "" and 
-                    self.dataset_map_edit.text() != "" and 
-                    self.dataset_ann_edit.text() != "")
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.comparison_button.setEnabled(
+                        self.dataset_mov_edit.text() != "" and 
+                        self.dataset_map_edit.text() != "" and 
+                        self.dataset_ann_edit.text() != "")
+    
+    @pyqtSlot()
+    def check_evaluate_enable(self):
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.evaluation_button.setEnabled(
+                        self.dataset_map_edit.text() != "" and 
+                        self.dataset_ann_edit.text() != "")
     
     # loads directory of image paths into chessboard list
     @pyqtSlot()
@@ -607,19 +809,73 @@ class Wizard(QMainWindow):
     # loads directory of csv paths into vicondata list
     @pyqtSlot()
     def load_vicondata(self):
+        self.vicondata = []
         if self.vicondata_edit.text() != "":
-            self.vicondata = glob.glob(os.path.join(str(self.vicondata_edit.text()), "*.csv"))
-        else:
-            self.vicondata = []
+            for f in glob.glob(os.path.join(str(self.vicondata_edit.text()), "*.csv")):
+                if "wand" not in f.lower():
+                    self.vicondata.append(f)
         
         self.num_vicondata.setText(str(len(self.vicondata)))
+        self.mapping_button.setEnabled(len(self.vicondata) > 0)
     
-    ## various other stuff
-    def default_path(self, edit_name):
-        return "{}_{}_{}".format(
-                        self.dataset_name_edit.text().replace(" ", "-"), 
-                        datetime.now().strftime("%m-%d"),
-                        self.__dict__[edit_name].placeholderText())
+    ## Various GUI events
+    @pyqtSlot()
+    def set_unsaved(self):
+        self.saved = False
+        self.setWindowTitle(self._working_title + "*")
+    
+    @pyqtSlot('QString')
+    def update_working_title(self, text):
+        self._working_title = "{} - {}".format(self._original_title, text)
+        self.setWindowTitle(self._working_title + "*")
+    
+    @pyqtSlot()
+    def reset_statusbar(self):
+        self.statusbar.showMessage("Nothing Running.")
+    
+    @pyqtSlot()
+    def enable_tools(self, set=True):
+        self.chessboard_button.setEnabled(set)
+        self.capture_trainer_button.setEnabled(set)
+        self.capture_button.setEnabled(set)
+        self.trainer_mov_button.setEnabled(set)
+        self.dataset_mov_button.setEnabled(set)
+        self.chessboard_edit.setEnabled(set)
+        self.trainer_csv_edit.setEnabled(set)
+        self.trainer_mov_edit.setEnabled(set)
+        self.trainer_xml_edit.setEnabled(set)
+        self.dataset_mov_edit.setEnabled(set)
+        self.vicondata_edit.setEnabled(set)
+        self.dataset_map_edit.setEnabled(set)
+        self.dataset_ann_edit.setEnabled(set)
+        self.comparison_edit.setEnabled(set)
+        self.evaluation_edit.setEnabled(set)
+        self.actionSave.setEnabled(set)
+        self.actionSave_As.setEnabled(set)
+        self.actionOpen.setEnabled(set)
+        self.actionSave.setEnabled(set)
+        self.actionOpen_Config.setEnabled(set)
+        self.actionEdit_Config.setEnabled(set)
+        
+        if not set:
+            self.calibration_button.setEnabled(set)
+            self.trainer_button.setEnabled(set)
+            self.mapping_button.setEnabled(set)
+            self.annotation_button.setEnabled(set)
+            self.comparison_button.setEnabled(set)
+            self.evaluation_button.setEnabled(set)
+        else:
+            self.check_trainer_enable()
+            self.check_mapping_enable()
+            self.check_annotate_enable()
+            self.check_compare_enable()
+            self.check_evaluate_enable()
+            self.load_chessboards()
+            self.load_vicondata()
+    
+    @pyqtSlot()
+    def disable_tools(self, set=False):
+        self.enable_tools(set)
     
     @pyqtSlot()
     def about(self):
@@ -627,7 +883,19 @@ class Wizard(QMainWindow):
                                 "UniSA ITMS 2015\n"
                                 "Gwilyn Saunders\n"
                                 "Kin Kuen Liu\n"
-                                "Kim Manjung")
+                                "Kim Manjung\n"
+                                "\n"
+                                "Using:\n"
+                                "Python: {}\n"
+                                "Qt: {}\n"
+                                "PyQt: {}\n"
+                                "OpenCV: {}\n"
+                                "NumPy: {}"\
+                                .format(sys.version.split('|')[0], 
+                                    QT_VERSION_STR, 
+                                    PYQT_VERSION_STR,
+                                    cv2.__version__, 
+                                    np.__version__))
     
     def closeEvent(self, ev):
         if not self.saved:
@@ -637,8 +905,26 @@ class Wizard(QMainWindow):
             
             if res == QMessageBox.Save:
                 self.save_file()
+        
         sys.exit(0)
+
+## Worker thread, for running CPU intensive tools
+## so as not to interrupt the ui event loop
+class ThreadWorker(QThread):
+    # only pass tool main() function here
+    # _cannot_ accept Wizard functions (because of clashing event loops, etc)
+    def __init__(self, func, args, parent=None):
+        QThread.__init__(self, parent)
+        self.func = func
+        self.args = args
     
+    def start(self):
+        QThread.start(self)
+
+    def run(self):
+        self.func(self.args)
+
+## Main thread
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     w = Wizard()

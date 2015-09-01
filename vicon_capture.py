@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.9.22
+# version 0.9.23
 #
 # Retrieves Vicon data via TCP sockets.
 # Includes syncronized timestamp data via a R232 COM port.
@@ -56,6 +56,7 @@ def main(sysargs):
     print "Running for", time, "seconds ({} frames)".format(num_frames)
     print "Flash delay at:", cfg.flash_delay, " ({} seconds)".format(int(cfg.flash_delay / cfg.framerate))
     print "Capturing at", cfg.framerate, "frames per second"
+    print "Saving data into:", output_folder
     print "Recording these subjects:\n", ", ".join(subjects)
     print ""
 
