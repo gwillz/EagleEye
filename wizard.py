@@ -2,8 +2,9 @@
 
 from PyQt4 import uic
 from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, qApp
-from PyQt4.QtCore import QProcess, QObject, QThread, pyqtSlot, pyqtSignal
-import sys, os, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
+from PyQt4.QtCore import QProcess, QObject, QThread, pyqtSlot, pyqtSignal, QT_VERSION_STR
+from PyQt4.Qt import PYQT_VERSION_STR
+import sys, os, cv2, numpy as np, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
 from elementtree.SimpleXMLWriter import XMLWriter
 from custom_widgets import *
 
@@ -865,7 +866,19 @@ class Wizard(QMainWindow):
                                 "UniSA ITMS 2015\n"
                                 "Gwilyn Saunders\n"
                                 "Kin Kuen Liu\n"
-                                "Kim Manjung")
+                                "Kim Manjung\n"
+                                "\n"
+                                "Using:\n"
+                                "Python: {}\n"
+                                "Qt: {}\n"
+                                "PyQt: {}\n"
+                                "OpenCV: {}\n"
+                                "NumPy: {}"\
+                                .format(sys.version.split('|')[0], 
+                                    QT_VERSION_STR, 
+                                    PYQT_VERSION_STR,
+                                    cv2.__version__, 
+                                    np.__version__))
     
     def closeEvent(self, ev):
         if not self.saved:
@@ -892,7 +905,7 @@ class ThreadWorker(QThread):
         QThread.start(self)
 
     def run(self):
-        self.func(self.args)
+        return self.func(self.args)
 
 ## Main thread
 if __name__ == "__main__":
