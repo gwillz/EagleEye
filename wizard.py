@@ -498,7 +498,7 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.calibration_edit.text() == "":
             QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
-                                                "XML File (*.xml)", QFileDialog.DontConfirmOverwrite)
+                                                "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.calibration_edit.text()
             
@@ -525,10 +525,14 @@ class Wizard(QMainWindow):
 
     @pyqtSlot()
     def run_capture_training(self):
+        #TODO training capture isn't complete, returns early
+        QMessageBox.information(self, "Stub function", "This is incomplete at the moment. Soz.")
+        return 
+        
         # browse for save path
         if self.trainer_csv_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Trainer CSV", "./data",
-                                                    "CSV File (*.csv)",  QFileDialog.DontConfirmOverwrite)
+                                                    "CSV File (*.csv)",  options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.trainer_csv_edit.text()
         
@@ -557,7 +561,7 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.trainer_xml_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Trainer XML", "./data",
-                                                    "XML File (*.xml)", QFileDialog.DontConfirmOverwrite)
+                                                    "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.trainer_xml_edit.text()
         
@@ -611,7 +615,7 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.dataset_map_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Mapping XML", "./data",
-                                                    "XML File (*.xml)", QFileDialog.DontConfirmOverwrite)
+                                                    "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.dataset_map_edit.text()
         
@@ -670,7 +674,7 @@ class Wizard(QMainWindow):
             if self.comparison_edit.text() == "":
                 path = QFileDialog.getSaveFileName(self, "Save Comparison Output", "./data",
                                                 "MOV File (*.mov);;AVI File (*.avi);;MP4 File (*.mp4);;Any File (*.*)",
-                                                QFileDialog.DontConfirmOverwrite)
+                                                options=QFileDialog.DontConfirmOverwrite)
             else:
                 path = self.comparison_edit.text()
         
@@ -707,7 +711,7 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.evaluation_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Evaluation Output", "./data",
-                                               "XML File (*.xml)", QFileDialog.DontConfirmOverwrite)
+                                               "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.evaluation_edit.text()
         
