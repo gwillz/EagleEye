@@ -1,13 +1,7 @@
 #python stuff
 
 *.pyc
-/raw_data/*.csv
-/raw_data/*.xml
-/processed_data/*.csv
-/final_data/*.xml
 *.lnk
 
-/tools/*
-!/tools/eagleeye
-/tools/eagleeye/*
-!/tools/eagleeye/__init__.py
+/data/*
+!/data/.keep
