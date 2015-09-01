@@ -315,7 +315,9 @@ class Wizard(QMainWindow):
             if calib is not None:
                 self.calibration_edit.setText(os.path.join(temp_dir, calib.find("xml").text))
                 if calib.find("chessboards") is not None:
-                    self.chessboard_edit.setText(os.path.join(temp_dir, calib.find("chessboards").attrib["path"]))
+                    self.chessboard_edit.setText(os.path.normpath(os.path.join(
+                                                    temp_dir, 
+                                                    calib.find("chessboards").attrib["path"])))
             
             if training is not None:
                 if training.find("xml") is not None:
@@ -329,7 +331,9 @@ class Wizard(QMainWindow):
                 if raw_data.find("video") is not None:
                     self.dataset_mov_edit.setText(os.path.join(temp_dir, raw_data.find("video").text))
                     if raw_data.find("vicon") is not None:
-                        self.vicondata_edit.setText(os.path.join(temp_dir, raw_data.find("vicon").attrib["path"]))
+                        self.vicondata_edit.setText(os.path.normpath(os.path.join(
+                                                        temp_dir, 
+                                                        raw_data.find("vicon").attrib["path"])))
             
             if evaluation is not None:
                 self.evaluation_edit.setText(os.path.join(temp_dir, evaluation.text))
@@ -448,16 +452,17 @@ class Wizard(QMainWindow):
     def run_calibration(self):
         # browse for save path
         if self.calibration_edit.text() == "":
-            path = str(QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
-                                                "XML File (*.xml)"))
-            self.calibration_edit.setText(path)
+            QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
+                                                "XML File (*.xml)")
         else:
-            path = str(self.calibration_edit.text())
+            path = self.calibration_edit.text()
             
         # run tests
         if path == "": return
+        path = os.path.normpath(str(path))
         if not path.lower().endswith(".xml"):
             path += ".xml"
+        self.calibration_edit.setText(path)
         
         if os.path.isfile(path):
             res = QMessageBox.question(self, "File Exists", 
@@ -476,16 +481,17 @@ class Wizard(QMainWindow):
     def run_capture_training(self):
         # browse for save path
         if self.trainer_csv_edit.text() == "":
-            path = str(QFileDialog.getSaveFileName(self, "Save Trainer CSV", "./data",
-                                                    "CSV File (*.csv)"))
-            self.trainer_csv_edit.setText(path)
+            path = QFileDialog.getSaveFileName(self, "Save Trainer CSV", "./data",
+                                                    "CSV File (*.csv)")
         else:
-            path = str(self.trainer_csv_edit.text())
+            path = self.trainer_csv_edit.text()
         
         # run tests
         if path == "": return
+        path = os.path.normpath(str(path))
         if not path.lower().endswith(".csv"):
             path += ".csv"
+        self.trainer_csv_edit.setText(path)
         
         if os.path.isfile(path):
             res = QMessageBox.question(self, "File Exists", 
@@ -504,16 +510,17 @@ class Wizard(QMainWindow):
     def run_training(self):
         # browse for save path
         if self.trainer_xml_edit.text() == "":
-            path = str(QFileDialog.getSaveFileName(self, "Save Trainer XML", "./data",
-                                                    "XML File (*.xml)"))
-            self.trainer_xml_text.setText(path)
+            path = QFileDialog.getSaveFileName(self, "Save Trainer XML", "./data",
+                                                    "XML File (*.xml)")
         else:
-            path = str(self.trainer_xml_edit.text())
+            path = self.trainer_xml_edit.text()
         
         # run tests
         if path == "": return
+        path = os.path.normpath(str(path))
         if not path.lower().endswith(".xml"):
             path += ".xml"
+        self.trainer_xml_text.setText(path)
         
         if os.path.isfile(path):
             res = QMessageBox.question(self, "File Exists", 
@@ -525,9 +532,9 @@ class Wizard(QMainWindow):
         
         self.statusbar.showMessage("Running Trainer.")
         self.run_tool(trainer_main, ["wizard", 
-                        path,
+                        str(self.trainer_mov_edit.text()),
                         str(self.trainer_csv_edit.text()),
-                        str(self.trainer_xml_edit.text()),
+                        path,
                         "-config", self.config_path])
 
         
@@ -552,16 +559,17 @@ class Wizard(QMainWindow):
     def run_mapping(self):
         # browse for save path
         if self.dataset_map_edit.text() == "":
-            path = str(QFileDialog.getSaveFileName(self, "Save Mapping XML", "./data",
-                                                    "XML File (*.xml)"))
-            self.dataset_map_edit.setText(path)
+            path = QFileDialog.getSaveFileName(self, "Save Mapping XML", "./data",
+                                                    "XML File (*.xml)")
         else:
-            path = str(self.dataset_map_edit.text())
+            path = self.dataset_map_edit.text()
         
         # run tests
         if path == "": return
+        path = os.path.normpath(str(path))
         if not path.lower().endswith(".xml"):
             path += ".xml"
+        self.dataset_map_edit.setText(path)
         
         if os.path.isfile(path):
             res = QMessageBox.question(self, "File Exists", 
@@ -587,14 +595,15 @@ class Wizard(QMainWindow):
     def run_comparison(self):
         # browse for save path
         if self.comparison_edit.text() == "":
-            path = str(QFileDialog.getSaveFileName(self, "Save Comparison Output", "./data",
-                                               "MOV File (*.mov);;AVI File (*.avi);;MP4 File (*.mp4);;Any File (*.*)"))
-            self.comparison_edit.setText(path)
+            path = QFileDialog.getSaveFileName(self, "Save Comparison Output", "./data",
+                                               "MOV File (*.mov);;AVI File (*.avi);;MP4 File (*.mp4);;Any File (*.*)")
         else:
-            path = str(self.comparison_edit.text())
+            path = self.comparison_edit.text()
         
         # run tests
         if path == "": return
+        path = os.path.normpath(str(path))
+        self.comparison_edit.setText(path)
         
         if os.path.isfile(path):
             res = QMessageBox.question(self, "File Exists", 
@@ -620,14 +629,15 @@ class Wizard(QMainWindow):
         if self.evaluation_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Evaluation Output", "./data",
                                                "XML File (*.xml)")
-            self.evaluation_edit.setText(path)
         else:
-            path = str(self.evaluation_edit.text())
+            path = self.evaluation_edit.text()
         
         # run tests
         if path == "": return
+        path = os.path.normpath(str(path))
         if not path.lower().endswith(".xml"):
             path += ".xml"
+        self.evaluation_edit.setText(path)
         
         if os.path.isfile(path):
             res = QMessageBox.question(self, "File Exists", 
@@ -649,6 +659,7 @@ class Wizard(QMainWindow):
                                             self.chessboard_edit.text(), QFileDialog.Options(0))
         
         if path != "":
+            path = os.path.normpath(str(path))
             self.chessboard_edit.setText(path)
             self.load_chessboards()
         
@@ -657,6 +668,7 @@ class Wizard(QMainWindow):
         path = QFileDialog.getOpenFileName(self, "Open Calibration XML", 
                                             self.calibration_edit.text(), "XML File (*.xml)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.calibration_edit.setText(path)
             self.check_mapping_enable()
         
@@ -665,6 +677,7 @@ class Wizard(QMainWindow):
         path = QFileDialog.getOpenFileName(self, "Open Training CSV", 
                                            self.trainer_csv_edit.text(), "CSV File (*.csv)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.trainer_csv_edit.setText(path)
             self.check_trainer_enable()
         
@@ -674,6 +687,7 @@ class Wizard(QMainWindow):
                                            self.trainer_mov_edit.text(), 
                                            "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.trainer_mov_edit.setText(path)
             self.check_trainer_enable()
         
@@ -682,6 +696,7 @@ class Wizard(QMainWindow):
         path = QFileDialog.getOpenFileName(self, "Open Training XML", 
                                            self.trainer_xml_edit.text(), "XML File (*.xml)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.trainer_xml_edit.setText(path)
             self.check_mapping_enable()
     
@@ -690,6 +705,7 @@ class Wizard(QMainWindow):
         path = QFileDialog.getExistingDirectory(self, "Folder of Vicon CSV files", 
                                                 self.vicondata_edit.text(), QFileDialog.Options(0))
         if path != "":
+            path = os.path.normpath(str(path))
             self.vicondata_edit.setText(path)
             self.load_vicondata()
         
@@ -699,6 +715,7 @@ class Wizard(QMainWindow):
                                            self.dataset_mov_edit.text(), 
                                            "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.dataset_mov_edit.setText(path)
             self.check_compare_enable()
             self.check_annotate_enable()
@@ -708,6 +725,7 @@ class Wizard(QMainWindow):
         path = QFileDialog.getOpenFileName(self, "Open Dataset XML (Mapped)", 
                                            self.dataset_map_edit.text(), "XML File (*.xml)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.dataset_map_edit.setText(path)
             self.check_compare_enable()
             self.check_evaluate_enable()
@@ -717,6 +735,7 @@ class Wizard(QMainWindow):
         path = QFileDialog.getOpenFileName(self, "Open Dataset XML (Annotated)", 
                                            self.dataset_ann_edit.text(), "XML File (*.xml)")
         if path != "":
+            path = os.path.normpath(str(path))
             self.dataset_ann_edit.setText(path)
             self.check_compare_enable()
             self.check_evaluate_enable()

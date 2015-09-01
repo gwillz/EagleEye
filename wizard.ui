@@ -174,7 +174,7 @@
     <item row="12" column="3" colspan="5">
      <widget class="HighlightEdit" name="dataset_map_edit">
       <property name="placeholderText">
-       <string>dataset.xml</string>
+       <string>dataset_mapped.xml</string>
       </property>
      </widget>
     </item>
@@ -188,7 +188,7 @@
     <item row="14" column="3" colspan="5">
      <widget class="HighlightEdit" name="dataset_ann_edit">
       <property name="placeholderText">
-       <string>dataset.xml</string>
+       <string>dataset_annotated.xml</string>
       </property>
      </widget>
     </item>
