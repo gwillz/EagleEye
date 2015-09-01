@@ -498,7 +498,7 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.calibration_edit.text() == "":
             QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
-                                                "XML File (*.xml)")
+                                                "XML File (*.xml)", QFileDialog.DontConfirmOverwrite)
         else:
             path = self.calibration_edit.text()
             
@@ -528,7 +528,7 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.trainer_csv_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Trainer CSV", "./data",
-                                                    "CSV File (*.csv)")
+                                                    "CSV File (*.csv)",  QFileDialog.DontConfirmOverwrite)
         else:
             path = self.trainer_csv_edit.text()
         
