@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.3.18
+# version 0.3.22
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -33,6 +33,14 @@ from elementtree.SimpleXMLWriter import XMLWriter
 
 def usage():
     print "usage: python2 trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out> | --clicks <num_clicks> | --config <file>}"
+
+# clicker status
+class Status:
+    stop   = 0
+    record = 1
+    skip   = 2
+    back   = 3
+    wait   = 5
 
 def main(sysargs):
     # settings
@@ -70,121 +78,135 @@ def main(sysargs):
     def on_mouse(event, x, y, flags, params):
         # left click to mark
         if event == cv2.EVENT_LBUTTONDOWN:
-            params['count'] += 1
             params['pos'] = (x, y)
-            params['status'] = 1
+            params['status'] = Status.record
             
         # right click to skip
         elif event == cv2.EVENT_RBUTTONDOWN:
-            params['status'] = 2
-
+            params['status'] = Status.skip
+    
     # load video (again)
     in_vid = BuffCap(args[1], cfg.buffer_size)
     cv2.namedWindow(window_name)
-
-    # status: 
-    #   0 = exit (break loop)
-    #   1 = left click (record pos)
-    #   2 = right click or key (skip forward frame)
-    #   3 = left key (skip back frame)
-    #   5 = wait for input
-    params = {'count':0, 'status': 2, 'pos': None}
+    
+    params = {'status': Status.skip, 'pos': None}
     cv2.setMouseCallback(window_name, on_mouse, params)
-
+    trainer_points = {}
+    
     # load csv (with appropriate ratio)
     in_csv = Memset(args[2])
     in_csv.restrict()
     in_csv.setRatio(cropped_total)
-
-    # prepare XML Writer
-    out_xml = XMLWriter(args[3])
-    out_xml.declaration()
-    doc = out_xml.start("TrainingSet")
-    out_xml.element("video", file=os.path.basename(args[1]))
-    out_xml.element("csv", file=os.path.basename(args[2]))
-    out_xml.start("frames")
-
+    
     # status
     print ""
     print "Writing to:", args[3]
     print "Number of clicks at:", max_clicks
     print ""
-
+    
     # grab clicks (Process 2)
-    count = 0
+    frame_no = 0
     while in_vid.isOpened():
-        count += 1
-        
         # restrict to flash marks
-        if count <= mark_in: 
+        if frame_no <= mark_in: 
+            frame_no += 1
             in_vid.next()
             continue
-        if count > mark_out: 
+        if frame_no > mark_out: 
             print "end of video."
             break
         
         # load frame
         frame = in_vid.frame()
         
-        # add CSV data and show
+        # prepare CSV data, click data
         textrow = "{:.3f}".format(float(in_csv.row()[0]))
         for cell in in_csv.row()[2:]: 
             textrow += ", {:.4f}".format(float(cell))
+        textstatus = "{}/{} clicks".format(len(trainer_points), max_clicks)
+        
+        # draw the trainer dot (if applicable)
+        if frame_no in trainer_points:
+            textstatus += " - There is a record in this frame!"
+            cv2.circle(frame, trainer_points[frame_no][0], 1, cfg.font_colour, 2)
+            cv2.circle(frame, trainer_points[frame_no][0], 15, cfg.font_colour, 1)
+            
+        # draw text and show
         cv2.putText(frame, textrow,
                     (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
-        
-        textstatus = "{}/{} clicks".format(params['count'], max_clicks)
         cv2.putText(frame, textstatus,
                     (5,35), font, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
-        
         cv2.imshow(window_name, frame)
         
         # pause for input
-        while params['status'] >= 5:
+        while params['status'] == Status.wait:
             key = cv2.waitKey(10)
             if key == Key.esc:
                 print "process aborted!\nData was still written."
-                params['status'] = 0
+                params['status'] = Status.stop
             elif key == Key.right:
-                params['status'] = 2
+                params['status'] = Status.skip
             elif key == Key.left:
-                params['status'] = 3
+                params['status'] = Status.back
             
         # catch exit status
-        if params['status'] <= 0: break
+        if params['status'] == Status.stop: break
         
-        # print data
-        if params['status'] == 1:
-            # write data
-            out_xml.start("frame", num=str(count))
-            out_xml.element("plane", 
-                            x=str(params['pos'][0]), 
-                            y=str(params['pos'][1]))
-            out_xml.element("vicon", 
-                            x=str(in_csv.row()[2]), y=str(in_csv.row()[3]), z=str(in_csv.row()[4]))
-            out_xml.end()
+        # write data
+        if params['status'] == Status.record:
+            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5])
             print textstatus
-        # else status == 2 (do nothing, next frame)
         
         # stop on max clicks
-        if params['count'] == max_clicks:
+        if len(trainer_points) == max_clicks:
             print "all clicks done"
             break
         
         # load next csv frame
-        if params['status'] in (1, 2):
+        if params['status'] in (Status.record, Status.skip):
             if in_vid.next():
                 in_csv.next()
-        elif params['status'] == 3:
+                frame_no += 1
+        elif params['status'] == Status.back:
             if in_vid.back():
                 in_csv.back()
-        params['status'] = 5
-
+                frame_no -= 1
+        
+        # reset status
+        params['status'] = Status.wait
+    
     # clean up
     cv2.destroyAllWindows()
+    
+    
+    ## write xml
+    out_xml = XMLWriter(args[3])
+    out_xml.declaration()
+    doc = out_xml.start("TrainingSet")
+    
+    # source information
+    out_xml.start("video", mark_in=str(mark_in), mark_out=str(mark_out))
+    out_xml.data(os.path.basename(args[1]))
+    out_xml.end()
+    out_xml.element("csv", os.path.basename(args[2]))
+    
+    # training point data
+    out_xml.start("frames")
+    for i in trainer_points:
+        pos, row = trainer_points[i]
+        
+        out_xml.start("frame", num=str(i))
+        out_xml.element("plane", 
+                        x=str(pos[0]), 
+                        y=str(pos[1]))
+        out_xml.element("vicon", 
+                        x=str(row[0]), y=str(row[1]), z=str(row[2]))
+        out_xml.end()
+    
+    # clean up
     out_xml.end()
     out_xml.close(doc)
-
+    
     print "\nDone."
     return 0
 
