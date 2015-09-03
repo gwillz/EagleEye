@@ -496,7 +496,7 @@ class Wizard(QMainWindow):
     def run_calibration(self):
         # browse for save path
         if self.calibration_edit.text() == "":
-            QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
+            path = QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
                                                 "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.calibration_edit.text()
