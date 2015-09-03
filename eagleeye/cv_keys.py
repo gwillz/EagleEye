@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# 0.2
+# 0.2.1
 # 
 
 import locale as lc
@@ -12,19 +12,19 @@ import locale as lc
 class Key:
     # this should only run on import, right?
     if lc.getdefaultlocale()[1] == "UTF-8":
-        enter  = 10
-        delete = 65288
-        left   = 65361
-        up     = 65362
-        right  = 65363
-        down   = 65364
+        enter     = 10
+        backspace = 65288
+        left      = 65361
+        up        = 65362
+        right     = 65363
+        down      = 65364
     else:
-        enter  = 13
-        delete = 8
-        left   = 2424832
-        up     = 2490368
-        right  = 2555904
-        down   = 2621440
+        enter     = 13
+        backspace = 8
+        left      = 2424832
+        up        = 2490368
+        right     = 2555904
+        down      = 2621440
     
     space = 32
     esc   = 27
