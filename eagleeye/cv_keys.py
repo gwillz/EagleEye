@@ -13,18 +13,18 @@ class Key:
     # this should only run on import, right?
     if lc.getdefaultlocale()[1] == "UTF-8":
         enter  = 10
+        delete = 65288
         left   = 65361
         up     = 65362
         right  = 65363
         down   = 65364
-        delete = 65288
     else:
         enter  = 13
+        delete = 8
         left   = 2424832
         up     = 2490368
         right  = 2555904
         down   = 2621440
-        delete = 65288   # this probably isn't correct
     
     space = 32
     esc   = 27
