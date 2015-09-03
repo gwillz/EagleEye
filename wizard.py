@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import uic
-from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, qApp
+from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, qApp
 from PyQt4.QtCore import QProcess, QObject, QThread, pyqtSlot, pyqtSignal, QT_VERSION_STR
 from PyQt4.Qt import PYQT_VERSION_STR
 import sys, os, cv2, numpy as np, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
@@ -15,6 +15,7 @@ from stdcalib import main as calib_main
 from trainer import main as trainer_main
 from mapping import main as mapping_main
 from compare import main as compare_main
+from eagleeye import marker_tool
 
 class Wizard(QMainWindow):
     def __init__(self):
@@ -48,33 +49,36 @@ class Wizard(QMainWindow):
         
         # save checks
         self.dataset_name_edit.textChanged.connect(self.update_working_title)
-        self.dataset_name_edit.editingFinished.connect(self.set_unsaved)
-        self.chessboard_edit.editingFinished.connect(self.set_unsaved)
-        self.trainer_csv_edit.editingFinished.connect(self.set_unsaved)
-        self.trainer_mov_edit.editingFinished.connect(self.set_unsaved)
-        self.calibration_edit.editingFinished.connect(self.set_unsaved)
-        self.trainer_xml_edit.editingFinished.connect(self.set_unsaved)
-        self.vicondata_edit.editingFinished.connect(self.set_unsaved)
-        self.vicondata_edit.editingFinished.connect(self.set_unsaved)
-        self.dataset_mov_edit.editingFinished.connect(self.set_unsaved)
-        self.dataset_mov_edit.editingFinished.connect(self.set_unsaved)
-        self.dataset_map_edit.editingFinished.connect(self.set_unsaved)
-        self.dataset_ann_edit.editingFinished.connect(self.set_unsaved)
+        self.dataset_name_edit.textChanged.connect(self.set_unsaved)
+        self.chessboard_edit.textChanged.connect(self.set_unsaved)
+        self.trainer_csv_edit.textChanged.connect(self.set_unsaved)
+        self.trainer_mov_edit.textChanged.connect(self.set_unsaved)
+        self.calibration_edit.textChanged.connect(self.set_unsaved)
+        self.trainer_xml_edit.textChanged.connect(self.set_unsaved)
+        self.vicondata_edit.textChanged.connect(self.set_unsaved)
+        self.vicondata_edit.textChanged.connect(self.set_unsaved)
+        self.dataset_mov_edit.textChanged.connect(self.set_unsaved)
+        self.dataset_mov_edit.textChanged.connect(self.set_unsaved)
+        self.dataset_map_edit.textChanged.connect(self.set_unsaved)
+        self.dataset_ann_edit.textChanged.connect(self.set_unsaved)
+        
+        self.trainer_mov_edit.textEdited.connect(self.del_trainer_marks)
+        self.dataset_mov_edit.textEdited.connect(self.del_dataset_marks)
         
         # editing check/enable events
         self.chessboard_edit.editingFinished.connect(self.load_chessboards)
-        self.trainer_csv_edit.editingFinished.connect(self.check_trainer_enable)
-        self.trainer_mov_edit.editingFinished.connect(self.check_trainer_enable)
-        self.calibration_edit.editingFinished.connect(self.check_mapping_enable)
-        self.trainer_xml_edit.editingFinished.connect(self.check_mapping_enable)
+        self.trainer_csv_edit.textChanged.connect(self.check_trainer_enable)
+        self.trainer_mov_edit.textChanged.connect(self.check_trainer_enable)
+        self.calibration_edit.textChanged.connect(self.check_mapping_enable)
+        self.trainer_xml_edit.textChanged.connect(self.check_mapping_enable)
         self.vicondata_edit.editingFinished.connect(self.load_vicondata)
-        self.vicondata_edit.editingFinished.connect(self.check_mapping_enable)
-        self.dataset_mov_edit.editingFinished.connect(self.check_annotate_enable)
-        self.dataset_mov_edit.editingFinished.connect(self.check_compare_enable)
-        self.dataset_map_edit.editingFinished.connect(self.check_compare_enable)
-        self.dataset_ann_edit.editingFinished.connect(self.check_compare_enable)
-        self.dataset_map_edit.editingFinished.connect(self.check_evaluate_enable)
-        self.dataset_ann_edit.editingFinished.connect(self.check_evaluate_enable)
+        self.vicondata_edit.textChanged.connect(self.check_mapping_enable)
+        self.dataset_mov_edit.textChanged.connect(self.check_annotate_enable)
+        self.dataset_mov_edit.textChanged.connect(self.check_compare_enable)
+        self.dataset_map_edit.textChanged.connect(self.check_compare_enable)
+        self.dataset_ann_edit.textChanged.connect(self.check_compare_enable)
+        self.dataset_map_edit.textChanged.connect(self.check_evaluate_enable)
+        self.dataset_ann_edit.textChanged.connect(self.check_evaluate_enable)
         
         # buttons and junk
         self.chessboard_button.clicked.connect(self.chessboard_extract)
@@ -201,7 +205,14 @@ class Wizard(QMainWindow):
                     file_name = os.path.basename(file_path)
                     zipper.write(file_path, file_name)
                     
-                    w.element("video", file_name)
+                    # with marks if applicable
+                    if "trainer_marks" in self.__dict__:
+                        mark_in, mark_out = self.trainer_marks
+                        w.start("video", mark_in=str(mark_in), mark_out=str(mark_out))
+                    else:
+                        w.start("video")
+                    w.data(file_name)
+                    w.end()
                 
                 # trainer CSV
                 file_path = str(self.trainer_csv_edit.text())
@@ -221,7 +232,15 @@ class Wizard(QMainWindow):
                 zipper.write(file_path, file_name)
                 
                 w.start("rawData")
-                w.element("video", file_name)
+                
+                # dataset video, with marks if applicable
+                if "dataset_marks" in self.__dict__:
+                    mark_in, mark_out = self.dataset_marks
+                    w.start("video", mark_in=str(mark_in), mark_out=str(mark_out))
+                else:
+                    w.start("video")
+                w.data(file_name)
+                w.end()
                 
                 # write vicon folder - dependant on video_file
                 file_path = str(self.vicondata_edit.text())
@@ -264,7 +283,6 @@ class Wizard(QMainWindow):
             w.end() # datasets
             w.close(doc)
             
-            
             # write header to zipper
             header_file.close()
             zipper.write(header_file.name, "header.xml")
@@ -302,10 +320,11 @@ class Wizard(QMainWindow):
                 QMessageBox.error(self, "Not a valid dataset", "The header.xml file is corrupt.")
                 return
             
-            # load into text fields
+            # load dataset name
             self.dataset_name_edit.setText(root.attrib["name"])
             self.save_date = root.attrib["date"]
             
+            # find root elements
             calib = root.find("calibration")
             training = root.find("training")
             raw_data = root.find("rawData")
@@ -313,29 +332,51 @@ class Wizard(QMainWindow):
             mapping = root.find("datasets/mapping")
             annotation = root.find("datasets/annotation")
             
+            # find calib elements
             if calib is not None:
-                self.calibration_edit.setText(os.path.join(temp_dir, calib.find("xml").text))
-                if calib.find("chessboards") is not None:
-                    self.chessboard_edit.setText(os.path.normpath(os.path.join(
-                                                    temp_dir, 
-                                                    calib.find("chessboards").attrib["path"])))
+                xml = calib.find("xml")
+                if xml is not None:
+                    chess_element = calib.find("chessboards")
+                    
+                    self.calibration_edit.setText(os.path.join(temp_dir, calib.find("xml").text))
+                    if chess_element is not None:
+                        self.chessboard_edit.setText(os.path.normpath(os.path.join(
+                                                        temp_dir, chess_element.attrib["path"])))
             
+            # find trainer elements
             if training is not None:
-                if training.find("xml") is not None:
-                    self.trainer_xml_edit.setText(os.path.join(temp_dir, training.find("xml").text))
-                    if training.find("csv") is not None:
-                        self.trainer_csv_edit.setText(os.path.join(temp_dir, training.find("csv").text))
-                    if training.find("video") is not None:
-                        self.trainer_mov_edit.setText(os.path.join(temp_dir, training.find("video").text))
+                xml = training.find("xml")
+                if xml is not None:
+                    csv = training.find("csv")
+                    video = training.find("video")
+                    
+                    # set edit boxes appropriately
+                    self.trainer_xml_edit.setText(os.path.join(temp_dir, xml.text))
+                    if csv is not None:
+                        self.trainer_csv_edit.setText(os.path.join(temp_dir, csv.text))
+                    if video is not None:
+                        self.trainer_mov_edit.setText(os.path.join(temp_dir, video.text))
+                        
+                        # load video marks if found
+                        if 'mark_in' in video.attrib:
+                            self.training_marks = (video.attrib['mark_in'], video.attrib['mark_out'])
             
+            # find data elements
             if raw_data is not None:
-                if raw_data.find("video") is not None:
-                    self.dataset_mov_edit.setText(os.path.join(temp_dir, raw_data.find("video").text))
-                    if raw_data.find("vicon") is not None:
+                video = raw_data.find("video")
+                if video is not None:
+                    vicon = raw_data.find("vicon")
+                    
+                    # set stuff
+                    self.dataset_mov_edit.setText(os.path.join(temp_dir, video.text))
+                    if 'mark_in' in video.attrib:
+                            self.dataset_marks = (video.attrib['mark_in'], video.attrib['mark_out'])
+                    
+                    if vicon is not None:
                         self.vicondata_edit.setText(os.path.normpath(os.path.join(
-                                                        temp_dir, 
-                                                        raw_data.find("vicon").attrib["path"])))
+                                                        temp_dir, vicon.attrib["path"])))
             
+            # duh for the rest
             if evaluation is not None:
                 self.evaluation_edit.setText(os.path.join(temp_dir, evaluation.text))
             
@@ -370,16 +411,17 @@ class Wizard(QMainWindow):
         dialog.setDefaultButton(QMessageBox.Save)
         res = dialog.exec_()
         
-        if res == QMessageBox.RejectRole:
-            return False
-        elif res == QMessageBox.AcceptRole:
-            self.save_file()
-        else: # DesctructiveRole
+        if res == QMessageBox.Discard:
             pass
+        elif res == QMessageBox.Save:
+            self.save_file()
+        else: # Reject or whatever
+            return False
         
-        self.saved = False
+        self.saved = True
         self.save_path = None
         self.save_date = None
+        self.setWindowTitle(self._original_title)
         
         self.dataset_name_edit.clear()
         self.chessboard_edit.clear()
@@ -414,13 +456,13 @@ class Wizard(QMainWindow):
             worker.destroyed.connect(self.destroy_worker)
             
             print "exec:", " ".join(args)
-            worker.start()
             self.disable_tools()
+            
+            self.worker = worker
+            return True, worker
         else:
             QMessageBox.warning(self, "Already running", "A tool is already running")
-        
-        self.worker = worker
-        return self.worker
+            return False, self.worker
     
     def destroy_worker(self, obj):
         del self.worker
@@ -442,19 +484,20 @@ class Wizard(QMainWindow):
         if input_path == "": return
         
         self.statusbar.showMessage("Running Chessboard Extractor.")
-        worker = self.run_tool(chess_extract_main, ["wizard", 
+        stat, worker = self.run_tool(chess_extract_main, ["wizard", 
                                     str(input_path),
                                     output_path,
                                     "-config", self.config_path])
-        
-        worker.finished.connect(self.load_chessboards)
+        if stat:
+            worker.finished.connect(self.load_chessboards)
+            worker.start()
         
     @pyqtSlot()
     def run_calibration(self):
         # browse for save path
         if self.calibration_edit.text() == "":
-            QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
-                                                "XML File (*.xml)")
+            path = QFileDialog.getSaveFileName(self, "Save Calibration XML", "./data",
+                                                "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.calibration_edit.text()
             
@@ -473,17 +516,22 @@ class Wizard(QMainWindow):
         
         
         self.statusbar.showMessage("Running Calibration.")
-        self.run_tool(calib_main, ["wizard", 
-                        "-output", path,
-                        "-config", self.config_path] +\
-                        self.chessboards)
+        stat, worker = self.run_tool(calib_main, ["wizard", 
+                                "-output", path,
+                                "-config", self.config_path] +\
+                                self.chessboards)
+        if stat: worker.start()
 
     @pyqtSlot()
     def run_capture_training(self):
+        #TODO training capture isn't complete, returns early
+        QMessageBox.information(self, "Stub function", "This is incomplete at the moment. Soz.")
+        return 
+        
         # browse for save path
         if self.trainer_csv_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Trainer CSV", "./data",
-                                                    "CSV File (*.csv)")
+                                                    "CSV File (*.csv)",  options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.trainer_csv_edit.text()
         
@@ -502,17 +550,17 @@ class Wizard(QMainWindow):
         
         #TODO need to add trainer mode to vicon_capture
         self.statusbar.showMessage("Running Training Capture.")
-        self.run_tool(capture_main, ["wizard", 
-                        "-trainer", path,
-                        "-config", self.config_path])
-
+        stat, worker = self.run_tool(capture_main, ["wizard", 
+                                    "-trainer", path,
+                                    "-config", self.config_path])
+        if stat: worker.start()
         
     @pyqtSlot()
     def run_training(self):
         # browse for save path
         if self.trainer_xml_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Trainer XML", "./data",
-                                                    "XML File (*.xml)")
+                                                    "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.trainer_xml_edit.text()
         
@@ -521,7 +569,7 @@ class Wizard(QMainWindow):
         path = os.path.normpath(str(path))
         if not path.lower().endswith(".xml"):
             path += ".xml"
-        self.trainer_xml_text.setText(path)
+        self.trainer_xml_edit.setText(path)
         
         if os.path.isfile(path):
             res = QMessageBox.question(self, "File Exists", 
@@ -529,16 +577,20 @@ class Wizard(QMainWindow):
                                         QMessageBox.Yes, QMessageBox.No)
             if res == QMessageBox.No: return
         
+        args = ["wizard", 
+                str(self.trainer_mov_edit.text()),
+                str(self.trainer_csv_edit.text()),
+                path,
+                "-config", self.config_path]
         
+        if "trainer_marks" in self.__dict__:
+            mark_in, mark_out = self.trainer_marks
+            args += [str(mark_in), str(mark_out)]
         
         self.statusbar.showMessage("Running Trainer.")
-        self.run_tool(trainer_main, ["wizard", 
-                        str(self.trainer_mov_edit.text()),
-                        str(self.trainer_csv_edit.text()),
-                        path,
-                        "-config", self.config_path])
-
-        
+        stat, worker = self.run_tool(trainer_main, args)
+        if stat: worker.start()
+    
     @pyqtSlot()
     def run_capture(self):
         # browse for save path
@@ -550,18 +602,19 @@ class Wizard(QMainWindow):
         if path == "": return
         
         self.statusbar.showMessage("Running Data Capture.")
-        worker = self.run_tool(capture_main, ["wizard", 
-                                "-output", path,
-                                "-config", self.config_path])
-        
-        worker.finished.connect(self.load_vicondata)
+        stat, worker = self.run_tool(capture_main, ["wizard", 
+                                    "-output", path,
+                                    "-config", self.config_path])
+        if stat: 
+            worker.finished.connect(self.load_vicondata)
+            worker.start()
         
     @pyqtSlot()
     def run_mapping(self):
         # browse for save path
         if self.dataset_map_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Mapping XML", "./data",
-                                                    "XML File (*.xml)")
+                                                    "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.dataset_map_edit.text()
         
@@ -579,12 +632,13 @@ class Wizard(QMainWindow):
             if res == QMessageBox.No: return
         
         self.statusbar.showMessage("Running Mapping.")
-        self.run_tool(mapping_main, ["wizard", 
-                        "-calib", str(self.calibration_edit.text()),
-                        "-trainer", str(self.trainer_xml_edit.text()),
-                        "-output", path,
-                        "-config", self.config_path] +\
-                        self.vicondata)
+        stat, worker = self.run_tool(mapping_main, ["wizard", 
+                                    "-calib", str(self.calibration_edit.text()),
+                                    "-trainer", str(self.trainer_xml_edit.text()),
+                                    "-output", path,
+                                    "-config", self.config_path] +\
+                                    self.vicondata)
+        if stat: worker.start()
 
     @pyqtSlot()
     def run_annotation(self):
@@ -611,12 +665,15 @@ class Wizard(QMainWindow):
         
         # cancel if invalid (ESC key)
         if res == QMessageBox.InvalidRole:
-            return
+            return 
+        
+        # run export
         elif res == QMessageBox.AcceptRole:
             # browse for save path
             if self.comparison_edit.text() == "":
                 path = QFileDialog.getSaveFileName(self, "Save Comparison Output", "./data",
-                                                "MOV File (*.mov);;AVI File (*.avi);;MP4 File (*.mp4);;Any File (*.*)")
+                                                "MOV File (*.mov);;AVI File (*.avi);;MP4 File (*.mp4);;Any File (*.*)",
+                                                options=QFileDialog.DontConfirmOverwrite)
             else:
                 path = self.comparison_edit.text()
         
@@ -633,9 +690,17 @@ class Wizard(QMainWindow):
                                             QMessageBox.Yes, QMessageBox.No)
                 if res == QMessageBox.No: return
         
+        #else run interactive
+        
+        # insert marks
+        if "dataset_marks" in self.__dict__:
+            mark_in, mark_out = self.dataset_marks
+            args += [str(mark_in), str(mark_out)]
+        
         # run the tool
         self.statusbar.showMessage("Running Comparison.")
-        self.run_tool(compare_main, args)
+        stat, worker = self.run_tool(compare_main, args)
+        if stat: worker.start()
     
     @pyqtSlot()
     def run_evaluation(self):
@@ -646,7 +711,7 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.evaluation_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Evaluation Output", "./data",
-                                               "XML File (*.xml)")
+                                               "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.evaluation_edit.text()
         
@@ -664,11 +729,33 @@ class Wizard(QMainWindow):
             if res == QMessageBox.No: return
         
         self.statusbar.showMessage("Running Evaluation.")
-        self.run_tool(evaluate_main, ["wizard", 
-                    str(self.dataset_map_edit.text()),
-                    str(self.dataset_ann_edit.text()),
-                    str(self.evaluation_edit.text()),
-                    "-config", self.config_path])
+        stat, worker = self.run_tool(evaluate_main, ["wizard", 
+                                str(self.dataset_map_edit.text()),
+                                str(self.dataset_ann_edit.text()),
+                                str(self.evaluation_edit.text()),
+                                "-config", self.config_path])
+        if stat: worker.start()
+    
+    def run_marker(self, path):
+        # ask for marks
+        mark_in, ok = QInputDialog.getInt(self, "Specify Marks", "Mark in:", 0, 0, 99999)
+        if ok:
+            mark_out, ok = QInputDialog.getInt(self, "Specify Marks", "Mark out:", mark_in+10, mark_in, 99999)
+            if ok:
+                print "from marks dialog:", mark_in, mark_out
+                return (mark_in, mark_out)
+        
+        # or use marker_tool
+        else:
+            self.disable_tools()
+            stat, mark_in, mark_out = marker_tool(path)
+            self.enable_tools()
+            
+            if stat:
+                print "from marker:", mark_in, mark_out
+                return (mark_in, mark_out)
+        
+        return None
     
     ## File dialog slots
     @pyqtSlot()
@@ -707,8 +794,11 @@ class Wizard(QMainWindow):
         if path != "":
             path = os.path.normpath(str(path))
             self.trainer_mov_edit.setText(path)
-            self.check_trainer_enable()
-        
+            
+            marks = self.run_marker(path)
+            if marks is not None:
+                self.trainer_marks = marks
+            
     @pyqtSlot()
     def browse_trainer_xml(self):
         path = QFileDialog.getOpenFileName(self, "Open Training XML", 
@@ -735,8 +825,10 @@ class Wizard(QMainWindow):
         if path != "":
             path = os.path.normpath(str(path))
             self.dataset_mov_edit.setText(path)
-            self.check_compare_enable()
-            self.check_annotate_enable()
+            
+            marks = self.run_marker(path)
+            if marks is not None:
+                self.dataset_marks = marks
         
     @pyqtSlot()
     def browse_mapping_data(self):
@@ -818,6 +910,24 @@ class Wizard(QMainWindow):
         self.num_vicondata.setText(str(len(self.vicondata)))
         self.mapping_button.setEnabled(len(self.vicondata) > 0)
     
+    @pyqtSlot()
+    def set_trainer_marks(self, mark_in, mark_out):
+        self.trainer_marks = (mark_in, mark_out)
+        
+    @pyqtSlot()
+    def set_dataset_marks(self, mark_in, mark_out):
+        self.dataset_marks = (mark_in, mark_out)
+    
+    @pyqtSlot()
+    def del_trainer_marks(self):
+        if 'trainer_marks' in self.__dict__:
+            del self.trainer_marks
+    
+    @pyqtSlot()
+    def del_dataset_marks(self):
+        if 'dataset_marks' in self.__dict__:
+            del self.dataset_marks
+    
     ## Various GUI events
     @pyqtSlot()
     def set_unsaved(self):
@@ -841,6 +951,7 @@ class Wizard(QMainWindow):
         self.trainer_mov_button.setEnabled(set)
         self.dataset_mov_button.setEnabled(set)
         self.chessboard_edit.setEnabled(set)
+        self.calibration_edit.setEnabled(set)
         self.trainer_csv_edit.setEnabled(set)
         self.trainer_mov_edit.setEnabled(set)
         self.trainer_xml_edit.setEnabled(set)
