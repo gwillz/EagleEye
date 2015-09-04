@@ -3,5 +3,7 @@
 *.pyc
 *.lnk
 
+/build
+/dist
 /data/*
 !/data/.keep
