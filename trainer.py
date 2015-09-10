@@ -52,6 +52,8 @@ def main(sysargs):
     font = CVFlag.FONT_HERSHEY_SIMPLEX
     window_name = "EagleEye Trainer"
 
+    textstatus = ""
+
     # grab marks from args
     if args.verifyLen(6):
         mark_in = args[4]
@@ -108,16 +110,18 @@ def main(sysargs):
     print "Number of clicks at:", max_clicks
     print ""
     
-    # grab clicks (Process 2)
+    # grab clicks (Process 2)   # TODO: frame_no is not accurate. But it's not used.
     frame_no = 0
     while in_vid.isOpened():
         # restrict to flash marks
-        if frame_no <= mark_in: 
+        if frame_no <= mark_in:
             frame_no += 1
             in_vid.next()
+            #print "Frame {} . {}".format(frame_no, mark_in)
             continue
-        if frame_no > mark_out: 
-            print "end of video."
+        if frame_no >= mark_out:
+            write_xml = True
+            print "end of video: {}/{}".format(frame_no, cropped_total)
             break
         
         # load frame
@@ -173,9 +177,10 @@ def main(sysargs):
             print "removed dot"
             del trainer_points[frame_no]
         
-        # stop on max clicks
+        # stop on max clicks - end condition 2
         if len(trainer_points) == max_clicks:
             print "all clicks done"
+            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5])
             write_xml = True
             break
         
