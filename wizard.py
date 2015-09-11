@@ -11,7 +11,10 @@ from custom_widgets import *
 # tool imports
 error = False
 try:
-    from vicon_capture import main as capture_main
+    # ignore vicon capture errors because of PyVicon
+    # will be reported seperately
+    try: from vicon_capture import main as capture_main
+    except: pass
     from extract_frames import main as chess_extract_main
     from stdcalib import main as calib_main
     from trainer import main as trainer_main
@@ -534,6 +537,13 @@ class Wizard(QMainWindow):
 
     @pyqtSlot()
     def run_capture_training(self):
+        # check for capture import
+        if 'capture_main' not in globals():
+            QMessageBox.warning(self, "No capture available", 
+                                "Cannot run CaptureTool.\n"
+                                "Probably because PyVicon isn't compiled for this system.")
+            return
+        
         # browse for save path
         if self.trainer_csv_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Trainer CSV", "./data",
@@ -613,6 +623,13 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def run_capture(self):
+        # check for capture import
+        if 'capture_main' not in globals():
+            QMessageBox.warning(self, "No capture available", 
+                                "Cannot run CaptureTool.\n"
+                                "Probably because PyVicon isn't compiled for this system.")
+            return
+        
         # browse for save path
         if self.vicondata_edit.text() == "":
             self.browse_vicondata()
