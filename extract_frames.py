@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.3
+# version 0.1.4
 # 
 # Processes a video and extracts singular frames for calibration.
 # 
@@ -19,7 +19,7 @@ def main(sysargs):
     # test args
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.config, group="chessboard_extract")
-    if not args.verifyLen(3):
+    if len(args) <= 3:
         usage()
         return 1
 

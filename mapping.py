@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.9
+# version 0.2.10
 # 
 # Runs mapping routines on multiple CSV files and combines them into a single XML format.
 #
@@ -20,12 +20,12 @@ def usage():
 def main(sysargs):
     args = EasyArgs(sysargs)
 
-    if not args.verifyOpts("calib", "trainer", "output"):
+    if ["calib", "trainer", "output"] not in args:
         print "Must specify: -calib, -trainer, -output files"
         usage()
         return 1
         
-    if not args.verifyLen(2):
+    if len(args) == 1:
         print "Not enough input CSV files"
         usage()
         return 1
@@ -35,7 +35,7 @@ def main(sysargs):
     frame_num = 1
     
     # open source CSV datasets
-    for i in range(1, len(args._noops)):
+    for i in range(1, len(args)):
         print args[i]
         csvs[i] = Dataset(args[i])
     
@@ -44,7 +44,7 @@ def main(sysargs):
     for i in csvs:
         csvs[i].reel()
         if len(csvs[i].row()) < 10:
-            print "CSV file:", args._noops[i], "contains no marker data!\nAborting."
+            print "CSV file:", args[i], "contains no marker data!\nAborting."
             return 1
     
     # open calib files

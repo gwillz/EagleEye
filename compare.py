@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.10
+# version 0.2.11
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
@@ -23,7 +23,7 @@ def main(sysargs):
     window_name = "EagleEye Comparator"
     
     # grab marks from args
-    if args.verifyLen(6):
+    if len(args) > 5:
         mark_in = args[4]
         mark_out = args[5]
         
@@ -34,7 +34,7 @@ def main(sysargs):
             return 1
     
     # or grab them from a marker tool
-    elif args.verifyLen(4):
+    elif len(args) > 3:
         ret, mark_in, mark_out = marker_tool(args[1], 50, window_name)
         if not ret:
             print "Not processing - exiting."

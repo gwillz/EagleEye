@@ -1,7 +1,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Kin Kuen, Liu
-ver = '1.3.21'
+ver = '1.3.22'
 # Last Updated: 2015-08-27
 # 
 # Camera Calibration and Image Undistortion using OpenCV standard pinhole camera functions.
@@ -306,11 +306,11 @@ def main(sysargs):
     elif args.version:
         version()
         return 0
-    elif not args.verifyLen(11):
+    elif len(args) < 10:
         print "Requires a minimum 10 chessboard images."
         usage()
         return 0
-    elif not args.verifyOpts('output'):
+    elif 'output' not in args:
         print "Requires an output path."
         usage()
         return 0
@@ -327,7 +327,7 @@ def main(sysargs):
         os.makedirs(args.preview)
     
     try: # calibration
-        cam_mat, dist, err = stdCalib(args._noops[1:], p_size, s_size, args.preview)
+        cam_mat, dist, err = stdCalib(args[1:], p_size, s_size, args.preview)
         # XML Output
         intWriter(args.output, cam_mat, dist, err)
     except:
@@ -336,7 +336,7 @@ def main(sysargs):
     
     # Rectify
     if args.preview:
-        undistort(args.preview, args._noops[1:], cam_mat, dist)
+        undistort(args.preview, args[1:], cam_mat, dist)
     
     print '--------------------------------------'
     print 'Intrinsic Calibration has completed successfully!'

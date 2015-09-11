@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.3.26
+# version 0.3.27
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -55,7 +55,7 @@ def main(sysargs):
     textstatus = ""
 
     # grab marks from args
-    if args.verifyLen(6):
+    if len(args) > 5:
         mark_in = args[4]
         mark_out = args[5]
         
@@ -65,7 +65,7 @@ def main(sysargs):
             usage()
             return 1
         
-    elif args.verifyLen(4):
+    elif len(args) > 3:
         ret, mark_in, mark_out = marker_tool(args[1], cfg.buffer_size, window_name)
         if not ret:
             print "Not processing - exiting."
