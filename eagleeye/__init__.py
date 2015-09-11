@@ -5,10 +5,13 @@
 # magical init file that makes everything work!
 # 
 
+import cv2
+if cv2.__version__ < '3.0.0':
+    raise Exception("EagleEye only supports OpenCV 3.0+")
+
 from easyargs import EasyArgs
 from easyconfig import EasyConfig
 from cv_keys import Key
-from cv_flags import CVFlag
 from buff_cap import BuffCap
 from buff_split_cap import BuffSplitCap
 from dataset import Dataset

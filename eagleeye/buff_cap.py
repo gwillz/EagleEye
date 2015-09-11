@@ -3,11 +3,10 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version: 0.2.7
+# version: 0.2.8
 # 
 
 import cv2
-from cv_flags import CVFlag
 
 class BuffCap:
     def __init__(self, path, buff_max=30):
@@ -26,7 +25,7 @@ class BuffCap:
         
         self._frame = self.buff[0]
         self.shape = self._frame.shape
-        self.total = int(self._cap.get(CVFlag.CAP_PROP_FRAME_COUNT))
+        self.total = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
     def frame(self):
         return self._frame.copy()

@@ -9,13 +9,18 @@ from elementtree.SimpleXMLWriter import XMLWriter
 from custom_widgets import *
 
 # tool imports
-from vicon_capture import main as capture_main
-from extract_frames import main as chess_extract_main
-from stdcalib import main as calib_main
-from trainer import main as trainer_main
-from mapping import main as mapping_main
-from compare import main as compare_main
-from eagleeye import marker_tool
+error = False
+try:
+    from vicon_capture import main as capture_main
+    from extract_frames import main as chess_extract_main
+    from stdcalib import main as calib_main
+    from trainer import main as trainer_main
+    from mapping import main as mapping_main
+    from compare import main as compare_main
+    from eagleeye import marker_tool
+# catch errors, report in main()
+except Exception as e:
+    error = e
 
 class Wizard(QMainWindow):
     def __init__(self):
@@ -1089,6 +1094,12 @@ class ThreadWorker(QThread):
 ## Main thread
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    
+    # catch import errors
+    if error:
+        QMessageBox.critical(None, "Error!", str(error))
+        exit(1)
+    
     w = Wizard()
     w.show()
     sys.exit(app.exec_())

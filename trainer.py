@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.3.27
+# version 0.3.28
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -29,7 +29,7 @@
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffCap, Memset, CVFlag, Key, EasyConfig, EasyArgs, marker_tool
+from eagleeye import BuffCap, Memset, Key, EasyConfig, EasyArgs, marker_tool
 from elementtree.SimpleXMLWriter import XMLWriter
 
 def usage():
@@ -49,7 +49,7 @@ def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.config, group="trainer")
     max_clicks = args.clicks or cfg.default_clicks
-    font = CVFlag.FONT_HERSHEY_SIMPLEX
+    font = cv2.FONT_HERSHEY_SIMPLEX
     window_name = "EagleEye Trainer"
 
     textstatus = ""
@@ -152,9 +152,9 @@ def main(sysargs):
             
         # draw text and show
         cv2.putText(frame, textrow,
-                    (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
+                    (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, cv2.LINE_AA)
         cv2.putText(frame, textstatus,
-                    (5,35), font, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
+                    (5,35), font, cfg.font_size, cfg.font_colour, cfg.font_thick, cv2.LINE_AA)
         cv2.imshow(window_name, frame)
         
         # pause for input
