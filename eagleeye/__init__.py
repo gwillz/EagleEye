@@ -14,7 +14,6 @@ from easyconfig import EasyConfig
 from cv_keys import Key
 from buff_cap import BuffCap
 from buff_split_cap import BuffSplitCap
-from dataset import Dataset
 from xmlset import Xmlset
 from mem_dataset import Memset
 from sleeper import Sleeper
