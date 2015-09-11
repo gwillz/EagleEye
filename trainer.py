@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.3.24
+# version 0.3.26
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -104,6 +104,11 @@ def main(sysargs):
     in_csv.restrict()
     in_csv.setRatio(cropped_total)
     
+    # test for marker data
+    if len(in_csv.row()) < 10:
+        print "This CSV contains no marker data!\nAborting."
+        return 1
+    
     # status
     print ""
     print "Writing to:", args[3]
@@ -129,13 +134,19 @@ def main(sysargs):
         
         # prepare CSV data, click data
         textrow = "{:.3f}".format(float(in_csv.row()[0]))
-        for cell in in_csv.row()[2:]: 
+        for cell in in_csv.row()[2:8]:
             textrow += ", {:.4f}".format(float(cell))
         textstatus = "{}/{} clicks".format(len(trainer_points), max_clicks)
         
+        # data quality status
+        quality = float(in_csv.row()[9]) / float(in_csv.row()[8])
+        if quality > cfg.quality_threshold:
+            textstatus += " - Good data"
+        else:
+            textstatus += " - Bad data!!"
+        
         # draw the trainer dot (if applicable)
         if frame_no in trainer_points:
-            textstatus += " - There is a record in this frame!"
             cv2.circle(frame, trainer_points[frame_no][0], 1, cfg.font_colour, 2)
             cv2.circle(frame, trainer_points[frame_no][0], 15, cfg.font_colour, 1)
             
@@ -169,7 +180,7 @@ def main(sysargs):
         # write data
         if params['status'] == Status.record:
             print textstatus
-            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5])
+            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5], quality)
             params['status'] = Status.skip
         
         # or remove it
@@ -180,7 +191,7 @@ def main(sysargs):
         # stop on max clicks - end condition 2
         if len(trainer_points) == max_clicks:
             print "all clicks done"
-            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5])
+            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5], quality)
             write_xml = True
             break
         
@@ -216,9 +227,9 @@ def main(sysargs):
         # training point data
         out_xml.start("frames")
         for i in trainer_points:
-            pos, row = trainer_points[i]
+            pos, row, quality = trainer_points[i]
             
-            out_xml.start("frame", num=str(i))
+            out_xml.start("frame", num=str(i), quality=str(quality))
             out_xml.element("plane", 
                             x=str(pos[0]), 
                             y=str(pos[1]))
