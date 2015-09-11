@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.7
+# version 0.2.8
 # 
 # I didn't like getopt.
 # This class separates options (--opt var) from arguments [0] => arg.
@@ -69,6 +69,12 @@ class EasyArgs:
     
     # i.e: EasyArgs.option_name # => option_var
     def __getattr__(self, key):
+        # support slicing
+        # python uses __getslice__ if available for backward compat with v2.0<
+        if key == "__getslice__":
+            raise AttributeError
+        
+        # search for full keys, then partial keys
         if key in self._ops:
             return self._ops[key]
         
@@ -136,7 +142,7 @@ class EasyArgs:
 if __name__ == "__main__" and sys.argv[1] == 'test':
     test_args = ["-u", "element 2", "regular", "--special", "variable1", \
                  "-he", "world", "nothing", "--true", "-ha", "again", \
-                 "-tuple", "(9,6)", "-list", "[1,4,55,\"seven\"]", "--end"]
+                 "-tuple", "(9,6)", "-list", "[1,4,55,\"seven\"]", "another", "--end"]
     args = EasyArgs(test_args)
     
     print "testing:", test_args
@@ -156,6 +162,7 @@ if __name__ == "__main__" and sys.argv[1] == 'test':
     print "list:", args.list, type(args.list)
     print ""
     print "args:", [i for i in args], "size:", len(args)
+    print "slice:", args[1:]
     print ""
     print "all:", args
     
