@@ -484,6 +484,11 @@ class Wizard(QMainWindow):
         if input_path == "": return
         
         self.statusbar.showMessage("Running Chessboard Extractor.")
+        self.showHelp("Chessboard Extractor", 
+                        "Use the Left and Right keys to navigate the video.\n"
+                        "When an appropriate chessboard frame is found, press Enter.\n"
+                        "To quit, press ESC.")
+        
         stat, worker = self.run_tool(chess_extract_main, ["wizard", 
                                     str(input_path),
                                     output_path,
@@ -524,10 +529,6 @@ class Wizard(QMainWindow):
 
     @pyqtSlot()
     def run_capture_training(self):
-        #TODO training capture isn't complete, returns early
-        QMessageBox.information(self, "Stub function", "This is incomplete at the moment. Soz.")
-        return 
-        
         # browse for save path
         if self.trainer_csv_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Trainer CSV", "./data",
@@ -548,10 +549,17 @@ class Wizard(QMainWindow):
                                         QMessageBox.Yes, QMessageBox.No)
             if res == QMessageBox.No: return
         
-        #TODO need to add trainer mode to vicon_capture
         self.statusbar.showMessage("Running Training Capture.")
-        stat, worker = self.run_tool(capture_main, ["wizard", 
-                                    "-trainer", path,
+        self.showHelp("Training Capture", 
+                        "First prepare the camera and flash for recording. "
+                        "When ready, press the OK button (below).\n"
+                        "The flash will trigger, then trigger the camera recording.\n"
+                        "It will flash again to mark the start of the dataset. "
+                        "Now wave the Vicon Wand around. "
+                        "At the end of the dataset, it was flash again a third time.")
+        
+        stat, worker = self.run_tool(capture_main, ["wizard",
+                                    "-training", path,
                                     "-config", self.config_path])
         if stat: worker.start()
         
@@ -588,6 +596,13 @@ class Wizard(QMainWindow):
             args += [str(mark_in), str(mark_out)]
         
         self.statusbar.showMessage("Running Trainer.")
+        self.showHelp("Training Tool", 
+                        "Use the Left and Right arrow keys to navigate the video.\n"
+                        "Mark the middle Wand dot with the cursor. "
+                        "Navigate backwards one frame to preview it's position.\n"
+                        "When satisfied, press Enter to save the training data. "
+                        "To quit, press ESC - this will lose data.")
+        
         stat, worker = self.run_tool(trainer_main, args)
         if stat: worker.start()
     
@@ -597,12 +612,26 @@ class Wizard(QMainWindow):
         if self.vicondata_edit.text() == "":
             self.browse_vicondata()
         
+        # get capture time
+        time, ok = QInputDialog.getInt(self, "Capture Time", "Time:", 60, 30, 999)
+        if not ok:
+            return
+        
         # get path
         path = str(self.vicondata_edit.text())
         if path == "": return
         
         self.statusbar.showMessage("Running Data Capture.")
+        self.showHelp("Data Capture", 
+                        "First prepare the camera and flash for recording. "
+                        "When ready, press the OK button (below).\n"
+                        "The flash will trigger, then trigger the camera recording.\n"
+                        "It will flash again to mark the start of the dataset. "
+                        "Now perform the dataset scenario. "
+                        "At the end of the dataset, it was flash again a third time.")
+        
         stat, worker = self.run_tool(capture_main, ["wizard", 
+                                    "-time", str(time),
                                     "-output", path,
                                     "-config", self.config_path])
         if stat: 
@@ -737,6 +766,10 @@ class Wizard(QMainWindow):
         if stat: worker.start()
     
     def run_marker(self, path):
+        self.showHelp("Define Marks", 
+                        "Enter the mark-in and mark-out values in the following dialogs.\n"
+                        "If unknown, press Cancel to use the Marker Tool.")
+        
         # ask for marks
         mark_in, ok = QInputDialog.getInt(self, "Specify Marks", "Mark in:", 0, 0, 99999)
         if ok:
@@ -746,14 +779,22 @@ class Wizard(QMainWindow):
                 return (mark_in, mark_out)
         
         # or use marker_tool
-        else:
-            self.disable_tools()
-            stat, mark_in, mark_out = marker_tool(path)
-            self.enable_tools()
-            
-            if stat:
-                print "from marker:", mark_in, mark_out
-                return (mark_in, mark_out)
+        
+        self.showHelp("Marker Tool", 
+                    "Use the Left and Right arrow keys to navigate the video.\n"
+                    "Find the first 'flash' frame and mark it with the '[' key.\n"
+                    "Continue navigation until the second flash, mark it with the ']' key.\n"
+                    "When complete, press Enter.")
+        
+        self.disable_tools()
+        self.statusbar.showMessage("Running Marker Tool.")
+        stat, mark_in, mark_out = marker_tool(path)
+        self.reset_statusbar()
+        self.enable_tools()
+        
+        if stat:
+            print "from marker:", mark_in, mark_out
+            return (mark_in, mark_out)
         
         return None
     
@@ -961,6 +1002,7 @@ class Wizard(QMainWindow):
         self.dataset_ann_edit.setEnabled(set)
         self.comparison_edit.setEnabled(set)
         self.evaluation_edit.setEnabled(set)
+        self.actionNew.setEnabled(set)
         self.actionSave.setEnabled(set)
         self.actionSave_As.setEnabled(set)
         self.actionOpen.setEnabled(set)
@@ -987,6 +1029,15 @@ class Wizard(QMainWindow):
     @pyqtSlot()
     def disable_tools(self, set=False):
         self.enable_tools(set)
+    
+    def showHelp(self, title, text):
+        if self.actionHelp_Dialogs.isChecked():
+            dialog = QMessageBox(self);
+            dialog.setWindowTitle(title)
+            dialog.setText(text)
+            dialog.setIcon(QMessageBox.Information)
+            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.exec_()
     
     @pyqtSlot()
     def about(self):
