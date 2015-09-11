@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.9
+# version 0.2.11
 # 
 # Runs mapping routines on multiple CSV files and combines them into a single XML format.
 #
@@ -12,7 +12,7 @@
 
 import sys, os
 from elementtree.SimpleXMLWriter import XMLWriter
-from eagleeye import Dataset, EasyArgs, Mapper
+from eagleeye import Memset, EasyArgs, Mapper
 
 def usage():
     print "python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> [<multiple csv files>] {--config <file>}"
@@ -20,12 +20,12 @@ def usage():
 def main(sysargs):
     args = EasyArgs(sysargs)
 
-    if not args.verifyOpts("calib", "trainer", "output"):
+    if ["calib", "trainer", "output"] not in args:
         print "Must specify: -calib, -trainer, -output files"
         usage()
         return 1
         
-    if not args.verifyLen(2):
+    if len(args) == 1:
         print "Not enough input CSV files"
         usage()
         return 1
@@ -35,16 +35,16 @@ def main(sysargs):
     frame_num = 1
     
     # open source CSV datasets
-    for i in range(1, len(args._noops)):
+    for i in range(1, len(args)):
         print args[i]
-        csvs[i] = Dataset(args[i])
+        csvs[i] = Memset(args[i])
     
     
     # reel all the files up to their first flash
     for i in csvs:
-        csvs[i].reel()
+        csvs[i].restrict()
         if len(csvs[i].row()) < 10:
-            print "CSV file:", args._noops[i], "contains no marker data!\nAborting."
+            print "CSV file:", args[i], "contains no marker data!\nAborting."
             return 1
     
     # open calib files
@@ -82,30 +82,20 @@ def main(sysargs):
                 
             w.end()
             
-            # test flashes
-            flashes = 0
+            # test end of files
+            eofs = 0
             for i in csvs:
-                if csvs[i].flash(): flashes += 1
+                if csvs[i].eof(): eofs += 1
             
-            if len(csvs) == flashes:
+            if len(csvs) == eofs:
                 print "end of all datasets"
                 break
             
+            
+            # load next frame
             frame_num += 1
-            
-            # load next frame, remove when they finish
             for i in csvs:
-                c = csvs[i]
-                
-                if not c.next():
-                    c.close()
-                    print "end of file:", c.name()
-                    del csvs[i]
-            
-            # break if all files have ended
-            if len(csvs) == 0:
-                print "all datasets exhausted!"
-                break
+                csvs[i].next()
         
         w.close(doc)
         

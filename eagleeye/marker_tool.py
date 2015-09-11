@@ -4,12 +4,11 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1
+# version 0.1.1
 #
 
 from buff_cap import BuffCap
 from cv_keys import Key
-from cv_flags import CVFlag
 import cv2
 
 def marker_tool(video_path, buffer_size=50, window_name="Marking Tool"):
@@ -26,7 +25,7 @@ def marker_tool(video_path, buffer_size=50, window_name="Marking Tool"):
         frame = cap.frame()
         cv2.putText(frame, \
                     cap.status() + " in: {0} out: {1}".format(mark_in, mark_out), 
-                    (5,15), CVFlag.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1, CVFlag.LINE_AA)
+                    (5,15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1, cv2.LINE_AA)
         
         # display and wait
         cv2.imshow(window_name, frame)

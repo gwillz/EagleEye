@@ -1,8 +1,8 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Kin Kuen, Liu
-ver = '1.3.21'
-# Last Updated: 2015-08-27
+ver = '1.3.23'
+# Last Updated: 2015-09-11
 # 
 # Camera Calibration and Image Undistortion using OpenCV standard pinhole camera functions.
 # Rational model flag is enabled to compensate radial and tangential effect present in fish-eye lens
@@ -20,7 +20,7 @@ ver = '1.3.21'
 import sys, glob, time, os, cv2, numpy as np, ast
 from datetime import datetime
 from elementtree.SimpleXMLWriter import XMLWriter
-from eagleeye import EasyArgs, EasyConfig, CVFlag
+from eagleeye import EasyArgs, EasyConfig
 
 '''
 Camera Calibration (Standard Pinhole Camera)
@@ -91,7 +91,7 @@ def stdCalib(imagesArr, patternSize=(9,6), squareSize=1.0, preview_path=False):
         grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Detect chessboard pattern
-        found, corners = cv2.findChessboardCorners(grey, p_size, CVFlag.CALIB_CB_ADAPTIVE_THRESH)
+        found, corners = cv2.findChessboardCorners(grey, p_size, cv2.CALIB_CB_ADAPTIVE_THRESH)
 
         if found == True:
             print ' *** Pattern found *** ',
@@ -306,11 +306,11 @@ def main(sysargs):
     elif args.version:
         version()
         return 0
-    elif not args.verifyLen(11):
+    elif len(args) < 10:
         print "Requires a minimum 10 chessboard images."
         usage()
         return 0
-    elif not args.verifyOpts('output'):
+    elif 'output' not in args:
         print "Requires an output path."
         usage()
         return 0
@@ -327,7 +327,7 @@ def main(sysargs):
         os.makedirs(args.preview)
     
     try: # calibration
-        cam_mat, dist, err = stdCalib(args._noops[1:], p_size, s_size, args.preview)
+        cam_mat, dist, err = stdCalib(args[1:], p_size, s_size, args.preview)
         # XML Output
         intWriter(args.output, cam_mat, dist, err)
     except:
@@ -336,7 +336,7 @@ def main(sysargs):
     
     # Rectify
     if args.preview:
-        undistort(args.preview, args._noops[1:], cam_mat, dist)
+        undistort(args.preview, args[1:], cam_mat, dist)
     
     print '--------------------------------------'
     print 'Intrinsic Calibration has completed successfully!'

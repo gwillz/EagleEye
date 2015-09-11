@@ -4,13 +4,13 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.3
+# version 0.1.5
 # 
 # Processes a video and extracts singular frames for calibration.
 # 
 
 import sys, cv2, os
-from eagleeye import EasyArgs, BuffSplitCap, Key, CVFlag, EasyConfig
+from eagleeye import EasyArgs, BuffSplitCap, Key, EasyConfig
 
 def usage():
     print "usage: python2 extract_frames.py <video file> <output image folder> {-prefix <output name> | --config <file>}"
@@ -19,7 +19,7 @@ def main(sysargs):
     # test args
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.config, group="chessboard_extract")
-    if not args.verifyLen(3):
+    if len(args) <= 3:
         usage()
         return 1
 
@@ -27,7 +27,7 @@ def main(sysargs):
     window_name = "Chessboard Extractor"
     side = BuffSplitCap.__dict__[cfg.split_side]
     rotate = BuffSplitCap.__dict__[cfg.rotate]
-    font = CVFlag.FONT_HERSHEY_SIMPLEX
+    font = cv2.FONT_HERSHEY_SIMPLEX
 
     # image stuff
     image_path = os.path.join(args[2], args.prefix or 'frame_')
@@ -44,7 +44,7 @@ def main(sysargs):
         # display status
         textframe = frame.copy()
         cv2.putText(textframe, cap.status(),
-                    (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, CVFlag.LINE_AA)
+                    (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, cv2.LINE_AA)
         cv2.imshow(window_name, textframe)
         
         # controls

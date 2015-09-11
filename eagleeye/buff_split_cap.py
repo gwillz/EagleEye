@@ -3,14 +3,13 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version: 0.1
+# version: 0.1.1
 # 
 # Implements features from both BuffCapture and SplitCapture.
 # Can buffer and split, rotate, crop frames on-the-fly.
 #
 
 import cv2, numpy as np
-from cv_flags import CVFlag
 
 class BuffSplitCap:
     left = 0
@@ -37,8 +36,8 @@ class BuffSplitCap:
         self.crop = crop
         
         # get _input_ frame dimensions
-        self._w = int(self._cap.get(CVFlag.CAP_PROP_FRAME_WIDTH))
-        self._h = int(self._cap.get(CVFlag.CAP_PROP_FRAME_HEIGHT))
+        self._w = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self._h = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         
         # load up the buffer
         for i in xrange(0, buff_max):
@@ -49,7 +48,7 @@ class BuffSplitCap:
         
         self._frame = self.buff[0]
         self.shape = self._frame.shape
-        self.total = int(self._cap.get(CVFlag.CAP_PROP_FRAME_COUNT))
+        self.total = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
     # internal routine - runs transformations on a single frame
     def _transform(self, frame, side, rotate, crop):

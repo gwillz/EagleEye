@@ -4,14 +4,14 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.10
+# version 0.2.12
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffCap, Xmlset, EasyArgs, EasyConfig, CVFlag, Key, marker_tool
+from eagleeye import BuffCap, Xmlset, EasyArgs, EasyConfig, Key, marker_tool
 
 def usage():
     print "usage: python2 compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}"
@@ -19,11 +19,11 @@ def usage():
 def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.cfg, group="compare")
-    font = CVFlag.FONT_HERSHEY_SIMPLEX
+    font = cv2.FONT_HERSHEY_SIMPLEX
     window_name = "EagleEye Comparator"
     
     # grab marks from args
-    if args.verifyLen(6):
+    if len(args) > 5:
         mark_in = args[4]
         mark_out = args[5]
         
@@ -34,7 +34,7 @@ def main(sysargs):
             return 1
     
     # or grab them from a marker tool
-    elif args.verifyLen(4):
+    elif len(args) > 3:
         ret, mark_in, mark_out = marker_tool(args[1], 50, window_name)
         if not ret:
             print "Not processing - exiting."
@@ -54,9 +54,9 @@ def main(sysargs):
     
     # open export (if specified)
     if args.export:
-        in_fps  = vid._cap.get(CVFlag.CAP_PROP_FPS)
-        in_size = (int(vid._cap.get(CVFlag.CAP_PROP_FRAME_WIDTH)),
-                   int(vid._cap.get(CVFlag.CAP_PROP_FRAME_HEIGHT)))
+        in_fps  = vid._cap.get(cv2.CAP_PROP_FPS)
+        in_size = (int(vid._cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                   int(vid._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
         out_vid = cv2.VideoWriter(args.export,
                                   cv2.VideoWriter_fourcc(*cfg.fourcc),
