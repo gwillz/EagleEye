@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.6
+# version 0.2.7
 # 
 # I didn't like getopt.
 # This class separates options (--opt var) from arguments [0] => arg.
@@ -26,9 +26,19 @@
 #
 # Beware: 
 #   -o will return the same as -option, --option, and --o
-#   this also means -o cannot distinguish between --option and --other
-#   remedy this by using more letter -ot and -op will be distinguishable
-#
+#   this also means -o cannot be distinguished between --option and --other
+#   remedy this by using more letters, -ot and -op will be distinguishable
+# 
+# Cheeky option checks.
+# i.e:
+#   if ['help', 'usage'] in args:
+#       print 'show help'
+# 
+# or even:
+#   if 'config' not in args:
+#       print 'get mad'
+# 
+# 
 
 import os, sys, re, ast
 
@@ -56,20 +66,8 @@ class EasyArgs:
         # catch end options
         if o is not None:
             self._ops[o] = True
-        
-    # True if has all of the listed options
-    def verifyOpts(self, *ops):
-        for o in ops:
-            if self.__getattr__(o) is False:
-                self._missing = o
-                return False
-        return True
     
-    # True if has _more_than_or_equal_ singular arguments than 'length'
-    def verifyLen(self, length):
-        return length <= len(self._noops)
-    
-    # I.e: EasyArgs.option_name # => option_var
+    # i.e: EasyArgs.option_name # => option_var
     def __getattr__(self, key):
         if key in self._ops:
             return self._ops[key]
@@ -80,9 +78,31 @@ class EasyArgs:
         
         return False
         
-    # I.e: EasyArgs[0] # => first arg (typically script.py)
+    # i.e: EasyArgs[0] # => first arg (typically script.py)
     def __getitem__(self, key):
         return self._noops[key]
+    
+    # number of args
+    def __len__(self):
+        return len(self._noops)
+    
+    # iterator of args i.e: for i in args
+    def __iter__(self):
+        return self._noops.__iter__()
+    
+    # test for available options
+    def __contains__(self, key):
+        # test lists - i.e: ['version', 'usage'] in EasyArgs
+        if type(key) is list:
+            for o in key:
+                if self.__getattr__(o) is False:
+                    self._missing = o
+                    return False
+            # else
+            return True
+        # test regular keys - i.e: 'config' in EasyArgs
+        else:
+            return (key in self._ops)
     
     # An inner routine function to auto-convert type from strings
     def _converttype(self, var):
@@ -121,9 +141,9 @@ if __name__ == "__main__" and sys.argv[1] == 'test':
     
     print "testing:", test_args
     print ""
-    print "verify len (2):", args.verifyLen(2)
-    print "verify opts:", args.verifyOpts("special", "u", "h")
-    print "verify opts (bad):", args.verifyOpts("bad")
+    print "verify len (2):", len(args) >= 2
+    print "verify opts [special, u, hello]:", ["special", "u", "hello"] in args
+    print "verify opts - bad:", "bad" in args
     print ""
     print "empty:", args.empty
     print "u:", args.u
@@ -134,6 +154,8 @@ if __name__ == "__main__" and sys.argv[1] == 'test':
     print "haha:", args.haha
     print "tuple:", args.tuple, type(args.tuple)
     print "list:", args.list, type(args.list)
+    print ""
+    print "args:", [i for i in args], "size:", len(args)
     print ""
     print "all:", args
     
