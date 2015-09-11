@@ -29,7 +29,24 @@ def main(sysargs):
         print "Not enough input CSV files"
         usage()
         return 1
-
+    
+    # working vars
+    csvs = {}
+    frame_num = 1
+    
+    # open source CSV datasets
+    for i in range(1, len(args._noops)):
+        print args[i]
+        csvs[i] = Dataset(args[i])
+    
+    
+    # reel all the files up to their first flash
+    for i in csvs:
+        csvs[i].reel()
+        if len(csvs[i].row()) < 10:
+            print "CSV file:", args._noops[i], "contains no marker data!\nAborting."
+            return 1
+    
     # open calib files
     mapper = Mapper(args.calib, args.trainer)
 
@@ -40,25 +57,12 @@ def main(sysargs):
         xmlfile.write("<!DOCTYPE dataset SYSTEM \"http://storage.gwillz.com.au/eagleeye_v2.dtd\">")
         doc = w.start("dataset")
         
-        # working vars
-        csvs = {}
-        frame_num = 1
-        
-        # open source CSV datasets
-        for i in range(1, len(args._noops)):
-            print args[i]
-            csvs[i] = Dataset(args[i])
-        
-        
-        # reel all the files up to their first flash
-        for i in csvs:
-            csvs[i].reel()
-        
+        # main loop
         while True:
             w.start("frameInformation")
             w.element("frame", number=str(frame_num))
             
-            for c in csvs:
+            for i in csvs:
                 c = csvs[i]
                 # run projection/mapping on data
                 points = mapper.calpts((
@@ -67,9 +71,13 @@ def main(sysargs):
                                 float(c.row()[4])
                                 ))
                 
-                w.start("object", id=str(c), name=c.name())
+                # determine marker quality
+                quality = float(c.row()[9]) / float(c.row()[8])
+                
+                w.start("object", id=str(i), name=c.name())
                 w.element("boxinfo", height="99", width="99", x=str(points[0]-50), y=str(points[1]-50))
                 w.element("centroid", x=str(points[0]), y=str(points[1]))
+                w.element("quality", str(quality))
                 w.end()
                 
             w.end()
