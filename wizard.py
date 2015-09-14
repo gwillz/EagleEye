@@ -41,10 +41,6 @@ class Wizard(QMainWindow):
         self._original_title = self.windowTitle() # for newaction
         self._working_title = self.windowTitle()
         
-        # chessboards
-        self.backside = []
-        self.buttonside = []
-        
         # config stuff
         self.config_path = "eagleeye.cfg"
         #TODO loading config files, editing and junk
@@ -479,6 +475,17 @@ class Wizard(QMainWindow):
     def destroy_worker(self, obj):
         del self.worker
     
+    def choose_lens(self, title, text):
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle(title)
+        dialog.setText(text)
+        buttonside_button = dialog.addButton("Button Side", QMessageBox.AcceptRole)
+        backside_button = dialog.addButton("Back Side", QMessageBox.AcceptRole)
+        both_button = dialog.addButton("Both", QMessageBox.AcceptRole)
+        dialog.exec_()
+        
+        return buttonside_button, backside_button, both_button, dialog.clickedButton()
+    
     ## tool launcher slots
     @pyqtSlot()
     def chessboard_extract(self):
@@ -488,13 +495,8 @@ class Wizard(QMainWindow):
         if input_path == "": return
         
         # determine lens side
-        dialog = QMessageBox(self)
-        dialog.setText("Which lens would you like to extract from this video?")
-        dialog.setWindowTitle("Chessboard Extract")
-        buttonside_button = dialog.addButton("Button Side", QMessageBox.AcceptRole)
-        backside_button = dialog.addButton("Back Side", QMessageBox.AcceptRole)
-        both_button = dialog.addButton("Both", QMessageBox.AcceptRole)
-        dialog.exec_()
+        button_b, back_b, both_b, click_b = self.choose_lens("Chessboard Extract", 
+                                                "Which lens would you like to extract from this video?")
         
         # browse for save path
         if self.chessboard_edit.text() == "":
@@ -509,7 +511,7 @@ class Wizard(QMainWindow):
                         "When an appropriate chessboard frame is found, press Enter.\n"
                         "To quit, press ESC.")
         
-        if dialog.clickedButton() == buttonside_button:
+        if click_b == button_b:
             self.statusbar.showMessage("Running Chessboard Extractor on Button Side.")
             extractor_help()
             stat, worker = self.run_tool(chess_extract_main, ["wizard", 
@@ -522,7 +524,7 @@ class Wizard(QMainWindow):
                 worker.finished.connect(self.load_chessboards)
                 worker.start()
         
-        elif dialog.clickedButton() == backside_button:
+        elif click_b == back_b:
             self.statusbar.showMessage("Running Chessboard Extractor on Back Side.")
             extractor_help()
             stat, worker = self.run_tool(chess_extract_main, ["wizard", 
@@ -535,7 +537,7 @@ class Wizard(QMainWindow):
                 worker.finished.connect(self.load_chessboards)
                 worker.start()
             
-        elif dialog.clickedButton() == both_button:
+        elif click_b == both_b:
             self.statusbar.showMessage("Running Chessboard Extractor on Button Side (1/2).")
             extractor_help()
             
@@ -549,9 +551,13 @@ class Wizard(QMainWindow):
                 self.chessboard_video_path = input_path
                 worker.destroyed.connect(self.run_extractor_left)
                 worker.start()
+        else:
+            print "Cancelled"
+            return
     
     @pyqtSlot()
     def run_extractor_left(self):
+        self.statusbar.showMessage("Running Chessboard Extractor on Back Side (2/2).")
         stat, worker = self.run_tool(chess_extract_main, ["wizard", 
                             str(self.chessboard_video_path), 
                             str(self.chessboard_edit.text()),
@@ -584,14 +590,60 @@ class Wizard(QMainWindow):
                                         QMessageBox.Yes, QMessageBox.No)
             if res == QMessageBox.No: return
         
+        button_b, back_b, both_b, click_b = self.choose_lens("Calibrate Lens", 
+                                                    "Which lens would you like to calibrate?")
         
-        self.statusbar.showMessage("Running Calibration.")
-        stat, worker = self.run_tool(calib_main, ["wizard", 
-                                "-output", path,
-                                "-config", self.config_path] +\
-                                self.chessboards)
+        if click_b == button_b:
+            if len(self.buttonside_images) == 0:
+                QMessageBox.information(self, "Not enough images", 
+                                                "No Button Side images were found.\n"
+                                                "Cancelling calibration.")
+                return
+            
+            self.statusbar.showMessage("Running Calibration on Button Side.")
+            args = ["wizard", 
+                    "-output", path,
+                    "-buttonside", self.buttonside_path,
+                    "-config", self.config_path]
+            
+        elif click_b == back_b:
+            if len(self.backside_images) == 0:
+                QMessageBox.information(self, "Not enough images", 
+                                                "No Back Side images were found.\n"
+                                                "Cancelling calibration.")
+                return
+            
+            self.statusbar.showMessage("Running Calibration on Back Side.")
+            args = ["wizard", 
+                    "-output", path,
+                    "-backside", self.backside_path,
+                    "-config", self.config_path]
+            
+        elif click_b == both_b:
+            if len(self.buttonside_images) == 0:
+                QMessageBox.information(self, "Not enough images", 
+                                                "No Button Side images were found.\n"
+                                                "Cancelling calibration.")
+                return
+            if len(self.backside_images) == 0:
+                QMessageBox.information(self, "Not enough images", 
+                                                "No Back Side images were found.\n"
+                                                "Cancelling calibration.")
+                return
+            
+            self.statusbar.showMessage("Running Calibration on Both Sides.")
+            args = ["wizard", 
+                    "-output", path,
+                    "-buttonside", self.buttonside_path,
+                    "-backside", self.backside_path,
+                    "-config", self.config_path]
+        else:
+            print "Cancelled"
+            return
+        
+        stat, worker = self.run_tool(calib_main, args)
         if stat: worker.start()
-
+    
     @pyqtSlot()
     def run_capture_training(self):
         # check for capture import
@@ -1010,17 +1062,26 @@ class Wizard(QMainWindow):
     # loads directory of image paths into chessboard list
     @pyqtSlot()
     def load_chessboards(self):
-        self.buttonside = []
-        self.backside = []
-        if self.chessboard_edit.text() != "":
-            self.buttonside = glob.glob(os.path.join(str(self.chessboard_edit.text()), "buttonside_*.jpg"))
-            self.backside = glob.glob(os.path.join(str(self.chessboard_edit.text()), "backside_*.jpg"))
+        self.buttonside_path = ""
+        self.backside_path = ""
+        self.buttonside_images = []
+        self.backside_images = []
         
-        chess_len = len(self.buttonside) + len(self.backside)
+        # load new images (if applicable)
+        if self.chessboard_edit.text() != "":
+            self.buttonside_path = str(self.chessboard_edit.text()) + os.sep + "buttonside_"
+            self.backside_path = str(self.chessboard_edit.text()) + os.sep + "backside_"
+            
+            self.buttonside_images = glob.glob(self.buttonside_path + "*")
+            self.backside_images = glob.glob(self.backside_path + "*")
+        
+        # determine length, present in gui, enable buttons, whatever
+        chess_len = len(self.buttonside_images) + len(self.backside_images)
         self.num_chessboards.setText(str(chess_len))
         self.calibration_button.setEnabled(chess_len > 0)
-        
-        self.num_chessboards.setToolTip("{} button side, {} back side".format(len(self.buttonside), len(self.backside)))
+        self.num_chessboards.setToolTip("{} button side, {} back side".format(
+                                            len(self.buttonside_images), 
+                                            len(self.backside_images)))
     
     # loads directory of csv paths into vicondata list
     @pyqtSlot()
