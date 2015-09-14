@@ -1,8 +1,8 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Kin Kuen, Liu
-ver = '1.3.23'
-# Last Updated: 2015-09-11
+ver = '1.4.23'
+# Last Updated: 2015-09-14
 # 
 # Camera Calibration and Image Undistortion using OpenCV standard pinhole camera functions.
 # Rational model flag is enabled to compensate radial and tangential effect present in fish-eye lens
@@ -13,7 +13,7 @@ ver = '1.3.23'
 #
 # Please read README for more information.
 #
-# Tested on Python 2.7.8, OpenCV 2.4.11
+# Tested on Python 2.7.8, OpenCV 3.0
 # API Reference: http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
 # 
 
@@ -30,23 +30,21 @@ converts each image to grey scale and detects chessboard pattern
 
 If pattern is found, position of each corner in image plane will be added to the image points array,
 along with object points which indicate the individual position of chessboard corners in real world.
-Each detection is rendered and output to the original image's location with a postfix of '_pattern'.
+Images with reprojected chessboard points are saved into the preview folder, if specified.
 
-Calibration occurs once detected corners are added to object points and image poitns arrays.
+Calibration occurs once detected corners are added to object points and image points arrays.
 k4, k5, k6 coefficients are enabled to decrease the error induced by fish-eye lens,
 while OpenCV fisheye functions are being investigated to replace this standard function.
 
-Intrinsic parameters: Camera matrix, distortion coefficents.
+Intrinsic parameters: Camera matrix, distortion coefficients.
 Extrinsic parameters: Rotation & Translation vectors.
 and root mean square (RMS), which indicates,on average of all images with pattern found,
 the difference between position of each reprojected point and their actual point pre-undistortion in pixels.
 Furthermore, the sum of error and arithmetical mean are also calculated to measure error in individual picture.
 
 Returns:
-rms - Root Mean Square in pixels
 camera_matrix - Camera Matrix
 dist_coefs - 8 parameters Distortion Coefficients (k4, k5, k6 enabled)
-extr - Each image's extrinsic value, e.g. [image path+name, rvecs, tvecs]
 intr_error - a dictionary containing rms, total error and arithmetical mean in pixels
 
 API Reference:
@@ -187,8 +185,8 @@ which happens in default cv2.undistort function.
 However, shape of the undistorted image will be changed and 'squished',
 additional black pixels will be present surrounding outer edges.
 
-Undistorted image is output to the same location as original image is loaded from
-with a postfix of '_undistorted' at the end.
+Undistorted images are saved into the path directory with a postfix 
+of '_undistorted' at the end.
 
 API Reference: http://docs.opencv.org/modules/imgproc/doc/geometric_transformations.html
 '''
@@ -231,9 +229,13 @@ def undistort(path, imagesArr, K, d):
 
 '''
 Outputs Intrinsic parameters to xmldata folder as a XML file
+'buttonside' and 'backside' are both tuples containing:
+   - a camera matrix,
+   - a distortion coefficient array,
+   - an error dict
 '''
 
-def intWriter(path, camMat, distCoe, calibError={}):
+def intWriter(path, buttonside=None, backside=None):
     try:
         print 'Generating Intrinsic Parameters to:', path, '...'
         with open(path, 'w') as int_xml:
@@ -241,48 +243,60 @@ def intWriter(path, camMat, distCoe, calibError={}):
             w.declaration()
             
             # Camera Intrinsic (Root)
-            root = w.start('StdIntrinsic')
+            root = w.start('dual_intrinsic')
             
-            # Camera Matrix
-            w.element('CamMat',
-                     fx=str(camMat[0][0]), fy=str(camMat[1][1]),
-                     cx=str(camMat[0][2]), cy=str(camMat[1][2]))
-            
-            # Distortion Coefficients
-            if (len(distCoe[0]) == 8): # 8 coefficients Rational Model, k4 k5 k6 enabled
-                w.element('DistCoe', k1=str(distCoe[0][0]), k2=str(distCoe[0][1]),
-                          p1=str(distCoe[0][2]), p2=str(distCoe[0][3]),
-                          k3=str(distCoe[0][4]), k4=str(distCoe[0][5]),
-                          k5=str(distCoe[0][6]), k6=str(distCoe[0][7]))
-            elif (len(distCoe[0]) == 12): # 12 coefficients Prism Model, c1, c2, c3, c4 enabled, new in OpenCV 3.0.0
-                w.element('DistCoe', k1=str(distCoe[0][0]), k2=str(distCoe[0][1]),
-                               p1=str(distCoe[0][2]), p2=str(distCoe[0][3]),
-                               k3=str(distCoe[0][4]), k4=str(distCoe[0][5]),
-                               k5=str(distCoe[0][6]), k6=str(distCoe[0][7]),
-                               c1=str(distCoe[0][8]), c2=str(distCoe[0][9]),
-                                c3=str(distCoe[0][10]),c4=str(distCoe[0][11]))
-            else:
-                w.element('DistCoe', k1=str(distCoe[0][0]), k2=str(distCoe[0][1]),
-                          p1=str(distCoe[0][2]), p2=str(distCoe[0][3]),
-                          k3=str(distCoe[0][4]))
-            
-            # Error values
-            if len(calibError) > 0:
-                w.element('Error', rms=str(calibError['rms']), total=str(calibError['tot_err']), arth=str(calibError['arth_err']))
-            
+            num_sides = range(0, 1) if buttonside is None or backside is None else range(0, 2)
+            for i in num_sides:
+                w.start("Buttonside" if i == 0 else "Backside")
+                
+                # Camera Matrix
+                w.element('CamMat',
+                         fx=str(camMat[i][0][0]), fy=str(camMat[i][1][1]),
+                         cx=str(camMat[i][0][2]), cy=str(camMat[i][1][2]))
+                
+                # Distortion Coefficients
+                if (len(distCoe[0]) == 8): # 8 coefficients Rational Model, k4 k5 k6 enabled
+                    w.element('DistCoe', 
+                                k1=str(distCoe[i][0][0]), k2=str(distCoe[i][0][1]),
+                                p1=str(distCoe[i][0][2]), p2=str(distCoe[i][0][3]),
+                                k3=str(distCoe[i][0][4]), k4=str(distCoe[i][0][5]),
+                                k5=str(distCoe[i][0][6]), k6=str(distCoe[i][0][7]))
+                elif (len(distCoe[0]) == 12): # 12 coefficients Prism Model, c1, c2, c3, c4 enabled, new in OpenCV 3.0.0
+                    w.element('DistCoe', 
+                                k1=str(distCoe[i][0][0]), k2=str(distCoe[i][0][1]),
+                                p1=str(distCoe[i][0][2]), p2=str(distCoe[i][0][3]),
+                                k3=str(distCoe[i][0][4]), k4=str(distCoe[i][0][5]),
+                                k5=str(distCoe[i][0][6]), k6=str(distCoe[i][0][7]),
+                                c1=str(distCoe[i][0][8]), c2=str(distCoe[i][0][9]),
+                                c3=str(distCoe[i][0][10]),c4=str(distCoe[i][0][11]))
+                else:
+                    w.element('DistCoe', 
+                                k1=str(distCoe[i][0][0]), k2=str(distCoe[i][0][1]),
+                                p1=str(distCoe[i][0][2]), p2=str(distCoe[i][0][3]),
+                                k3=str(distCoe[i][0][4]))
+                
+                # Error values
+                if len(calibError) > 0:
+                    w.element('Error', 
+                                rms=str(calibError[i]['rms']), 
+                                total=str(calibError[i]['tot_err']), 
+                                arth=str(calibError[i]['arth_err']))
+                
+                w.end() #buttonside/backside
+                
             w.close(root)
         print 'Intrinsic calibration has been generated successfully.'
         
     except Exception as e:
-        print 'ERROR: occurred in writing intrinsic XML file.'
-        raise e # keep it bubbling up, to catch in main()
-
+        # keep it bubbling up, to catch in main()
+        raise Exception("{}: {}\n'ERROR: occurred in writing intrinsic XML file.'".format(type(e), e.message))
+    
 '''
 Prints versions of Python and OpenCV.
 '''
 def version():
     print 'Camera Calibration Script Version: ', ver
-    print 'Script is tested using Python 2.7.8 & OpenCV 3.0.0 & NumPy 1.9.0 \n'
+    print 'Script has been tested using Python 2.7.8 & OpenCV 3.0.0 & NumPy 1.9.0 \n'
     
     print 'Running versions:'
     print 'Python:', sys.version
@@ -290,10 +304,10 @@ def version():
     print 'NumPy Version:', np.__version__
 
 '''
-Prints usage of stdcalib.py
+Prints usage of dualcalib.py
 '''
 def usage():
-    print 'usage: stdcalib.py -output <file path> <multiple jpg files> {-chess_size <pattern: def. 9,6> | -square_size <in mm: def. 1.0> | -preview <preview file folder> | -config <file>}'
+    print 'usage: dualcalib.py -output <file path> -buttonside <path prefix> -backside <path prefix> {-chess_size <pattern: def. 9,6> | -square_size <in mm: def. 1.0> | -preview <preview file folder> | -config <file>}'
 
 def main(sysargs):
     args = EasyArgs(sysargs)
@@ -306,12 +320,12 @@ def main(sysargs):
     elif args.version:
         version()
         return 0
-    elif len(args) < 10:
-        print "Requires a minimum 10 chessboard images."
-        usage()
-        return 0
     elif 'output' not in args:
         print "Requires an output path."
+        usage()
+        return 0
+    if not ('buttonside' in args or 'backside' in args):
+        print "Requires one of -buttonside or -backside."
         usage()
         return 0
     
@@ -322,22 +336,37 @@ def main(sysargs):
     else:
         p_size = cfg.default_chess
     
-    # create preview folder if specified
-    if args.preview and not os.path.exists(args.preview):
-        os.makedirs(args.preview)
-    
-    try: # calibration
-        cam_mat, dist, err = stdCalib(args[1:], p_size, s_size, args.preview)
+    try:
+        # find chessboard images from prefixes
+        if args.buttonside:
+            buttonside_images = glob.glob(args.buttonside + "*")
+            buttonside_cam, buttonside_dist, buttonside_err = stdCalib(buttonside_images, p_size, s_size, args.preview)
+        if args.backside:
+            backside_images = glob.glob(args.backside + "*")
+            backside_cam, backside_dist, backside_err = stdCalib(backside_images, p_size, s_size, args.preview)
+        
+        # create preview folder if specified
+        if args.preview and not os.path.exists(args.preview):
+            os.makedirs(args.preview)
+        
         # XML Output
-        intWriter(args.output, cam_mat, dist, err)
-    except:
+        intWriter(args.output, 
+                        (buttonside_cam, buttonside_dist, buttonside_err), 
+                        (backside_cam, backside_dist, backside_err))
+        
+        # Rectify
+        if args.preview:
+            if args.buttonside:
+                undistort(args.preview, buttonside_images, buttonside_cam, buttonside_dist)
+            if args.backside:
+                undistort(args.preview, backside_images, backside_cam, backside_dist)
+        
+    except Exception as e:
+        print e.message
         print "Aborting."
         return 1
     
-    # Rectify
-    if args.preview:
-        undistort(args.preview, args[1:], cam_mat, dist)
-    
+    # well otherwise everything worked out, right?
     print '--------------------------------------'
     print 'Intrinsic Calibration has completed successfully!'
     return 0
