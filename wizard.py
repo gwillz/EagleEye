@@ -41,6 +41,10 @@ class Wizard(QMainWindow):
         self._original_title = self.windowTitle() # for newaction
         self._working_title = self.windowTitle()
         
+        # chessboards
+        self.backside = []
+        self.buttonside = []
+        
         # config stuff
         self.config_path = "eagleeye.cfg"
         #TODO loading config files, editing and junk
@@ -478,33 +482,86 @@ class Wizard(QMainWindow):
     ## tool launcher slots
     @pyqtSlot()
     def chessboard_extract(self):
-        # browse for save path
-        if self.chessboard_edit.text() == "":
-            self.browse_chessboards()
-        
-        # get path
-        output_path = str(self.chessboard_edit.text())
-        if output_path == "": return
-        
         # find a chessboard video
         input_path = QFileDialog.getOpenFileName(self, "Open Chessboard Video", "./", 
                                                 "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
         if input_path == "": return
         
-        self.statusbar.showMessage("Running Chessboard Extractor.")
-        self.showHelp("Chessboard Extractor", 
+        # determine lens side
+        dialog = QMessageBox(self)
+        dialog.setText("Which lens would you like to extract from this video?")
+        dialog.setWindowTitle("Chessboard Extract")
+        buttonside_button = dialog.addButton("Button Side", QMessageBox.AcceptRole)
+        backside_button = dialog.addButton("Back Side", QMessageBox.AcceptRole)
+        both_button = dialog.addButton("Both", QMessageBox.AcceptRole)
+        dialog.exec_()
+        
+        # browse for save path
+        if self.chessboard_edit.text() == "":
+            self.browse_chessboards()
+        
+        output_path = self.chessboard_edit.text()
+        if output_path == "": return
+        
+        def extractor_help():
+            self.showHelp("Chessboard Extractor", 
                         "Use the Left and Right keys to navigate the video.\n"
                         "When an appropriate chessboard frame is found, press Enter.\n"
                         "To quit, press ESC.")
         
-        stat, worker = self.run_tool(chess_extract_main, ["wizard", 
-                                    str(input_path),
-                                    output_path,
+        if dialog.clickedButton() == buttonside_button:
+            self.statusbar.showMessage("Running Chessboard Extractor on Button Side.")
+            extractor_help()
+            stat, worker = self.run_tool(chess_extract_main, ["wizard", 
+                                    str(input_path), 
+                                    str(output_path),
+                                    "-split", "right",
+                                    "-prefix", "buttonside_",
                                     "-config", self.config_path])
+            if stat:
+                worker.finished.connect(self.load_chessboards)
+                worker.start()
+        
+        elif dialog.clickedButton() == backside_button:
+            self.statusbar.showMessage("Running Chessboard Extractor on Back Side.")
+            extractor_help()
+            stat, worker = self.run_tool(chess_extract_main, ["wizard", 
+                                    str(input_path), 
+                                    str(output_path),
+                                    "-split", "left",
+                                    "-prefix", "backside_",
+                                    "-config", self.config_path])
+            if stat:
+                worker.finished.connect(self.load_chessboards)
+                worker.start()
+            
+        elif dialog.clickedButton() == both_button:
+            self.statusbar.showMessage("Running Chessboard Extractor on Button Side (1/2).")
+            extractor_help()
+            
+            stat, worker = self.run_tool(chess_extract_main, ["wizard", 
+                                    str(input_path),
+                                    str(output_path),
+                                    "-split", "right",
+                                    "-prefix", "buttonside_",
+                                    "-config", self.config_path])
+            if stat:
+                self.chessboard_video_path = input_path
+                worker.destroyed.connect(self.run_extractor_left)
+                worker.start()
+    
+    @pyqtSlot()
+    def run_extractor_left(self):
+        stat, worker = self.run_tool(chess_extract_main, ["wizard", 
+                            str(self.chessboard_video_path), 
+                            str(self.chessboard_edit.text()),
+                            "-split", "left",
+                            "-prefix", "backside_",
+                            "-config", self.config_path])
         if stat:
             worker.finished.connect(self.load_chessboards)
             worker.start()
-        
+    
     @pyqtSlot()
     def run_calibration(self):
         # browse for save path
@@ -823,14 +880,14 @@ class Wizard(QMainWindow):
     ## File dialog slots
     @pyqtSlot()
     def browse_chessboards(self):
-        path = QFileDialog.getExistingDirectory(self, "Folder of Chessboard Images", 
-                                            self.chessboard_edit.text(), QFileDialog.Options(0))
+        path = QFileDialog.getExistingDirectory(self, "Folder of Chessboards Images", 
+                                                self.chessboard_edit.text(), QFileDialog.Options(0))
         
         if path != "":
             path = os.path.normpath(str(path))
             self.chessboard_edit.setText(path)
             self.load_chessboards()
-        
+    
     @pyqtSlot()
     def browse_calibration(self):
         path = QFileDialog.getOpenFileName(self, "Open Calibration XML", 
@@ -953,14 +1010,18 @@ class Wizard(QMainWindow):
     # loads directory of image paths into chessboard list
     @pyqtSlot()
     def load_chessboards(self):
+        self.buttonside = []
+        self.backside = []
         if self.chessboard_edit.text() != "":
-            self.chessboards = glob.glob(os.path.join(str(self.chessboard_edit.text()), "*.jpg"))
-        else:
-            self.chessboards = []
+            self.buttonside = glob.glob(os.path.join(str(self.chessboard_edit.text()), "buttonside_*.jpg"))
+            self.backside = glob.glob(os.path.join(str(self.chessboard_edit.text()), "backside_*.jpg"))
         
-        self.num_chessboards.setText(str(len(self.chessboards)))
-        self.calibration_button.setEnabled(len(self.chessboards) > 0)
+        chess_len = len(self.buttonside) + len(self.backside)
+        self.num_chessboards.setText(str(chess_len))
+        self.calibration_button.setEnabled(chess_len > 0)
         
+        self.num_chessboards.setToolTip("{} button side, {} back side".format(len(self.buttonside), len(self.backside)))
+    
     # loads directory of csv paths into vicondata list
     @pyqtSlot()
     def load_vicondata(self):

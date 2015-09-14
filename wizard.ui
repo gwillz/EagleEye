@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>583</width>
+    <width>661</width>
     <height>708</height>
    </rect>
   </property>
@@ -14,7 +14,7 @@
    <string>EagleEye Wizard</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout" columnstretch="2,2,1,1,9,9,9,1">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="2,2,1,1,9,1,9,1">
     <property name="leftMargin">
      <number>20</number>
     </property>
@@ -209,16 +209,6 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="3" colspan="4">
-     <widget class="HighlightEdit" name="chessboard_edit">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="placeholderText">
-       <string>chessboards/</string>
-      </property>
-     </widget>
-    </item>
     <item row="10" column="0" colspan="2">
      <widget class="QPushButton" name="dataset_mov_button">
       <property name="text">
@@ -256,22 +246,6 @@
       </property>
       <property name="alignment">
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="7">
-     <widget class="QLabel" name="num_chessboards">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="text">
-       <string>0</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </item>
@@ -390,6 +364,26 @@
       </property>
      </widget>
     </item>
+    <item row="2" column="7">
+     <widget class="QLabel" name="num_chessboards">
+      <property name="text">
+       <string>0</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="3" colspan="4">
+     <widget class="HighlightEdit" name="chessboard_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>chessboards/</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -397,7 +391,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>583</width>
+     <width>661</width>
      <height>21</height>
     </rect>
    </property>
