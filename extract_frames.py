@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.5
+# version 0.1.6
 # 
 # Processes a video and extracts singular frames for calibration.
 # 
@@ -13,20 +13,21 @@ import sys, cv2, os
 from eagleeye import EasyArgs, BuffSplitCap, Key, EasyConfig
 
 def usage():
-    print "usage: python2 extract_frames.py <video file> <output image folder> {-prefix <output name> | --config <file>}"
+    print "usage: python2 extract_frames.py <video file> <output image folder> {-split <left|right> | -prefix <output name> | --config <file>}"
 
 def main(sysargs):
     # test args
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.config, group="chessboard_extract")
-    if len(args) <= 3:
+    if len(args) <= 2:
         usage()
         return 1
 
     # video settings, etc
     window_name = "Chessboard Extractor"
-    side = BuffSplitCap.__dict__[cfg.split_side]
-    rotate = BuffSplitCap.__dict__[cfg.rotate]
+    side = BuffSplitCap.__dict__[args.split or 'right']
+    rotate = BuffSplitCap.r0
+    crop = (0,0,0,0)
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     # image stuff
@@ -35,7 +36,7 @@ def main(sysargs):
         os.makedirs(args[2])
 
     cv2.namedWindow(window_name)
-    cap = BuffSplitCap(args[1], side=side, rotate=rotate, crop=cfg.crop, buff_max=cfg.buffer_size)
+    cap = BuffSplitCap(args[1], side=side, rotate=rotate, crop=crop, buff_max=cfg.buffer_size)
 
     # loop video file
     while cap.isOpened():
