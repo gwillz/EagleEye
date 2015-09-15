@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.3.28
+# version 0.4.28
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -29,7 +29,7 @@
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffCap, Memset, Key, EasyConfig, EasyArgs, marker_tool
+from eagleeye import BuffSplitCap, Memset, Key, EasyConfig, EasyArgs, marker_tool
 from elementtree.SimpleXMLWriter import XMLWriter
 
 def usage():
@@ -43,6 +43,7 @@ class Status:
     back   = 3
     remove = 4
     wait   = 5
+    still  = 6
 
 def main(sysargs):
     # settings
@@ -91,11 +92,11 @@ def main(sysargs):
     
     # working variables
     params = {'status': Status.skip, 'pos': None}
-    trainer_points = {}
+    trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
     write_xml = False
     
     # load video (again)
-    in_vid = BuffCap(args[1], cfg.buffer_size)
+    in_vid = BuffSplitCap(args[1], crop=(0,0,0,0), rotate=BuffSplitCap.r0, buff_max=cfg.buffer_size)
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, on_mouse, params)
     
@@ -115,8 +116,11 @@ def main(sysargs):
     print "Number of clicks at:", max_clicks
     print ""
     
-    # grab clicks (Process 2)   # TODO: frame_no is not accurate. But it's not used.
+    # TODO: frame_no is not accurate. But it's not used.
+    
+    # grab clicks (Process 2)   
     frame_no = 0
+    lens = BuffSplitCap.left
     while in_vid.isOpened():
         # restrict to flash marks
         if frame_no <= mark_in:
@@ -130,13 +134,14 @@ def main(sysargs):
             break
         
         # load frame
-        frame = in_vid.frame()
+        frame = in_vid.frame(side=lens)
         
         # prepare CSV data, click data
         textrow = "{:.3f}".format(float(in_csv.row()[0]))
         for cell in in_csv.row()[2:8]:
             textrow += ", {:.4f}".format(float(cell))
-        textstatus = "{}/{} clicks".format(len(trainer_points), max_clicks)
+        textstatus = "{}/{} clicks".format(len(trainer_points[lens]), max_clicks)
+        textstatus += " - back side" if lens == BuffSplitCap.left else " - button side"
         
         # data quality status
         quality = float(in_csv.row()[9]) / float(in_csv.row()[8])
@@ -146,9 +151,9 @@ def main(sysargs):
             textstatus += " - Bad data!!"
         
         # draw the trainer dot (if applicable)
-        if frame_no in trainer_points:
-            cv2.circle(frame, trainer_points[frame_no][0], 1, cfg.font_colour, 2)
-            cv2.circle(frame, trainer_points[frame_no][0], 15, cfg.font_colour, 1)
+        if frame_no in trainer_points[lens]:
+            cv2.circle(frame, trainer_points[lens][frame_no][0], 1, cfg.font_colour, 2)
+            cv2.circle(frame, trainer_points[lens][frame_no][0], 15, cfg.font_colour, 1)
             
         # draw text and show
         cv2.putText(frame, textrow,
@@ -171,6 +176,12 @@ def main(sysargs):
                 params['status'] = Status.back
             elif key == Key.backspace:
                 params['status'] = Status.remove
+            elif Key.char(key, '1'):
+                params['status'] = Status.still
+                lens = BuffSplitCap.left
+            elif Key.char(key, '2'):
+                params['status'] = Status.still
+                lens = BuffSplitCap.right
             
         # catch exit status
         if params['status'] == Status.stop:
@@ -178,20 +189,25 @@ def main(sysargs):
             break
         
         # write data
-        if params['status'] == Status.record:
+        if params['status'] == Status.record \
+                and len(trainer_points[lens]) != max_clicks:
             print textstatus
-            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5], quality)
+            trainer_points[lens][frame_no] = (params['pos'], in_csv.row()[2:5], quality)
             params['status'] = Status.skip
         
         # or remove it
         elif params['status'] == Status.remove:
             print "removed dot"
-            del trainer_points[frame_no]
+            del trainer_points[lens][frame_no]
+            params['status'] = Status.still
         
         # stop on max clicks - end condition 2
-        if len(trainer_points) == max_clicks:
+        if len(trainer_points[BuffSplitCap.left]) == max_clicks \
+                and len(trainer_points[BuffSplitCap.right]) == max_clicks:
             print "all clicks done"
-            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5], quality)
+            
+            # why record here? how can we know this a good training point?
+            trainer_points[lens][frame_no] = (params['pos'], in_csv.row()[2:5], quality)
             write_xml = True
             break
         
@@ -225,20 +241,25 @@ def main(sysargs):
         out_xml.element("csv", os.path.basename(args[2]))
         
         # training point data
-        out_xml.start("frames")
-        for i in trainer_points:
-            pos, row, quality = trainer_points[i]
+        for lens in trainer_points:
+            out_xml.start("buttonside" if lens == BuffSplitCap.left else "backside")
+            out_xml.start("frames")
             
-            out_xml.start("frame", num=str(i), quality=str(quality))
-            out_xml.element("plane", 
-                            x=str(pos[0]), 
-                            y=str(pos[1]))
-            out_xml.element("vicon", 
-                            x=str(row[0]), y=str(row[1]), z=str(row[2]))
-            out_xml.end()
+            for i in trainer_points[lens]:
+                pos, row, quality = trainer_points[lens][i]
+                
+                out_xml.start("frame", num=str(i), quality=str(quality))
+                out_xml.element("plane", 
+                                x=str(pos[0]), 
+                                y=str(pos[1]))
+                out_xml.element("vicon", 
+                                x=str(row[0]), y=str(row[1]), z=str(row[2]))
+                out_xml.end()
+                
+            out_xml.end() # frames
+            out_xml.end() # buttonside/backside
         
         # clean up
-        out_xml.end()
         out_xml.close(doc)
         
         print "Data was written."
