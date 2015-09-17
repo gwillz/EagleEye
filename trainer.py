@@ -115,18 +115,17 @@ def main(sysargs):
     print "Number of clicks at:", max_clicks
     print ""
     
-    # grab clicks (Process 2)   # TODO: frame_no is not accurate. But it's not used.
-    frame_no = 0
+    # grab clicks (Process 2)
     while in_vid.isOpened():
+        print "Current Frame in vid: {}".format(in_vid.at())
         # restrict to flash marks
-        if frame_no < mark_in:
-            print "Forward to first flash... frame in vid: {} | frame_no: {}".format(in_vid.at(), frame_no)
+        if in_vid.at() < mark_in:
+            print "Forward to first flash... frame in vid: {} | mark in: {}".format(in_vid.at(), mark_in)
             in_vid.next()
-            frame_no += 1
             continue
-        if frame_no >= (mark_in + cropped_total) or frame_no >= mark_out:
+        if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
             write_xml = True
-            print "end of video: {}/{}".format(frame_no, mark_out)
+            print "end of video: {}/{}".format(in_vid.at(), mark_out)
             break
         
         # load frame
@@ -146,9 +145,9 @@ def main(sysargs):
             textstatus += " - Bad data!!"
         
         # draw the trainer dot (if applicable)
-        if frame_no in trainer_points:
-            cv2.circle(frame, trainer_points[frame_no][0], 1, cfg.font_colour, 2)
-            cv2.circle(frame, trainer_points[frame_no][0], 15, cfg.font_colour, 1)
+        if in_vid.at() in trainer_points:
+            cv2.circle(frame, trainer_points[in_vid.at()][0], 1, cfg.font_colour, 2)
+            cv2.circle(frame, trainer_points[in_vid.at()][0], 15, cfg.font_colour, 1)
             
         # draw text and show
         cv2.putText(frame, textrow,
@@ -180,18 +179,18 @@ def main(sysargs):
         # write data
         if params['status'] == Status.record:
             print textstatus
-            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5], quality)
+            trainer_points[in_vid.at()] = (params['pos'], in_csv.row()[2:5], quality)
             params['status'] = Status.skip
         
         # or remove it
         elif params['status'] == Status.remove:
             print "removed dot"
-            del trainer_points[frame_no]
+            del trainer_points[in_vid.at()]
         
         # stop on max clicks - end condition 2
         if len(trainer_points) == max_clicks:
             print "all clicks done"
-            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5], quality)
+            trainer_points[in_vid.at()] = (params['pos'], in_csv.row()[2:5], quality)
             write_xml = True
             break
         
@@ -199,12 +198,10 @@ def main(sysargs):
         if params['status'] == Status.skip:
             if in_vid.next():
                 in_csv.next()
-                frame_no += 1
         elif params['status'] == Status.back:
-            if(frame_no - 1 != mark_in):    # prevents going back to the frame with first flash (mark_in)
-                if in_vid.back():
-                    in_csv.back()
-                    frame_no -= 1
+            #if(in_vid.at() - 1 != mark_in):    # prevents going back to the frame with first flash (mark_in)
+            if in_vid.back():
+                in_csv.back()
         
         # reset status
         params['status'] = Status.wait
