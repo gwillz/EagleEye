@@ -199,9 +199,9 @@ def main(sysargs):
             if in_vid.next():
                 in_csv.next()
         elif params['status'] == Status.back:
-            #if(in_vid.at() - 1 != mark_in):    # prevents going back to the frame with first flash (mark_in)
-            if in_vid.back():
-                in_csv.back()
+            if(in_vid.at() - 1 != mark_in):    # prevents going back to the frame with first flash (mark_in)
+                if in_vid.back():
+                    in_csv.back()
         
         # reset status
         params['status'] = Status.wait
