@@ -119,14 +119,14 @@ def main(sysargs):
     frame_no = 0
     while in_vid.isOpened():
         # restrict to flash marks
-        if frame_no <= mark_in:
-            frame_no += 1
+        if frame_no < mark_in:
+            print "Forward to first flash... frame in vid: {} | frame_no: {}".format(in_vid.at(), frame_no)
             in_vid.next()
-            #print "Frame {} . {}".format(frame_no, mark_in)
+            frame_no += 1
             continue
-        if frame_no >= mark_out:
+        if frame_no >= (mark_in + cropped_total) or frame_no >= mark_out:
             write_xml = True
-            print "end of video: {}/{}".format(frame_no, cropped_total)
+            print "end of video: {}/{}".format(frame_no, mark_out)
             break
         
         # load frame
@@ -201,9 +201,10 @@ def main(sysargs):
                 in_csv.next()
                 frame_no += 1
         elif params['status'] == Status.back:
-            if in_vid.back():
-                in_csv.back()
-                frame_no -= 1
+            if(frame_no - 1 != mark_in):    # prevents going back to the frame with first flash (mark_in)
+                if in_vid.back():
+                    in_csv.back()
+                    frame_no -= 1
         
         # reset status
         params['status'] = Status.wait
