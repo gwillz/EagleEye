@@ -5,20 +5,21 @@
 # Gwilyn Saunders
 # version 0.2.11
 # 
-# Runs mapping routines on multiple CSV files and combines them into a single XML format.
+# Runs mapping routines on multiple CSV files and combipnes them into a single XML format.
 #
 # usage: python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> {<multiple csv files>}
 #
 
 import sys, os
 from elementtree.SimpleXMLWriter import XMLWriter
-from eagleeye import Memset, EasyArgs, Mapper
+from eagleeye import Memset, EasyArgs, EasyConfig, Mapper
 
 def usage():
     print "python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> [<multiple csv files>] {--config <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
+    cfg = EasyConfig(args.cfg, group="mapper")
 
     if ["calib", "trainer", "output"] not in args:
         print "Must specify: -calib, -trainer, -output files"
@@ -46,9 +47,10 @@ def main(sysargs):
         if len(csvs[i].row()) < 10:
             print "CSV file:", args[i], "contains no marker data!\nAborting."
             return 1
+
     
     # open calib files
-    mapper = Mapper(args.calib, args.trainer)
+    mapper = Mapper(args.calib, args.trainer, cfg)
 
     # open destination XML
     with open(args.output, "w") as xmlfile:
@@ -64,20 +66,39 @@ def main(sysargs):
             
             for i in csvs:
                 c = csvs[i]
-                # run projection/mapping on data
-                points = mapper.calpts((
-                                float(c.row()[2]),
-                                float(c.row()[3]),
-                                float(c.row()[4])
-                                ))
-                
                 # determine marker quality
-                quality = float(c.row()[9]) / float(c.row()[8])
+                try:
+                    max_reflectors = int(c.row()[8])
+                    visible_reflectors = int(c.row()[9])
+                    quality = visible_reflectors / max_reflectors
+                except:
+                    print "Error in calculating mapping quality at row {}".format(i)
+                    return 1
+
+                try:
+                    # read VICON data
+                    x = float(c.row()[2])
+                    y = float(c.row()[3])
+                    z = float(c.row()[4])
+                    
+                    # TODO: CHECK CSV INDEX
+                    pitch = float(c.row()[5])
+                    yaw = float(c.row()[6])
+                    roll = float(c.row()[7])
+                except:
+                    print "Error occurred when converting VICON data at row {}".format(i)
+                    return 1
+                    mode = cfg.quality_mode
                 
+                # run projection/mapping on VICON data
+                points = mapper.reprojpts((x, y, z))
+
+                # TODO: Proposed structure to include all data, need to update dtd!!!!!!!
+                # TODO: Include mode and threshold somewhere?
                 w.start("object", id=str(i), name=c.name())
                 w.element("boxinfo", height="99", width="99", x=str(points[0]-50), y=str(points[1]-50))
-                w.element("centroid", x=str(points[0]), y=str(points[1]))
-                w.element("quality", str(quality))
+                w.element("centroid", x=str(points[0]), y=str(points[1]), pitch=str(pitch), yaw=str(yaw), roll=str(roll))
+                w.element("quality", value=str(quality), visible=str(visible_reflectors), maxVisible=str(max_reflectors))
                 w.end()
                 
             w.end()

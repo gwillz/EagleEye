@@ -64,12 +64,13 @@ def main(sysargs):
     else:
         cv2.namedWindow(window_name)
     
-    count = 0
+    #count = 0
     while vid.isOpened():
-        count += 1
-        
+        #count += 1
+        print vid.at()
         # restrict to flash marks
-        if count <= mark_in: 
+        if vid.at() <= mark_in:
+            
             vid.next()
             continue
         
@@ -92,7 +93,7 @@ def main(sysargs):
         
         # export or navigate
         if args.export:
-            sys.stdout.write("{}/{}\r".format(count, cropped_total))
+            sys.stdout.write("{}/{}\r".format(vid.at(), cropped_total))
             sys.stdout.flush()
             
             out_vid.write(frame)
@@ -115,9 +116,10 @@ def main(sysargs):
                     xml1.next()
                     xml2.next()
             elif key == Key.left:
-                if vid.back():
-                    xml1.back()
-                    xml2.back()
+                if(vid.at() - 1 != mark_in):
+                    if vid.back():
+                        xml1.back()
+                        xml2.back()
     
     # clean up
     vid.release()
