@@ -33,7 +33,7 @@ def main(sysargs):
     
     # working vars
     csvs = {}
-    frame_num = 1
+    frame_num = 0
     
     # open source CSV datasets
     for i in range(1, len(args)):
