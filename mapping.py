@@ -70,9 +70,8 @@ def main(sysargs):
                 try:
                     max_reflectors = int(c.row()[8])
                     visible_reflectors = int(c.row()[9])
-                    quality = visible_reflectors / max_reflectors
                 except:
-                    print "Error in calculating mapping quality at row {}".format(i)
+                    print "Error in reading quality at row {}".format(i)
                     return 1
 
                 try:
@@ -81,10 +80,10 @@ def main(sysargs):
                     y = float(c.row()[3])
                     z = float(c.row()[4])
                     
-                    # TODO: CHECK CSV INDEX
-                    pitch = float(c.row()[5])
-                    yaw = float(c.row()[6])
-                    roll = float(c.row()[7])
+                    # TODO: Render Orientation Here
+                    rx = float(c.row()[5])
+                    ry = float(c.row()[6])
+                    rz = float(c.row()[7])
                 except:
                     print "Error occurred when converting VICON data at row {}".format(i)
                     return 1
@@ -93,12 +92,11 @@ def main(sysargs):
                 # run projection/mapping on VICON data
                 points = mapper.reprojpts((x, y, z))
 
-                # TODO: Proposed structure to include all data, need to update dtd!!!!!!!
-                # TODO: Include mode and threshold somewhere?
+                # TODO: Change DTD and double check with Manjung
                 w.start("object", id=str(i), name=c.name())
                 w.element("boxinfo", height="99", width="99", x=str(points[0]-50), y=str(points[1]-50))
-                w.element("centroid", x=str(points[0]), y=str(points[1]), pitch=str(pitch), yaw=str(yaw), roll=str(roll))
-                w.element("quality", value=str(quality), visible=str(visible_reflectors), maxVisible=str(max_reflectors))
+                w.element("centroid", x=str(points[0]), y=str(points[1]), rx=str(rx), ry=str(ry), rz=str(rz))
+                w.element("visibility", visible=str(visible_reflectors), visibleMax=str(max_reflectors))
                 w.end()
                 
             w.end()

@@ -33,6 +33,7 @@ class Xmltrainer:
                 self.frames[frame_no] = {}
                 self.frames[frame_no]["plane"] = frame.find("plane").attrib
                 self.frames[frame_no]["vicon"] = frame.find("vicon").attrib
+                self.frames[frame_no]["visibility"] = frame.find("visibility").attrib
             
             #self.frames.update(objects)
         

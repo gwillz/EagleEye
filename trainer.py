@@ -94,23 +94,12 @@ def main(sysargs):
     trainer_points = {}
     write_xml = False
     lastframe = False
-    qMode = cfg.quality_mode
-    quality_threshold = cfg.quality_threshold
     min_reflectors = cfg.min_reflectors
     # ensure minimum is 4 as required by VICON system
     if (min_reflectors < 4):
         min_reflectors = 4
-    qModeText = ""
     # Minimum points of reflectors, must be at least 4
-    if qMode == 1:      qModeText = "min of {} visible".format(min_reflectors)
-    # Quality Threshold (No. of visible reflectors / Max reflectors on object)
-    elif qMode == 2:    qModeText = "threshold of {}".format(quality_threshold)
-    # 1 or 2
-    elif qMode == 3:    qModeText = "min of {} visible & threshold of {}".format(min_reflectors, quality_threshold)
-    # Both 1 & 2
-    elif qMode == 4:    qModeText = "min of {} visible & threshold of {}".format(min_reflectors, quality_threshold)
-    else:               qModeText = "No quality control mode has been set."
-    print "Trainer Quality Mode: {}. | Ignore Negative xyz: {}".format(qModeText, cfg.check_negatives)
+    print "Minimum of reflectors: {}. | Ignore Negative xyz: {}".format(min_reflectors, cfg.check_negatives)
     
         
     # load video (again)
@@ -140,6 +129,7 @@ def main(sysargs):
         if in_vid.at() < mark_in:
             in_vid.next()
             continue
+        # TODO: Last frame prints wrong frame number in console, something to do with the print position and loop
         if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
             write_xml = True
             print "\nend of video: {}/{}".format(in_vid.at(), mark_out -1)
@@ -159,52 +149,36 @@ def main(sysargs):
         vicon_x = float(in_csv.row()[2])
         vicon_y = float(in_csv.row()[3])
         vicon_z = float(in_csv.row()[4])
-        pitch = float(in_csv.row()[5])
-        row = float(in_csv.row()[6])
-        yaw = float(in_csv.row()[7])
+        rx = float(in_csv.row()[5])
+        ry = float(in_csv.row()[6])
+        rz = float(in_csv.row()[7])
 
-        # TODO: CHECK PITCH ROw YAw
-        textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | pitch: {:.4f} row: {:.4f} yaw: {:.4f}".format(vicon_x, vicon_y, vicon_z, pitch, row, yaw)
-        textstatus = "{}/{} clicks".format(len(trainer_points), max_clicks)
-        textstatus_size, baseline = cv2.getTextSize(textstatus, font, cfg.font_scale, cfg.font_thick)
+        rowText = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | Rotation - rx: {:.4f} ry: {:.4f} rz: {:.4f}".format(vicon_x, vicon_y, vicon_z, rx, ry, rz)
+        statusText = "Frame {}/{} | {}/{} clicks".format(in_vid.at(), mark_out-1, len(trainer_points), max_clicks)
+        statusText_size, baseline = cv2.getTextSize(textstatus, font, cfg.font_scale, cfg.font_thick)
 
-        # data quality status
+        # visible reflectors status
         dataStatus = ""
         dataStatus_colour = (255,255,255)
         visible = int(in_csv.row()[9])
         max_visible = int(in_csv.row()[8])
-        quality = float(visible) / float(max_visible)
+        qualityText = "Visible: {} , Max Visible: {}".format(visible, max_visible)
+
+        dataQuality = True      # True = good, False = bad
+        dataText = " - Good data!!"
+        dataText_colour = (0, 255, 0) # green
+        # Minimum points of reflectors, must be at least 4
+        if (visible < min_reflectors):
+            dataQuality = False
+            dataText = " - Bad data!!"
+            dataText_colour = (0, 0, 255) # red
+
 
         if(cfg.check_negatives == "on"):
             if(vicon_x < 0 or vicon_y < 0 or vicon_z < 0):
-                dataStatus += " - Bad data!!"
-                dataStatus_colour = (0, 0, 255) # red
-
-        dataStatus = " - Good data!!"
-        dataStatus_colour = (0, 255, 0) # green
-        # Minimum points of reflectors, must be at least 4
-        if qMode == 1:
-            if (visible < min_reflectors):
-                dataStatus = " - Bad data!!"
-                dataStatus_colour = (0, 0, 255) # red
-        # Quality Threshold (No. of visible reflectors / Max reflectors on object)
-        elif qMode == 2:
-            if (quality < quality_threshold):
-                dataStatus = " - Bad data!!"
-                dataStatus_colour = (0, 0, 255) # red
-        # 1 or 2
-        elif qMode == 3:
-            if ((visible < min_reflectors) or (quality < quality_threshold)):
-                dataStatus = " - Bad data!!"
-                dataStatus_colour = (0, 0, 255) # red
-        # Both 1 & 2
-        elif qMode == 4:
-            if ((visible < min_reflectors) and (quality < quality_threshold)):
-                dataStatus = " - Bad data!!"
-                dataStatus_colour = (0, 0, 255) # red
-        else:
-            dataStatus = " - No quality control."
-            dataStatus_colour = (0, 0, 0)
+                dataQuality = False
+                dataText = " - Bad data!!"
+                dataText_colour = (0, 0, 255) # red
         
         # draw the trainer dot (if applicable)
         if in_vid.at() in trainer_points:
@@ -212,9 +186,10 @@ def main(sysargs):
             cv2.circle(frame, trainer_points[in_vid.at()][0], 15, cfg.font_colour, 1)
             
         # draw text and show
-        frame, textOffset, _toptextSize = displayText(frame, textrow, textOffset, cfg)
-        frame, _textOffset, _textSize = displayText(frame, textstatus, textOffset, cfg)
-        frame, dataStatus_offset, _textSize = displayText(frame, dataStatus, (_textSize[0], textOffset[1]), cfg, dataStatus_colour)
+        frame, textOffset, _topTextSize = displayText(frame, rowText, textOffset, cfg)
+        frame, textOffset, _topTextSize = displayText(frame, qualityText, textOffset, cfg)
+        frame, _textOffset, _textSize = displayText(frame, statusText, textOffset, cfg)
+        frame, dataStatus_offset, _textSize = displayText(frame, dataText, (_textSize[0], textOffset[1]), cfg, dataText_colour)
             
         cv2.imshow(window_name, frame)
         
@@ -240,7 +215,12 @@ def main(sysargs):
         
         # write data
         if params['status'] == Status.record:
-            trainer_points[in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10], quality)
+            if cfg.ignore_baddata == "on":
+                if dataQuality == True:
+                    trainer_points[in_vid.at()] = (params['pos'], [vicon_x, vicon_y, vicon_z, rx, ry, rz], [visible, max_visible])
+            else:
+                trainer_points[in_vid.at()] = (params['pos'], [vicon_x, vicon_y, vicon_z, rx, ry, rz], [visible, max_visible])
+                
             params['status'] = Status.skip
         
         # or remove it
@@ -251,9 +231,14 @@ def main(sysargs):
         
         # stop on max clicks - end condition 2
         if len(trainer_points) == max_clicks:
+            # TODO: Does this save as soon as last frame hits or does it record the click on the last frame?
             print "\nall clicks done"
-            trainer_points[in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10], quality)
-            write_xml = True
+            if cfg.ignore_baddata == "on":
+                if dataQuality == True:
+                    trainer_points[in_vid.at()] = (params['pos'], [vicon_x, vicon_y, vicon_z, rx, ry, rz], [visible, max_visible])
+            else:
+                trainer_points[in_vid.at()] = (params['pos'], [vicon_x, vicon_y, vicon_z, rx, ry, rz], [visible, max_visible])
+                
             break
         
         # load next csv frame
@@ -287,14 +272,17 @@ def main(sysargs):
         # training point data
         out_xml.start("frames")
         for i in trainer_points:
-            pos, data, visibility, quality = trainer_points[i]
+            pos, data, visibility = trainer_points[i]
             
-            out_xml.start("frame", num=str(i), maxVisible=str(visibility[0]), visible=str(visibility[1]), quality=str(quality))
+            out_xml.start("frame", num=str(i))
             out_xml.element("plane", 
                             x=str(pos[0]), 
                             y=str(pos[1]))
             out_xml.element("vicon", 
                             x=str(data[0]), y=str(data[1]), z=str(data[2]))
+            out_xml.element("visibility",
+                            visibleMax=str(visibility[0]),
+                            visible=str(visibility[1]))
             out_xml.end()
         
         # clean up
