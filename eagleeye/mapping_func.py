@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.2.8
+# version 0.2.9
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
@@ -164,7 +164,7 @@ class Mapper:
         return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32), np.asarray(trainer_imgpos, dtype=np.float32), np.asarray(trainer_objpos, dtype=np.float32)
     
     
-    def calPose(self, mode=0, cfg):
+    def calPose(self, cfg, mode=0):
 
         # TODO: customised solvePnP flags form config
         # levenberg-marquardt iterative method
