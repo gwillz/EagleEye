@@ -44,9 +44,17 @@ def marker_tool(video_path, buffer_size=50, window_name="Marking Tool"):
         elif key == Key.left:
             cap.back()
         elif Key.char(key, '['):
-            mark_in = cap.at()
+            if(cap.at() > mark_out):
+                print "You must not mark in after mark out."
+                continue
+            else:
+                mark_in = cap.at()
         elif Key.char(key, ']'):
-            mark_out = cap.at()
+            if(cap.at() < mark_in):
+                print "You must not mark out before mark in."
+                continue
+            else:
+                mark_out = cap.at()
 
     # clean up
     cap.release()

@@ -3,8 +3,8 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # 
-# Gwilyn Saunders
-# version 0.4.28
+# Gwilyn Saunders & Kin Kuen Liu
+# version 0.5.28
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -50,11 +50,10 @@ def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.config, group="trainer")
     max_clicks = args.clicks or cfg.default_clicks
-    font = cv2.FONT_HERSHEY_SIMPLEX
     window_name = "EagleEye Trainer"
-
+    
     textstatus = ""
-
+    
     # grab marks from args
     if len(args) > 5:
         mark_in = args[4]
@@ -74,11 +73,11 @@ def main(sysargs):
     else:
         usage()
         return 1
-
+    
     ## clicking time!
     cropped_total = mark_out - mark_in
     print "video cropped at:", mark_in, "to", mark_out, "- ({} frames)".format(cropped_total)
-
+    
     # clicking function
     def on_mouse(event, x, y, flags, params):
         # left click to mark
@@ -94,7 +93,12 @@ def main(sysargs):
     params = {'status': Status.skip, 'pos': None}
     trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
     write_xml = False
+    lastframe = False
     
+    # ensure minimum is 4 as required by VICON system
+    min_reflectors = cfg.min_reflectors if cfg.min_reflectors >= 4 else 4
+    print "Minimum reflectors: {} | Ignore Negative xyz: {}".format(min_reflectors, cfg.check_negatives)
+        
     # load video (again)
     in_vid = BuffSplitCap(args[1], crop=(0,0,0,0), rotate=BuffSplitCap.r0, buff_max=cfg.buffer_size)
     cv2.namedWindow(window_name)
@@ -116,50 +120,71 @@ def main(sysargs):
     print "Number of clicks at:", max_clicks
     print ""
     
-    # TODO: frame_no is not accurate. But it's not used.
-    
-    # grab clicks (Process 2)   
-    frame_no = 0
+    # default left side
     lens = BuffSplitCap.left
+    
+    # grab clicks (Process 2)
     while in_vid.isOpened():
         # restrict to flash marks
-        if frame_no <= mark_in:
-            frame_no += 1
+        if in_vid.at() < mark_in:
             in_vid.next()
-            #print "Frame {} . {}".format(frame_no, mark_in)
             continue
-        if frame_no >= mark_out:
+        if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
             write_xml = True
-            print "end of video: {}/{}".format(frame_no, cropped_total)
+            print "\nend of video: {}/{}".format(in_vid.at(), mark_out -1)
             break
+
+        sys.stdout.write("Current Video Frame: {} / {}".format(in_vid.at(), mark_out -1)
+                 + " | Clicks {} / {}\r".format(len(trainer_points), max_clicks))
+        sys.stdout.flush()
         
         # load frame
         frame = in_vid.frame(side=lens)
         
+        textOffset = (5, 0)
+        
         # prepare CSV data, click data
-        textrow = "{:.3f}".format(float(in_csv.row()[0]))
-        for cell in in_csv.row()[2:8]:
-            textrow += ", {:.4f}".format(float(cell))
+        tx = float(in_csv.row()[2])
+        ty = float(in_csv.row()[3])
+        tz = float(in_csv.row()[4])
+        rx = float(in_csv.row()[5])
+        ry = float(in_csv.row()[6])
+        rz = float(in_csv.row()[7])
+        
+        #textrow = "{:.3f}".format(float(in_csv.row()[0]))
+        textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
         textstatus = "{}/{} clicks".format(len(trainer_points[lens]), max_clicks)
         textstatus += " - back side" if lens == BuffSplitCap.left else " - button side"
         
         # data quality status
-        quality = float(in_csv.row()[9]) / float(in_csv.row()[8])
-        if quality > cfg.quality_threshold:
-            textstatus += " - Good data"
-        else:
-            textstatus += " - Bad data!!"
+        visible = int(in_csv.row()[9])
+        max_visible = int(in_csv.row()[8])
+        quality = float(visible) / float(max_visible)
+        
+        # assume good data, unless it fails the following tests
+        dataStatus = " - Good data!!"
+        dataStatus_colour = (0, 255, 0) # green
+        
+        if cfg.check_negatives == "on":
+            if tx < 0 or ty < 0 or tz < 0:
+                dataStatus += " - Bad data!!"
+                dataStatus_colour = (0, 0, 255) # red
+        
+        # Minimum points of reflectors, must be at least 4 (or whatever the config speicifies)
+        if visible < min_reflectors:
+            dataStatus = " - Bad data!!"
+            dataStatus_colour = (0, 0, 255) # red
         
         # draw the trainer dot (if applicable)
-        if frame_no in trainer_points[lens]:
-            cv2.circle(frame, trainer_points[lens][frame_no][0], 1, cfg.font_colour, 2)
-            cv2.circle(frame, trainer_points[lens][frame_no][0], 15, cfg.font_colour, 1)
-            
+        if in_vid.at() in trainer_points[lens]:
+            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 1, cfg.font_colour, 2)
+            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 15, cfg.font_colour, 1)
+        
         # draw text and show
-        cv2.putText(frame, textrow,
-                    (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, cv2.LINE_AA)
-        cv2.putText(frame, textstatus,
-                    (5,35), font, cfg.font_size, cfg.font_colour, cfg.font_thick, cv2.LINE_AA)
+        frame, textOffset, _toptextSize = displayText(frame, textrow, textOffset, cfg)
+        frame, _textOffset, _textSize = displayText(frame, textstatus, textOffset, cfg)
+        frame, dataStatus_offset, _textSize = displayText(frame, dataStatus, (_textSize[0], textOffset[1]), cfg, dataStatus_colour)
+            
         cv2.imshow(window_name, frame)
         
         # pause for input
@@ -183,31 +208,31 @@ def main(sysargs):
                 params['status'] = Status.still
                 lens = BuffSplitCap.right
             
-        # catch exit status
+        # catch exit status - end condition 1
         if params['status'] == Status.stop:
-            print "process aborted!"
+            print "\nprocess aborted!"
             break
         
         # write data
         if params['status'] == Status.record \
                 and len(trainer_points[lens]) != max_clicks:
-            print textstatus
-            trainer_points[lens][frame_no] = (params['pos'], in_csv.row()[2:5], quality)
+            trainer_points[lens][in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10])
             params['status'] = Status.skip
         
         # or remove it
-        elif params['status'] == Status.remove:
-            print "removed dot"
-            del trainer_points[lens][frame_no]
-            params['status'] = Status.still
+        elif params['status'] == Status.remove \
+                and in_vid.at() in trainer_points:
+            del trainer_points[lens][in_vid.at()]
+            print "\nremoved dot"
         
         # stop on max clicks - end condition 2
         if len(trainer_points[BuffSplitCap.left]) == max_clicks \
-                and len(trainer_points[BuffSplitCap.right]) == max_clicks:
-            print "all clicks done"
+                and len(trainer_points[BuffSplitCap.right]) == max_clicks \
+                and in_vid.at() in trainer_points:
             
-            # why record here? how can we know this a good training point?
-            trainer_points[lens][frame_no] = (params['pos'], in_csv.row()[2:5], quality)
+            trainer_points[in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10])
+            
+            print "\nall clicks done"
             write_xml = True
             break
         
@@ -215,11 +240,13 @@ def main(sysargs):
         if params['status'] == Status.skip:
             if in_vid.next():
                 in_csv.next()
-                frame_no += 1
-        elif params['status'] == Status.back:
+        
+        # or load previous csv frame
+        elif params['status'] == Status.back \
+                and in_vid.at() > mark_in:
+            # don't track before mark_in
             if in_vid.back():
                 in_csv.back()
-                frame_no -= 1
         
         # reset status
         params['status'] = Status.wait
@@ -246,9 +273,9 @@ def main(sysargs):
             out_xml.start("frames")
             
             for i in trainer_points[lens]:
-                pos, row, quality = trainer_points[lens][i]
+                pos, row, markers = trainer_points[lens][i]
                 
-                out_xml.start("frame", num=str(i), quality=str(quality))
+                out_xml.start("frame", num=str(i), maxVisible=str(markers[0]), visible=str(markers[1]))
                 out_xml.element("plane", 
                                 x=str(pos[0]), 
                                 y=str(pos[1]))
@@ -268,6 +295,27 @@ def main(sysargs):
     
     print "\nDone."
     return 0
+
+# calculate height offset of a line of text and display on top left
+def displayText(frame, text, offset, cfg, customColour=None):
+    if customColour is None:
+        customColour = cfg.font_colour
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    y_extraOffset = 2
+    x_offset = 5
+    y_offset = 0
+    if len(offset) == 2:
+        x_offset = offset[0]
+        y_offset = offset[1]
+
+    textSize, baseLine = cv2.getTextSize(text, font, cfg.font_scale, cfg.font_thick)
+    y_offset += textSize[1] + baseLine + y_extraOffset
+    cv2.putText(frame, text,
+        (x_offset, y_offset), font, cfg.font_scale, customColour, cfg.font_thick, cv2.LINE_AA)
+    
+    return frame, (x_offset, y_offset), textSize
+
 
 if __name__ == '__main__':
     exit(main(sys.argv))
