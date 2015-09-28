@@ -20,7 +20,6 @@ try:
     from trainer import main as trainer_main
     from mapping import main as mapping_main
     from compare import main as compare_main
-    from eagleeye import marker_tool
 # catch errors, report in main()
 except Exception as e:
     error = e
@@ -44,6 +43,9 @@ class Wizard(QMainWindow):
         # config stuff
         self.config_path = "eagleeye.cfg"
         #TODO loading config files, editing and junk
+        
+        self.trainer_marks = (0,0)
+        self.dataset_marks = (0,0)
         
         # save/open events
         self.actionSave.triggered.connect(self.save_file)
@@ -70,8 +72,8 @@ class Wizard(QMainWindow):
         self.dataset_map_edit.textChanged.connect(self.set_unsaved)
         self.dataset_ann_edit.textChanged.connect(self.set_unsaved)
         
-        self.trainer_mov_edit.textEdited.connect(self.del_trainer_marks)
-        self.dataset_mov_edit.textEdited.connect(self.del_dataset_marks)
+        self.trainer_mov_edit.textEdited.connect(self.reset_trainer_marks)
+        self.dataset_mov_edit.textEdited.connect(self.reset_dataset_marks)
         
         # editing check/enable events
         self.chessboard_edit.editingFinished.connect(self.load_chessboards)
@@ -214,7 +216,7 @@ class Wizard(QMainWindow):
                     zipper.write(file_path, file_name)
                     
                     # with marks if applicable
-                    if "trainer_marks" in self.__dict__:
+                    if self.trainer_marks[1] > 0:
                         mark_in, mark_out = self.trainer_marks
                         w.start("video", mark_in=str(mark_in), mark_out=str(mark_out))
                     else:
@@ -242,7 +244,7 @@ class Wizard(QMainWindow):
                 w.start("rawData")
                 
                 # dataset video, with marks if applicable
-                if "dataset_marks" in self.__dict__:
+                if self.dataset_marks[1] > 0:
                     mark_in, mark_out = self.dataset_marks
                     w.start("video", mark_in=str(mark_in), mark_out=str(mark_out))
                 else:
@@ -606,7 +608,7 @@ class Wizard(QMainWindow):
                 path,
                 "-config", self.config_path]
         
-        if "trainer_marks" in self.__dict__:
+        if self.trainer_marks[1] > 0:
             mark_in, mark_out = self.trainer_marks
             args += [str(mark_in), str(mark_out)]
         
@@ -744,7 +746,7 @@ class Wizard(QMainWindow):
         #else run interactive
         
         # insert marks
-        if "dataset_marks" in self.__dict__:
+        if self.dataset_marks[1] > 0:
             mark_in, mark_out = self.dataset_marks
             args += [str(mark_in), str(mark_out)]
         
@@ -787,36 +789,18 @@ class Wizard(QMainWindow):
                                 "-config", self.config_path])
         if stat: worker.start()
     
-    def run_marker(self, path):
-        self.showHelp("Define Marks", 
-                        "Enter the mark-in and mark-out values in the following dialogs.\n"
-                        "If unknown, press Cancel to use the Marker Tool.")
-        
-        # ask for marks
-        mark_in, ok = QInputDialog.getInt(self, "Specify Marks", "Mark in:", 0, 0, 99999)
-        if ok:
-            mark_out, ok = QInputDialog.getInt(self, "Specify Marks", "Mark out:", mark_in+10, mark_in, 99999)
-            if ok:
-                print "from marks dialog:", mark_in, mark_out
-                return (mark_in, mark_out)
-        
-        # or use marker_tool
-        
-        self.showHelp("Marker Tool", 
-                    "Use the Left and Right arrow keys to navigate the video.\n"
-                    "Find the first 'flash' frame and mark it with the '[' key.\n"
-                    "Continue navigation until the second flash, mark it with the ']' key.\n"
-                    "When complete, press Enter.")
+    def run_marker(self, path, marks):
+        dialog = MarkerDialog(self, path, marks)
         
         self.disable_tools()
         self.statusbar.showMessage("Running Marker Tool.")
-        stat, mark_in, mark_out = marker_tool(path)
+        ok = dialog.exec_()
         self.reset_statusbar()
         self.enable_tools()
         
-        if stat:
-            print "from marker:", mark_in, mark_out
-            return (mark_in, mark_out)
+        if ok == MarkerDialog.Accepted:
+            print "Marks:", dialog.marks()
+            return dialog.marks()
         
         return None
     
@@ -858,7 +842,7 @@ class Wizard(QMainWindow):
             path = os.path.normpath(str(path))
             self.trainer_mov_edit.setText(path)
             
-            marks = self.run_marker(path)
+            marks = self.run_marker(path, self.trainer_marks)
             if marks is not None:
                 self.trainer_marks = marks
             
@@ -889,7 +873,7 @@ class Wizard(QMainWindow):
             path = os.path.normpath(str(path))
             self.dataset_mov_edit.setText(path)
             
-            marks = self.run_marker(path)
+            marks = self.run_marker(path, self.dataset_marks)
             if marks is not None:
                 self.dataset_marks = marks
         
@@ -982,14 +966,12 @@ class Wizard(QMainWindow):
         self.dataset_marks = (mark_in, mark_out)
     
     @pyqtSlot()
-    def del_trainer_marks(self):
-        if 'trainer_marks' in self.__dict__:
-            del self.trainer_marks
+    def reset_trainer_marks(self):
+        self.trainer_marks = (0,0)
     
     @pyqtSlot()
-    def del_dataset_marks(self):
-        if 'dataset_marks' in self.__dict__:
-            del self.dataset_marks
+    def reset_dataset_marks(self):
+        self.dataset_marks = (0,0)
     
     ## Various GUI events
     @pyqtSlot()
