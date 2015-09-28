@@ -98,22 +98,23 @@ class Mapper:
         # ensure minimum is 4 as required by VICON system
         if (min_reflectors < 4):
             min_reflectors = 4
-
-        qualityText = "min of {} visible".format(min_reflectors)
+        
+        qualityText = "min of {} visible \n".format(min_reflectors)
         print qualityText
 
         for f in root.find('frames'):
-            # TODO: inconsistent get attrib names
+            # TODO: inconsistent get attrib names ??
             plane = f.find('plane').attrib
             vicon = f.find('vicon').attrib
+            visibility = f.find('visibility').attrib
             
             x = float(plane['x'])
             y = float(plane['y'])
             vicon_x = float(vicon['x'])
             vicon_y = float(vicon['y'])
             vicon_z = float(vicon['z'])
-            visible = int(f.get('visible'))
-            max_visible = int(f.get('visibleMax'))
+            visible = int(visibility['visible'])
+            max_visible = int(visibility['visibleMax'])
 
             # add to the complete set first
             img_pos.append((x, y))
@@ -137,7 +138,13 @@ class Mapper:
     
     
     def calPose(self, cfg, mode=0):
-
+        if(len(self.trainer_imgpts) < 4 or len(self.trainer_objpts) < 4):
+            print "Must have at least 4 training points."
+            return np.asarray([], dtype=np.float32), np.asarray([], dtype=np.float32)           # TODO: need to abort here, not a good abort atm
+        if(len(self.trainer_imgpts) != len(self.trainer_objpts)):
+            print "Training image points and object points must be equal in size. image pts {}, obj pts {}".format(len(self.trainer_imgpts), len(self.trainer_objpts))
+            return np.asarray([], dtype=np.float32), np.asarray([], dtype=np.float32)           # TODO: need to abort here, not a good abort atm
+        
         # TODO: customised solvePnP flags form config
         # levenberg-marquardt iterative method
         if mode == 0:
