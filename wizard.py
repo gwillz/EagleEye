@@ -16,7 +16,7 @@ try:
     try: from vicon_capture import main as capture_main
     except: pass
     from extract_frames import main as chess_extract_main
-    from stdcalib import main as calib_main
+    from dualcalib import main as calib_main
     from trainer import main as trainer_main
     from mapping import main as mapping_main
     from compare import main as compare_main
@@ -723,8 +723,10 @@ class Wizard(QMainWindow):
         self.showHelp("Training Tool", 
                         "Use the Left and Right arrow keys to navigate the video.\n"
                         "Mark the middle Wand dot with the cursor. "
-                        "Navigate backwards one frame to preview it's position.\n"
-                        "When satisfied, press Enter to save the training data. "
+                        "Use the 1 and 2 keys to switch between each lens. "
+                        "Change the number of clicks in the config file.\n"
+                        "Navigate backwards one frame to preview it's position. "
+                        "When satisfied, press Enter to save the training data.\n"
                         "To quit, press ESC - this will lose data.")
         
         stat, worker = self.run_tool(trainer_main, args)
