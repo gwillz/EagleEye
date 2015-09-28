@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 #
 # Project Eagle Eye
-# Group 15 - UniSA 2015
+# Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
 # version 0.2.8
 # 
@@ -9,13 +9,23 @@
 import cv2, xml.etree.ElementTree as ET, numpy as np
 
 class Mapper:
-    def __init__(self, intrinsic, trainer):
+    def __init__(self, intrinsic, trainer, cfg):
+        # variables
+        self.rv = np.asarray([], dtype=np.float32)  # rotation
+        self.tv = np.asarray([], dtype=np.float32)  # translation
+
         # open intrinsic, trainer files
         self.cam, self.distort = self.parseCamIntr(intrinsic)
-        self.img_pts, self.obj_pts = self.parseTrainer(trainer)
-        
+        # first 2 are full sets of data
+        # trainer pts are filtered by quality control for generating consistent PnP result
+        self.img_pts, self.obj_pts, self.trainer_imgpts, self.trainer_objpts = self.parseTrainer(trainer, cfg)
+
+        print "img_pts {}".format(len(self.img_pts))
+        print "obj_pts {}".format(len(self.obj_pts))
+        print "trainer img_pts {}".format(len(self.trainer_imgpts))
+        print "trainer obj_pts {}".format(len(self.trainer_objpts))
         #calculate pose
-        self.rv, self.tv = self.calPose()
+        self.rv, self.tv = self.calPose(cfg)
     
     # opens the Intrinsic calib xml file
     def parseCamIntr(self, xmlpath):
@@ -41,7 +51,7 @@ class Mapper:
         
         for elem in root.iter():
             if elem.tag == 'CamMat':
-                cm_dict.update(elem.attrib) # TODO: check if update only replaces existing elements
+                cm_dict.update(elem.attrib)
             if elem.tag =='DistCoe':
                 dc_dict.update(elem.attrib)
             
@@ -71,7 +81,7 @@ class Mapper:
         return cm, dc
     
     
-    def parseTrainer(self, xmlpath):
+    def parseTrainer(self, xmlpath, cfg):
         if xmlpath is None:
             raise IOError('Invalid file path to XML file.')
         
@@ -80,35 +90,103 @@ class Mapper:
         
         if len(root) == 0:
                 raise IOError('XML file is empty.')
-        
         img_pos = []
         obj_pos = []
+        trainer_imgpos = []
+        trainer_objpos = []
+        qMode = cfg.quality_mode
+        quality_threshold = cfg.quality_threshold
+        min_reflectors = cfg.min_reflectors
+        # ensure minimum is 4 as required by VICON system
+        if (min_reflectors < 4):
+            min_reflectors = 4
+
+        qModeText = ""
+        # Minimum points of reflectors, must be at least 4
+        if qMode == 1:      qModeText = "min of {} visible".format(min_reflectors)
+        # Quality Threshold (No. of visible reflectors / Max reflectors on object)
+        elif qMode == 2:    qModeText = "threshold of {}".format(quality_threshold)
+        # 1 or 2
+        elif qMode == 3:    qModeText = "min of {} visible & threshold of {}".format(min_reflectors, quality_threshold)
+        # Both 1 & 2
+        elif qMode == 4:    qModeText = "min of {} visible & threshold of {}".format(min_reflectors, quality_threshold)
+        else:               qModeText = "No quality control mode has been set."
+        print "Trainer Quality Mode: {}. | Ignore Negative xyz: {}".format(qModeText, cfg.check_negatives)
         
         for f in root.find('frames'):
             plane = f.find('plane').attrib
             vicon = f.find('vicon').attrib
-            
-            img_pos.append((float(plane['x']), float(plane['y'])))
-            obj_pos.append((float(vicon['x']), float(vicon['y']), float(vicon['z'])))
+
+            x = float(plane['x'])
+            y = float(plane['y'])
+            vicon_x = float(vicon['x'])
+            vicon_y = float(vicon['y'])
+            vicon_z = float(vicon['z'])
+            visible = int(f.get('visible'))
+            max_visible = int(f.get('maxVisible'))
+            quality = float(f.get('quality'))
+
+            # add to full sets first
+            img_pos.append((x, y))
+            obj_pos.append((vicon_x, vicon_y, vicon_z))
+
+
+            # Quality control for solvePnP, skip data/frame if criteria not met
+            # check negative position values, if on skip mapping at this frame
+            if(cfg.check_negatives == "on"):
+                if(vicon_x < 0 or vicon_y < 0 or vicon_z < 0):
+                    continue
+            # Minimum points of reflectors, must be at least 4
+            if qMode == 1:
+                if (visible < min_reflectors):
+                    continue    # skip frame
+            # Quality Threshold (No. of visible reflectors / Max reflectors on object)
+            elif qMode == 2:
+                if (quality < quality_threshold):
+                    continue
+            # 1 or 2
+            elif qMode == 3:
+                if ((visible < min_reflectors) or (quality < quality_threshold)):
+                    continue
+            # Both 1 & 2
+            elif qMode == 4:
+                if ((visible < min_reflectors) and (quality < quality_threshold)):
+                    continue
+            else:
+                print 
+                #print "No quality control mode has been set."
+                
+            # Add to trainer set if good
+            trainer_imgpos.append((x, y))
+            trainer_objpos.append((vicon_x, vicon_y, vicon_z))
+    
         
-        return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32)
+        return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32), np.asarray(trainer_imgpos, dtype=np.float32), np.asarray(trainer_objpos, dtype=np.float32)
     
     
-    def calPose(self, mode=0):
+    def calPose(self, mode=0, cfg):
+
+        # TODO: customised solvePnP flags form config
         # levenberg-marquardt iterative method
         if mode == 0:
             retval, rv, tv = cv2.solvePnP(
-                                self.obj_pts, self.img_pts, 
-                                self.cam, self.distort, # where do these come from??
+                                self.trainer_objpts, self.trainer_imgpts, 
+                                self.cam, self.distort,
                                 None, None, cv2.SOLVEPNP_ITERATIVE)
-            
+            '''
+            NOT RUNNING
+            http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
+            rv, tv, inliners = cv2.solvePnPRansac(
+                                self.trainer_objpts, self.trainer_imgpts, 
+                                self.cam, self.distort)
+            '''
         # alternate, loopy style iterative method (could be the same, idk)
         else:
             rv, tv = None, None
             for i in range(0, len(data)):
                 retval, _rv, _tv = cv2.solvePnP(
-                                    self.obj_pts[i], self.img_pts[i],
-                                    self.cam, self.distort, # where do these come from??
+                                    self.trainer_objpts[i], self.trainer_imgpts[i],
+                                    self.cam, self.distort,
                                     rv, tv, useExtrinsicGuess=True)
                 #append if 'good'
                 if retval: 
@@ -116,7 +194,7 @@ class Mapper:
         
         # check, print, return
         if rv is None or rv is None or not retval:
-            raise Error("Error producing rotation and translation vectors.")
+            raise Error("Error occurred when calculating rotation and translation vectors.")
         
         print 'Rotation Vector:\n', rv
         print 'Translation Vector:\n', tv
@@ -124,7 +202,7 @@ class Mapper:
         return rv, tv
     
     
-    def calpts(self, obj_pts):
+    def reprojpts(self, obj_pts):
         #if len(obj_pts) == 0:
         #    raise Error('No points to project.')
         

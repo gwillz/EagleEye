@@ -93,7 +93,26 @@ def main(sysargs):
     params = {'status': Status.skip, 'pos': None}
     trainer_points = {}
     write_xml = False
+    lastframe = False
+    qMode = cfg.quality_mode
+    quality_threshold = cfg.quality_threshold
+    min_reflectors = cfg.min_reflectors
+    # ensure minimum is 4 as required by VICON system
+    if (min_reflectors < 4):
+        min_reflectors = 4
+    qModeText = ""
+    # Minimum points of reflectors, must be at least 4
+    if qMode == 1:      qModeText = "min of {} visible".format(min_reflectors)
+    # Quality Threshold (No. of visible reflectors / Max reflectors on object)
+    elif qMode == 2:    qModeText = "threshold of {}".format(quality_threshold)
+    # 1 or 2
+    elif qMode == 3:    qModeText = "min of {} visible & threshold of {}".format(min_reflectors, quality_threshold)
+    # Both 1 & 2
+    elif qMode == 4:    qModeText = "min of {} visible & threshold of {}".format(min_reflectors, quality_threshold)
+    else:               qModeText = "No quality control mode has been set."
+    print "Trainer Quality Mode: {}. | Ignore Negative xyz: {}".format(qModeText, cfg.check_negatives)
     
+        
     # load video (again)
     in_vid = BuffCap(args[1], cfg.buffer_size)
     cv2.namedWindow(window_name)
@@ -115,46 +134,88 @@ def main(sysargs):
     print "Number of clicks at:", max_clicks
     print ""
     
-    # grab clicks (Process 2)   # TODO: frame_no is not accurate. But it's not used.
-    frame_no = 0
+    # grab clicks (Process 2)
     while in_vid.isOpened():
         # restrict to flash marks
-        if frame_no <= mark_in:
-            frame_no += 1
+        if in_vid.at() < mark_in:
             in_vid.next()
-            #print "Frame {} . {}".format(frame_no, mark_in)
             continue
-        if frame_no >= mark_out:
+        if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
             write_xml = True
-            print "end of video: {}/{}".format(frame_no, cropped_total)
+            print "\nend of video: {}/{}".format(in_vid.at(), mark_out -1)
             break
+
+        sys.stdout.write("Current Video Frame: {} / {}".format(in_vid.at(), mark_out -1)
+                 + " | Clicks {} / {}\r".format(len(trainer_points), max_clicks))
+        sys.stdout.flush()
         
         # load frame
         frame = in_vid.frame()
         
         # prepare CSV data, click data
+        textOffset = (5, 0)
         textrow = "{:.3f}".format(float(in_csv.row()[0]))
-        for cell in in_csv.row()[2:8]:
-            textrow += ", {:.4f}".format(float(cell))
+
+        vicon_x = float(in_csv.row()[2])
+        vicon_y = float(in_csv.row()[3])
+        vicon_z = float(in_csv.row()[4])
+        pitch = float(in_csv.row()[5])
+        row = float(in_csv.row()[6])
+        yaw = float(in_csv.row()[7])
+
+        # TODO: CHECK PITCH ROw YAw
+        textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | pitch: {:.4f} row: {:.4f} yaw: {:.4f}".format(vicon_x, vicon_y, vicon_z, pitch, row, yaw)
         textstatus = "{}/{} clicks".format(len(trainer_points), max_clicks)
-        
+        textstatus_size, baseline = cv2.getTextSize(textstatus, font, cfg.font_scale, cfg.font_thick)
+
         # data quality status
-        quality = float(in_csv.row()[9]) / float(in_csv.row()[8])
-        if quality > cfg.quality_threshold:
-            textstatus += " - Good data"
+        dataStatus = ""
+        dataStatus_colour = (255,255,255)
+        visible = int(in_csv.row()[9])
+        max_visible = int(in_csv.row()[8])
+        quality = float(visible) / float(max_visible)
+
+        if(cfg.check_negatives == "on"):
+            if(vicon_x < 0 or vicon_y < 0 or vicon_z < 0):
+                dataStatus += " - Bad data!!"
+                dataStatus_colour = (0, 0, 255) # red
+
+        dataStatus = " - Good data!!"
+        dataStatus_colour = (0, 255, 0) # green
+        # Minimum points of reflectors, must be at least 4
+        if qMode == 1:
+            if (visible < min_reflectors):
+                dataStatus = " - Bad data!!"
+                dataStatus_colour = (0, 0, 255) # red
+        # Quality Threshold (No. of visible reflectors / Max reflectors on object)
+        elif qMode == 2:
+            if (quality < quality_threshold):
+                dataStatus = " - Bad data!!"
+                dataStatus_colour = (0, 0, 255) # red
+        # 1 or 2
+        elif qMode == 3:
+            if ((visible < min_reflectors) or (quality < quality_threshold)):
+                dataStatus = " - Bad data!!"
+                dataStatus_colour = (0, 0, 255) # red
+        # Both 1 & 2
+        elif qMode == 4:
+            if ((visible < min_reflectors) and (quality < quality_threshold)):
+                dataStatus = " - Bad data!!"
+                dataStatus_colour = (0, 0, 255) # red
         else:
-            textstatus += " - Bad data!!"
+            dataStatus = " - No quality control."
+            dataStatus_colour = (0, 0, 0)
         
         # draw the trainer dot (if applicable)
-        if frame_no in trainer_points:
-            cv2.circle(frame, trainer_points[frame_no][0], 1, cfg.font_colour, 2)
-            cv2.circle(frame, trainer_points[frame_no][0], 15, cfg.font_colour, 1)
+        if in_vid.at() in trainer_points:
+            cv2.circle(frame, trainer_points[in_vid.at()][0], 1, cfg.font_colour, 2)
+            cv2.circle(frame, trainer_points[in_vid.at()][0], 15, cfg.font_colour, 1)
             
         # draw text and show
-        cv2.putText(frame, textrow,
-                    (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, cv2.LINE_AA)
-        cv2.putText(frame, textstatus,
-                    (5,35), font, cfg.font_size, cfg.font_colour, cfg.font_thick, cv2.LINE_AA)
+        frame, textOffset, _toptextSize = displayText(frame, textrow, textOffset, cfg)
+        frame, _textOffset, _textSize = displayText(frame, textstatus, textOffset, cfg)
+        frame, dataStatus_offset, _textSize = displayText(frame, dataStatus, (_textSize[0], textOffset[1]), cfg, dataStatus_colour)
+            
         cv2.imshow(window_name, frame)
         
         # pause for input
@@ -174,24 +235,24 @@ def main(sysargs):
             
         # catch exit status
         if params['status'] == Status.stop:
-            print "process aborted!"
+            print "\nprocess aborted!"
             break
         
         # write data
         if params['status'] == Status.record:
-            print textstatus
-            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5], quality)
+            trainer_points[in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10], quality)
             params['status'] = Status.skip
         
         # or remove it
         elif params['status'] == Status.remove:
-            print "removed dot"
-            del trainer_points[frame_no]
+            if (trainer_points.has_key(in_vid.at()) is True):
+                del trainer_points[in_vid.at()]
+                print "\nremoved dot"
         
         # stop on max clicks - end condition 2
         if len(trainer_points) == max_clicks:
-            print "all clicks done"
-            trainer_points[frame_no] = (params['pos'], in_csv.row()[2:5], quality)
+            print "\nall clicks done"
+            trainer_points[in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10], quality)
             write_xml = True
             break
         
@@ -199,11 +260,10 @@ def main(sysargs):
         if params['status'] == Status.skip:
             if in_vid.next():
                 in_csv.next()
-                frame_no += 1
         elif params['status'] == Status.back:
-            if in_vid.back():
-                in_csv.back()
-                frame_no -= 1
+            if(in_vid.at() - 1 != mark_in):    # prevents going back to the frame with first flash (mark_in)
+                if in_vid.back():
+                    in_csv.back()
         
         # reset status
         params['status'] = Status.wait
@@ -227,14 +287,14 @@ def main(sysargs):
         # training point data
         out_xml.start("frames")
         for i in trainer_points:
-            pos, row, quality = trainer_points[i]
+            pos, data, visibility, quality = trainer_points[i]
             
-            out_xml.start("frame", num=str(i), quality=str(quality))
+            out_xml.start("frame", num=str(i), maxVisible=str(visibility[0]), visible=str(visibility[1]), quality=str(quality))
             out_xml.element("plane", 
                             x=str(pos[0]), 
                             y=str(pos[1]))
             out_xml.element("vicon", 
-                            x=str(row[0]), y=str(row[1]), z=str(row[2]))
+                            x=str(data[0]), y=str(data[1]), z=str(data[2]))
             out_xml.end()
         
         # clean up
@@ -247,6 +307,26 @@ def main(sysargs):
     
     print "\nDone."
     return 0
+
+# calculate height offset of a line of text and display on top left
+def displayText(frame, text, offset, cfg, customColour=None):
+    if(customColour is None):
+        customColour = cfg.font_colour
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    y_extraOffset = 2
+    x_offset = 5
+    y_offset = 0
+    if(len(offset) == 2):
+        x_offset = offset[0]
+        y_offset = offset[1]
+
+    textSize, baseLine = cv2.getTextSize(text, font, cfg.font_scale, cfg.font_thick)
+    y_offset += textSize[1] + baseLine + y_extraOffset
+    cv2.putText(frame, text,
+        (x_offset, y_offset), font, cfg.font_scale, customColour, cfg.font_thick, cv2.LINE_AA)
+    return frame, (x_offset, y_offset), textSize
+
 
 if __name__ == '__main__':
     exit(main(sys.argv))
