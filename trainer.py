@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.29
+# version 0.5.30
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -93,7 +93,6 @@ def main(sysargs):
     params = {'status': Status.skip, 'pos': None}
     trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
     write_xml = False
-    lastframe = False
     
     # ensure minimum is 4 as required by VICON system
     min_reflectors = cfg.min_reflectors if cfg.min_reflectors >= 4 else 4
@@ -210,7 +209,7 @@ def main(sysargs):
                 params['status'] = Status.still
                 lens = BuffSplitCap.right
             
-        # catch exit status - end condition 1
+        # catch exit status
         if params['status'] == Status.stop:
             print "\nprocess aborted!"
             break
@@ -226,17 +225,6 @@ def main(sysargs):
                 and in_vid.at() in trainer_points:
             del trainer_points[lens][in_vid.at()]
             print "\nremoved dot"
-        
-        # stop on max clicks - end condition 2
-        if len(trainer_points[BuffSplitCap.left]) == max_clicks \
-                and len(trainer_points[BuffSplitCap.right]) == max_clicks \
-                and in_vid.at() in trainer_points:
-            
-            trainer_points[in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10])
-            
-            print "\nall clicks done"
-            write_xml = True
-            break
         
         # load next csv frame
         if params['status'] == Status.skip:
@@ -271,18 +259,25 @@ def main(sysargs):
         
         # training point data
         for lens in trainer_points:
-            out_xml.start("buttonside" if lens == BuffSplitCap.left else "backside")
+            out_xml.start("buttonside" if lens == BuffSplitCap.right else "backside")
             out_xml.start("frames")
             
             for i in trainer_points[lens]:
                 pos, row, markers = trainer_points[lens][i]
+                x, y = pos
                 
-                out_xml.start("frame", num=str(i), maxVisible=str(markers[0]), visible=str(markers[1]))
+                # add 960 for rightside
+                if lens == BuffSplitCap.right:
+                    x =+ 960
+                
+                out_xml.start("frame", num=str(i))
                 out_xml.element("plane", 
                                 x=str(pos[0]), 
                                 y=str(pos[1]))
                 out_xml.element("vicon", 
                                 x=str(row[0]), y=str(row[1]), z=str(row[2]))
+                out_xml.element(visibility, visibleMax=str(markers[0]), 
+                                            visible=str(markers[1]))
                 out_xml.end()
                 
             out_xml.end() # frames
