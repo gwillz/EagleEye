@@ -176,8 +176,9 @@ class Wizard(QMainWindow):
         edit_fields = {}
         if self.calibration_edit.text() != "":
             edit_fields['calibration'] = str(self.calibration_edit.text())
-        if len(self.buttonside_images) + len(self.backside_images) > 0:
-            edit_fields['chessboards'] = True
+        if len(self.buttonside_images) + len(self.backside_images) > 0 \
+                and self.chessboards_edit.text() != "":
+            edit_fields['chessboards'] = str(self.chessboards_edit.text())
         if self.trainer_xml_edit.text() != "":
             edit_fields['trainer_set'] = str(self.trainer_xml_edit.text())
         if self.trainer_csv_edit.text() != "":
@@ -189,7 +190,7 @@ class Wizard(QMainWindow):
         if self.dataset_mov_edit.text() != "":
             edit_fields['dataset_mov'] = str(self.dataset_mov_edit.text())
         if len(self.vicondata) > 0:
-            edit_fields['vicondata'] = True
+            edit_fields['vicondata'] = str(self.vicondata_edit.text())
         if self.dataset_map_edit.text() != "":
             edit_fields['dataset_map'] = str(self.dataset_map_edit.text())
         if self.trainer_map_edit.text() != "":
@@ -204,12 +205,11 @@ class Wizard(QMainWindow):
             QMessageBox.information(self, "No data", "There is nothing to save!")
             return
             
+        # determine which data to save
         dialog = SaveOptionsDialog(self, edit_fields)
-        
         ok = dialog.exec_()
         if not ok: return
         edit_fields = dialog.checked_fields()
-        
         
         # add zip extension if not already present
         if not path.lower().endswith(".zip"):
@@ -224,10 +224,12 @@ class Wizard(QMainWindow):
             w.declaration()
             doc = w.start('datasetHeader', name=name, date=temp_date)
             
-            # write stuff
+            # zips things while at the same time 
+            # recording them into the header xml
+            
             # calibration xml
-            file_path = str(self.calibration_edit.text())
-            if file_path != "" and os.path.isfile(file_path):
+            file_path = edit_fields.get("calibration")
+            if file_path and os.path.isfile(file_path):
                 
                 file_name = os.path.basename(file_path)
                 zipper.write(file_path, file_name)
@@ -236,23 +238,24 @@ class Wizard(QMainWindow):
                 w.element("xml", file_name)
                 
                 # optional elements - dependant on calib xml
+                chess_len = len(self.buttonside_images) + len(self.backside_images)
+                file_path = edit_fields.get("chessboards")
+                
                 # write chessboard folder
-                file_path = str(self.chessboard_edit.text())
-                if file_path != "" and os.path.exists(file_path) and len(self.chessboards) > 0:
-                    w.start("chessboards", path="chessboards/", size=str(len(self.chessboards)))
+                if file_path and os.path.exists(file_path) and chess_len > 0:
+                    w.start("chessboards", path="chessboards/", size=str(chess_len))
                     
-                    for c in self.chessboards:
+                    for c in self.buttonside_images + self.backside_images:
                         file_name = os.path.basename(c)
                         zipper.write(str(c), "chessboards/" + file_name)
-                        
                         w.element("file", file_name)
                     
                     w.end() # chessboards
                 w.end() # calibration
             
             # trainer xml
-            file_path = str(self.trainer_xml_edit.text())
-            if file_path != "" and os.path.isfile(file_path):
+            file_path = edit_fields.get("trainer_set")
+            if file_path and os.path.isfile(file_path):
                 
                 file_name = os.path.basename(file_path)
                 zipper.write(file_path, file_name)
@@ -262,8 +265,8 @@ class Wizard(QMainWindow):
                 
                 # optional elements - dependant on trainer xml
                 # trainer video
-                file_path = str(self.trainer_mov_edit.text())
-                if file_path != "" and os.path.isfile(file_path):
+                file_path = edit_fields.get("trainer_mov")
+                if file_path and os.path.isfile(file_path):
                     
                     file_name = os.path.basename(file_path)
                     zipper.write(file_path, file_name)
@@ -278,18 +281,26 @@ class Wizard(QMainWindow):
                     w.end()
                 
                 # trainer CSV
-                file_path = str(self.trainer_csv_edit.text())
-                if file_path != "" and os.path.isfile(file_path):
+                file_path = edit_fields.get("trainer_csv")
+                if file_path and os.path.isfile(file_path):
                     
                     file_name = os.path.basename(file_path)
                     zipper.write(file_path, file_name)
                     w.element("csv", file_name)
+                
+                # trainer mapping
+                file_path = edit_fields.get("trainer_map")
+                if file_path and os.path.isfile(file_path):
+                    
+                    file_name = os.path.basename(file_path)
+                    zipper.write(file_path, file_name)
+                    w.element("map", file_name)
                     
                 w.end() # training
                 
             # raw video
-            file_path = str(self.dataset_mov_edit.text())
-            if file_path != "" and os.path.isfile(file_path):
+            file_path = edit_fields.get("dataset_mov")
+            if file_path and os.path.isfile(file_path):
                 
                 file_name = os.path.basename(file_path)
                 zipper.write(file_path, file_name)
@@ -306,8 +317,8 @@ class Wizard(QMainWindow):
                 w.end()
                 
                 # write vicon folder - dependant on video_file
-                file_path = str(self.vicondata_edit.text())
-                if file_path != "" and os.path.exists(file_path) and len(self.vicondata) > 0:
+                file_path = edit_fields.get("vicondata")
+                if file_path and os.path.exists(file_path) and len(self.vicondata) > 0:
                     w.start("vicon", path="vicondata/", size=str(len(self.vicondata)))
                     
                     for v in self.vicondata:
@@ -318,26 +329,34 @@ class Wizard(QMainWindow):
                     w.end() # vicon
                 w.end() # rawData
                 
-            # comparison xml
-            file_path = str(self.evaluation_edit.text())
-            if file_path != "" and os.path.isfile(file_path):
+            # evaluation xml
+            file_path = edit_fields.get("evaluation")
+            if file_path and os.path.isfile(file_path):
                 
                 file_name = os.path.basename(file_path)
                 zipper.write(file_path, file_name)
                 w.element("evaluation", file_name)
+            
+            # comparison video
+            file_path = edit_fields.get("comparison")
+            if file_path and os.path.isfile(file_path):
                 
+                file_name = os.path.basename(file_path)
+                zipper.write(file_path, file_name)
+                w.element("comparison", file_name)
+            
             # write datasets group
             w.start("datasets")
             
-            file_path = str(self.dataset_map_edit.text())
-            if file_path != "" and os.path.isfile(file_path):
+            file_path = edit_fields.get("dataset_map")
+            if file_path and os.path.isfile(file_path):
                 
                 file_name = os.path.basename(file_path)
                 zipper.write(file_path, file_name)
                 w.element("mapping", file_name)
                 
-            file_path = str(self.dataset_ann_edit.text())
-            if file_path != "" and os.path.isfile(file_path):
+            file_path = edit_fields.get("dataset_ann")
+            if file_path and os.path.isfile(file_path):
                 
                 file_name = os.path.basename(file_path)
                 zipper.write(file_path, file_name)
