@@ -47,6 +47,9 @@ class Wizard(QMainWindow):
         
         self.trainer_marks = (0,0)
         self.dataset_marks = (0,0)
+        self.buttonside_images = []
+        self.backside_images = []
+        self.vicondata = []
         
         # save/open events
         self.actionSave.triggered.connect(self.save_file)
@@ -166,6 +169,45 @@ class Wizard(QMainWindow):
         name = str(name)
         path = str(path)
         temp_date = datetime.date.today().strftime("%Y-%m-%d")
+        
+        # determine which fields to save
+        edit_fields = {}
+        if self.calibration_edit.text() != "":
+            edit_fields['calibration'] = str(self.calibration_edit.text())
+        if len(self.buttonside_images) + len(self.backside_images) > 0:
+            edit_fields['chessboards'] = True
+        if self.trainer_xml_edit.text() != "":
+            edit_fields['trainer_set'] = str(self.trainer_xml_edit.text())
+        if self.trainer_csv_edit.text() != "":
+            edit_fields['trainer_csv'] = str(self.trainer_csv_edit.text())
+        if self.trainer_mov_edit.text() != "":
+            edit_fields['trainer_mov'] = str(self.trainer_mov_edit.text())
+        if self.trainer_map_edit.text() != "":
+            edit_fields['trainer_map'] = str(self.trainer_map_edit.text())
+        if self.dataset_mov_edit.text() != "":
+            edit_fields['dataset_mov'] = str(self.dataset_mov_edit.text())
+        if len(self.vicondata) > 0:
+            edit_fields['vicondata'] = True
+        if self.dataset_map_edit.text() != "":
+            edit_fields['dataset_map'] = str(self.dataset_map_edit.text())
+        if self.trainer_map_edit.text() != "":
+            edit_fields['dataset_ann'] = str(self.datset_ann_edit.text())
+        if self.comparison_edit.text() != "":
+            edit_fields['comparison'] = str(self.comparison_edit.text())
+        if self.evaluation_edit.text() != "":
+            edit_fields['evaluation'] = str(self.evaluation_edit.text())
+        
+        # abort if there's no data
+        if len(edit_fields) == 0:
+            QMessageBox.information(self, "No data", "There is nothing to save!")
+            return
+            
+        dialog = SaveOptionsDialog(self, edit_fields)
+        
+        ok = dialog.exec_()
+        if not ok: return
+        edit_fields = dialog.checked_fields()
+        
         
         # add zip extension if not already present
         if not path.lower().endswith(".zip"):
