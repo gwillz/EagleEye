@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>661</width>
-    <height>708</height>
+    <width>591</width>
+    <height>772</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>EagleEye Wizard</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout" columnstretch="2,2,1,1,9,1,9,1">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="2,2,1,1,9,9,9,1">
     <property name="leftMargin">
      <number>20</number>
     </property>
@@ -24,16 +24,236 @@
     <property name="horizontalSpacing">
      <number>4</number>
     </property>
-    <item row="1" column="0" colspan="2">
-     <widget class="QLabel" name="label_2">
+    <item row="7" column="0" colspan="2">
+     <widget class="HoverButton" name="trainer_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="text">
-       <string>&lt;h3&gt;Calibration Tool&lt;/h3&gt;</string>
+       <string>Run Training</string>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="0" colspan="2">
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>&lt;h3&gt;Annotation Tool&lt;/h3&gt;</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
       </property>
       <property name="indent">
        <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0" colspan="2">
+     <widget class="HoverButton" name="calibration_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Calibration</string>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="0" colspan="2">
+     <widget class="HoverButton" name="mapping_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Mapping</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="7">
+     <widget class="QLabel" name="num_chessboards">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="text">
+       <string>0</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="3" colspan="4">
+     <widget class="HighlightEdit" name="vicondata_edit">
+      <property name="placeholderText">
+       <string>vicon_dataset/</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2" colspan="2">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::MinimumExpanding</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QPushButton" name="chessboard_button">
+      <property name="text">
+       <string>Extract Chessboards</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="3" colspan="4">
+     <widget class="HighlightEdit" name="chessboard_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>chessboards/</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0" colspan="2">
+     <widget class="QPushButton" name="trainer_mov_button">
+      <property name="text">
+       <string>Import Trainer...</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="3" colspan="5">
+     <widget class="HighlightEdit" name="dataset_mov_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>dataset.mov</string>
+      </property>
+     </widget>
+    </item>
+    <item row="15" column="0" colspan="2">
+     <widget class="HoverButton" name="annotation_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Annotation</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="3" colspan="5">
+     <widget class="HighlightEdit" name="calibration_edit">
+      <property name="placeholderText">
+       <string>calibration.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3" colspan="5">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>&lt;h4&gt;Outputs&lt;/h4&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+      </property>
+      <property name="indent">
+       <number>12</number>
+      </property>
+     </widget>
+    </item>
+    <item row="15" column="3" colspan="5">
+     <widget class="HighlightEdit" name="dataset_ann_edit">
+      <property name="placeholderText">
+       <string>dataset_annotated.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="3" colspan="5">
+     <widget class="HighlightEdit" name="trainer_csv_edit">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>trainer.csv</string>
+      </property>
+     </widget>
+    </item>
+    <item row="17" column="0" colspan="2">
+     <widget class="HoverButton" name="comparison_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Project Comparison</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" rowspan="17">
+     <spacer name="horizontalSpacer_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="16" column="0" colspan="2">
+     <widget class="QLabel" name="label_7">
+      <property name="text">
+       <string>&lt;h3&gt;Comparison Tool&lt;/h3&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+      </property>
+      <property name="indent">
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="3" colspan="5">
+     <widget class="HighlightEdit" name="dataset_map_edit">
+      <property name="placeholderText">
+       <string>dataset_mapped.xml</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="2">
+     <widget class="QLabel" name="label_8">
+      <property name="text">
+       <string>&lt;h1&gt;EagleEye Wizard&lt;/h1&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="18" column="0" colspan="2">
+     <widget class="HoverButton" name="evaluation_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Run Evaluation</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="0" colspan="2">
+     <widget class="QPushButton" name="dataset_mov_button">
+      <property name="text">
+       <string>Import Video...</string>
       </property>
      </widget>
     </item>
@@ -50,46 +270,23 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="0" colspan="2">
-     <widget class="QLabel" name="label_8">
+    <item row="9" column="7">
+     <widget class="QLabel" name="num_vicondata">
       <property name="text">
-       <string>&lt;h1&gt;EagleEye Wizard&lt;/h1&gt;</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2" rowspan="16">
-     <spacer name="horizontalSpacer_2">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Fixed</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="1" column="3" colspan="5">
-     <widget class="QLabel" name="label">
-      <property name="text">
-       <string>&lt;h4&gt;Outputs&lt;/h4&gt;</string>
+       <string>0</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-      </property>
-      <property name="indent">
-       <number>12</number>
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </item>
-    <item row="3" column="3" colspan="5">
-     <widget class="HighlightEdit" name="calibration_edit">
+    <item row="6" column="3" colspan="5">
+     <widget class="HighlightEdit" name="trainer_mov_edit">
+      <property name="text">
+       <string/>
+      </property>
       <property name="placeholderText">
-       <string>calibration.xml</string>
+       <string>trainer.mov</string>
       </property>
      </widget>
     </item>
@@ -106,23 +303,10 @@
       </property>
      </widget>
     </item>
-    <item row="13" column="0" colspan="2">
-     <widget class="QLabel" name="label_6">
+    <item row="1" column="0" colspan="2">
+     <widget class="QLabel" name="label_2">
       <property name="text">
-       <string>&lt;h3&gt;Annotation Tool&lt;/h3&gt;</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
-      </property>
-      <property name="indent">
-       <number>10</number>
-      </property>
-     </widget>
-    </item>
-    <item row="15" column="0" colspan="2">
-     <widget class="QLabel" name="label_7">
-      <property name="text">
-       <string>&lt;h3&gt;Comparison Tool&lt;/h3&gt;</string>
+       <string>&lt;h3&gt;Calibration Tool&lt;/h3&gt;</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
@@ -145,84 +329,10 @@
       </property>
      </widget>
     </item>
-    <item row="6" column="3" colspan="5">
-     <widget class="HighlightEdit" name="trainer_mov_edit">
+    <item row="9" column="0" colspan="2">
+     <widget class="QPushButton" name="capture_button">
       <property name="text">
-       <string/>
-      </property>
-      <property name="placeholderText">
-       <string>trainer.mov</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2" colspan="2">
-     <spacer name="horizontalSpacer">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::MinimumExpanding</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>40</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="12" column="3" colspan="5">
-     <widget class="HighlightEdit" name="dataset_map_edit">
-      <property name="placeholderText">
-       <string>dataset_mapped.xml</string>
-      </property>
-     </widget>
-    </item>
-    <item row="7" column="3" colspan="5">
-     <widget class="HighlightEdit" name="trainer_xml_edit">
-      <property name="placeholderText">
-       <string>training_set.xml</string>
-      </property>
-     </widget>
-    </item>
-    <item row="14" column="3" colspan="5">
-     <widget class="HighlightEdit" name="dataset_ann_edit">
-      <property name="placeholderText">
-       <string>dataset_annotated.xml</string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="0" colspan="2">
-     <widget class="QPushButton" name="trainer_mov_button">
-      <property name="text">
-       <string>Import Trainer...</string>
-      </property>
-     </widget>
-    </item>
-    <item row="10" column="3" colspan="5">
-     <widget class="HighlightEdit" name="dataset_mov_edit">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="placeholderText">
-       <string>dataset.mov</string>
-      </property>
-     </widget>
-    </item>
-    <item row="10" column="0" colspan="2">
-     <widget class="QPushButton" name="dataset_mov_button">
-      <property name="text">
-       <string>Import Video...</string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="3" colspan="5">
-     <widget class="HighlightEdit" name="trainer_csv_edit">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="placeholderText">
-       <string>trainer.csv</string>
+       <string>Capture Data</string>
       </property>
      </widget>
     </item>
@@ -247,49 +357,8 @@
       <property name="alignment">
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
-     </widget>
-    </item>
-    <item row="9" column="3" colspan="4">
-     <widget class="HighlightEdit" name="vicondata_edit">
-      <property name="placeholderText">
-       <string>vicon_dataset/</string>
-      </property>
-     </widget>
-    </item>
-    <item row="9" column="7">
-     <widget class="QLabel" name="num_vicondata">
-      <property name="text">
-       <string>0</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0" colspan="2">
-     <widget class="HoverButton" name="calibration_button">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>Run Calibration</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0" colspan="2">
-     <widget class="QPushButton" name="chessboard_button">
-      <property name="text">
-       <string>Extract Chessboards</string>
-      </property>
-     </widget>
-    </item>
-    <item row="7" column="0" colspan="2">
-     <widget class="HoverButton" name="trainer_button">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>Run Training</string>
+      <property name="buddy">
+       <cstring>dataset_name_edit</cstring>
       </property>
      </widget>
     </item>
@@ -300,44 +369,34 @@
       </property>
      </widget>
     </item>
-    <item row="9" column="0" colspan="2">
-     <widget class="QPushButton" name="capture_button">
-      <property name="text">
-       <string>Capture Data</string>
+    <item row="7" column="3" colspan="5">
+     <widget class="HighlightEdit" name="trainer_xml_edit">
+      <property name="placeholderText">
+       <string>training_set.xml</string>
       </property>
      </widget>
     </item>
-    <item row="12" column="0" colspan="2">
-     <widget class="HoverButton" name="mapping_button">
+    <item row="13" column="0">
+     <widget class="HoverButton" name="trainer_map_button">
       <property name="enabled">
        <bool>false</bool>
       </property>
       <property name="text">
-       <string>Run Mapping</string>
+       <string>Map Trainer</string>
       </property>
      </widget>
     </item>
-    <item row="14" column="0" colspan="2">
-     <widget class="HoverButton" name="annotation_button">
+    <item row="13" column="1">
+     <widget class="HoverButton" name="trainer_compare_button">
       <property name="enabled">
        <bool>false</bool>
       </property>
       <property name="text">
-       <string>Run Annotation</string>
+       <string>Compare Trainer</string>
       </property>
      </widget>
     </item>
-    <item row="17" column="0" colspan="2">
-     <widget class="HoverButton" name="evaluation_button">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>Run Evaluation</string>
-      </property>
-     </widget>
-    </item>
-    <item row="16" column="3" colspan="4">
+    <item row="17" column="3" colspan="5">
      <widget class="HighlightEdit" name="comparison_edit">
       <property name="text">
        <string/>
@@ -347,40 +406,17 @@
       </property>
      </widget>
     </item>
-    <item row="17" column="3" colspan="4">
+    <item row="18" column="3" colspan="5">
      <widget class="HighlightEdit" name="evaluation_edit">
       <property name="placeholderText">
        <string>evaluation.xml</string>
       </property>
      </widget>
     </item>
-    <item row="16" column="0" colspan="2">
-     <widget class="HoverButton" name="comparison_button">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>Project Comparison</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="7">
-     <widget class="QLabel" name="num_chessboards">
-      <property name="text">
-       <string>0</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="3" colspan="4">
-     <widget class="HighlightEdit" name="chessboard_edit">
-      <property name="text">
-       <string/>
-      </property>
+    <item row="13" column="3" colspan="5">
+     <widget class="HighlightEdit" name="trainer_map_edit">
       <property name="placeholderText">
-       <string>chessboards/</string>
+       <string>trainer_mapped.xml</string>
       </property>
      </widget>
     </item>
@@ -391,8 +427,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>661</width>
-     <height>21</height>
+     <width>591</width>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -605,8 +641,11 @@
   <tabstop>capture_button</tabstop>
   <tabstop>dataset_mov_button</tabstop>
   <tabstop>mapping_button</tabstop>
+  <tabstop>trainer_map_button</tabstop>
+  <tabstop>trainer_compare_button</tabstop>
   <tabstop>annotation_button</tabstop>
   <tabstop>comparison_button</tabstop>
+  <tabstop>evaluation_button</tabstop>
   <tabstop>chessboard_edit</tabstop>
   <tabstop>calibration_edit</tabstop>
   <tabstop>trainer_csv_edit</tabstop>
@@ -615,7 +654,10 @@
   <tabstop>vicondata_edit</tabstop>
   <tabstop>dataset_mov_edit</tabstop>
   <tabstop>dataset_map_edit</tabstop>
+  <tabstop>trainer_map_edit</tabstop>
   <tabstop>dataset_ann_edit</tabstop>
+  <tabstop>comparison_edit</tabstop>
+  <tabstop>evaluation_edit</tabstop>
  </tabstops>
  <resources>
   <include location="icons.qrc"/>
@@ -740,12 +782,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>174</x>
-     <y>570</y>
+     <x>194</x>
+     <y>631</y>
     </hint>
     <hint type="destinationlabel">
-     <x>538</x>
-     <y>409</y>
+     <x>560</x>
+     <y>442</y>
     </hint>
    </hints>
   </connection>
@@ -756,8 +798,8 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>110</x>
-     <y>649</y>
+     <x>130</x>
+     <y>706</y>
     </hint>
     <hint type="destinationlabel">
      <x>538</x>
@@ -772,12 +814,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>110</x>
-     <y>649</y>
+     <x>130</x>
+     <y>706</y>
     </hint>
     <hint type="destinationlabel">
-     <x>538</x>
-     <y>568</y>
+     <x>560</x>
+     <y>630</y>
     </hint>
    </hints>
   </connection>
@@ -788,12 +830,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>110</x>
-     <y>649</y>
+     <x>130</x>
+     <y>706</y>
     </hint>
     <hint type="destinationlabel">
-     <x>538</x>
-     <y>409</y>
+     <x>560</x>
+     <y>442</y>
     </hint>
    </hints>
   </connection>
@@ -804,12 +846,12 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>184</x>
-     <y>668</y>
+     <x>204</x>
+     <y>743</y>
     </hint>
     <hint type="destinationlabel">
-     <x>328</x>
-     <y>480</y>
+     <x>560</x>
+     <y>517</y>
     </hint>
    </hints>
   </connection>
@@ -820,12 +862,108 @@
    <slot>highlight(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>161</x>
-     <y>670</y>
+     <x>181</x>
+     <y>743</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>556</y>
+     <x>560</x>
+     <y>630</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trainer_map_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>trainer_xml_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>78</x>
+     <y>547</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>317</x>
+     <y>317</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trainer_map_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>trainer_csv_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>97</x>
+     <y>536</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>265</x>
+     <y>236</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trainer_map_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>calibration_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>57</x>
+     <y>530</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>270</x>
+     <y>161</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trainer_compare_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>trainer_map_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>196</x>
+     <y>542</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>287</x>
+     <y>541</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trainer_compare_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>trainer_mov_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>204</x>
+     <y>535</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>258</x>
+     <y>272</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trainer_compare_button</sender>
+   <signal>hovered(bool)</signal>
+   <receiver>trainer_xml_edit</receiver>
+   <slot>highlight(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>143</x>
+     <y>532</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>278</x>
+     <y>313</y>
     </hint>
    </hints>
   </connection>

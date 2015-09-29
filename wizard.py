@@ -20,6 +20,7 @@ try:
     from trainer import main as trainer_main
     from mapping import main as mapping_main
     from compare import main as compare_main
+    from compare_trainer import main as compare_trainer_main
 # catch errors, report in main()
 except Exception as e:
     error = e
@@ -65,6 +66,7 @@ class Wizard(QMainWindow):
         self.trainer_mov_edit.textChanged.connect(self.set_unsaved)
         self.calibration_edit.textChanged.connect(self.set_unsaved)
         self.trainer_xml_edit.textChanged.connect(self.set_unsaved)
+        self.trainer_map_edit.textChanged.connect(self.set_unsaved)
         self.vicondata_edit.textChanged.connect(self.set_unsaved)
         self.vicondata_edit.textChanged.connect(self.set_unsaved)
         self.dataset_mov_edit.textChanged.connect(self.set_unsaved)
@@ -89,6 +91,12 @@ class Wizard(QMainWindow):
         self.dataset_ann_edit.textChanged.connect(self.check_compare_enable)
         self.dataset_map_edit.textChanged.connect(self.check_evaluate_enable)
         self.dataset_ann_edit.textChanged.connect(self.check_evaluate_enable)
+        self.trainer_xml_edit.textChanged.connect(self.check_trainer_mapping_enable)
+        self.trainer_csv_edit.textChanged.connect(self.check_trainer_mapping_enable)
+        self.calibration_edit.textChanged.connect(self.check_trainer_mapping_enable)
+        self.trainer_xml_edit.textChanged.connect(self.check_trainer_compare_enable)
+        self.trainer_map_edit.textChanged.connect(self.check_trainer_compare_enable)
+        self.trainer_mov_edit.textChanged.connect(self.check_trainer_compare_enable)
         
         # buttons and junk
         self.chessboard_button.clicked.connect(self.chessboard_extract)
@@ -803,7 +811,55 @@ class Wizard(QMainWindow):
                                     "-config", self.config_path] +\
                                     self.vicondata)
         if stat: worker.start()
-
+    
+    @pyqtSlot()
+    def run_trainer_mapping(self):
+        # browse for save path
+        if self.trainer_map_edit.text() == "":
+            path = QFileDialog.getSaveFileName(self, "Save Trainer Mapping XML", "./data",
+                                                    "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
+        else:
+            path = self.trainer_map_edit.text()
+        
+        # run tests
+        if path == "": return
+        path = os.path.normpath(str(path))
+        if not path.lower().endswith(".xml"):
+            path += ".xml"
+        self.trainer_map_edit.setText(path)
+        
+        if os.path.isfile(path):
+            res = QMessageBox.question(self, "File Exists", 
+                                        "File Exists.\nDo you want to overwrite it?",
+                                        QMessageBox.Yes, QMessageBox.No)
+            if res == QMessageBox.No: return
+        
+        self.statusbar.showMessage("Running Trainer Mapping.")
+        stat, worker = self.run_tool(mapping_main, ["wizard", 
+                                    "-calib", str(self.calibration_edit.text()),
+                                    "-trainer", str(self.trainer_xml_edit.text()),
+                                    "-output", path,
+                                    "-config", self.config_path,
+                                    trainer_csv.edit.text()])
+        if stat: worker.start()
+    
+    @pyqtSlot()
+    def run_trainer_compare(self):
+        args = ["wizard", 
+                str(self.trainer_mov_edit.text()),
+                str(self.trainer_map_edit.text()),
+                str(self.trainer_xml_edit.text()),
+                "-config", self.config_path]
+        
+        # insert marks
+        if self.trainer_marks[1] > 0:
+            mark_in, mark_out = self.trainer_marks
+            args += [str(mark_in), str(mark_out)]
+        
+        self.statusbar.showMessage("Running Trainer Comparison.")
+        stat, worker = self.run_tool(trainer_compare_main, args)
+        if stat: worker.start()
+    
     @pyqtSlot()
     def run_annotation(self):
         print "annotation tool stub"
@@ -1039,6 +1095,23 @@ class Wizard(QMainWindow):
                         self.dataset_ann_edit.text() != "")
     
     @pyqtSlot()
+    def check_trainer_mapping_enable(self):
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.trainer_map_button.setEnabled(
+                        self.trainer_xml_edit.text() != "" and 
+                        self.trainer_csv_edit.text() != "" and 
+                        self.calibration_edit.text() != "")
+    
+    @pyqtSlot()
+    def check_trainer_compare_enable(self):
+        if 'worker' not in self.__dict__ or self.worker.isRunning():
+            self.trainer_compare_button.setEnabled(
+                        self.trainer_map_edit.text() != "" and 
+                        self.trainer_mov_edit.text() != "" and 
+                        self.trainer_xml_edit.text() != "")
+    
+    
+    @pyqtSlot()
     def check_evaluate_enable(self):
         if 'worker' not in self.__dict__ or self.worker.isRunning():
             self.evaluation_button.setEnabled(
@@ -1130,6 +1203,7 @@ class Wizard(QMainWindow):
         self.dataset_ann_edit.setEnabled(set)
         self.comparison_edit.setEnabled(set)
         self.evaluation_edit.setEnabled(set)
+        self.trainer_map_edit.setEnabled(set)
         self.actionNew.setEnabled(set)
         self.actionSave.setEnabled(set)
         self.actionSave_As.setEnabled(set)
@@ -1145,6 +1219,8 @@ class Wizard(QMainWindow):
             self.annotation_button.setEnabled(set)
             self.comparison_button.setEnabled(set)
             self.evaluation_button.setEnabled(set)
+            self.trainer_map_button.setEnabled(set)
+            self.trainer_compare_button.setEnabled(set)
         else:
             self.check_trainer_enable()
             self.check_mapping_enable()
