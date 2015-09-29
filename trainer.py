@@ -150,7 +150,7 @@ def main(sysargs):
         ry = float(in_csv.row()[6])
         rz = float(in_csv.row()[7])
         
-        textstatus = "{:.3f}".format(float(in_csv.row()[0]))
+        textstatus = "timestamp: {:.3f}, {}".format(float(in_csv.row()[0]), in_vid.status())
         textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
         textclicks = "{}/{} clicks".format(len(trainer_points[lens]), max_clicks)
         textclicks += " - back side" if lens == BuffSplitCap.left else " - button side"
