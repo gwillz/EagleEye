@@ -204,8 +204,12 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
 
         visibility_txt = "Visible: {} , Max Visible: {}".format(visible, max_visible)
         cvframe, _textOffset, _textSize = displayText(cvframe, visibility_txt, textOffset, cfg)
+
         dataText = " - Good data!!"
         dataText_colour = (0, 255, 0) # green
+        if(visible < min_reflectors):           # for when there isn't a matching trainer
+            dataText = " - Bad data!! Ignored."
+            dataText_colour = (0, 0, 255) # red
         
         # Get trainer point if it exists at current frame
         vicon_txt = "VICON - x:{} y:{} z:{}".format("?", "?", "?")
@@ -227,17 +231,13 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
                 reprojErr = calReprojError(centre, trainer_pt)
                 reprojErr_txt = "Reprojection Error: {} pixels".format(str(reprojErr))
                 if(cfg.ignore_baddata == "on"):
-                    if(visible < min_reflectors):
-                        dataText = " - Bad data!! Ignored."
-                        dataText_colour = (0, 0, 255) # red
-                    else:
+                    if(visible >= min_reflectors):
                         reprojerror_list.update({vidframe_no: {"rms": reprojErr,
                                                     "x1": trainer_pt[0],
                                                     "y1": trainer_pt[1],
                                                     "x2": pt1[0],
                                                     "y2": pt1[1]}})
                 
-                # VICON Data - is it needed here ??
                 vicon_txt = "VICON - x:{} y:{} z:{}".format(float(trainer_frame["vicon"]["x"]),
                                                                 float(trainer_frame["vicon"]["y"]),
                                                                 float(trainer_frame["vicon"]["z"]))
