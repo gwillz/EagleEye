@@ -2,8 +2,8 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # 
-# Gwilyn Saunders
-# version 0.2.1
+# Kin Kuen Liu, Gwilyn Saunders
+# version 0.1
 
 import xml.etree.ElementTree as ET
 

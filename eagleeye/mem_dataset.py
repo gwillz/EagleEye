@@ -2,24 +2,28 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.4
+# version 0.2.6
 # 
-# Loads the whole dataset into memory
+# Loads a whole CSV dataset into memory
+# Provides flash detection and set restriction
+# Include synchronisation techniques
 #
-
-import os, csv
+import os, csv, re
 
 class Memset:
-    def __init__(self, path, id=None, delimiter=","):
+    def __init__(self, path, delimiter=","):
         self.data = []
         self.total = 0
         self.start_set = 0
         self.end_set = 0
         self._at = 0.0
         
+        m = re.match(".*\d_(.*)\.csv", os.path.basename(path))
+        if m: self._name = m.group(1)
+        else: self._name = "NameError"
+        
         self._delim = delimiter
         self._path = path
-        self._name = os.path.basename(path).split("_")[-1].split(".")[0].replace("-", " ")
         self._ratio = 1.0
         
         # determine set parameters
@@ -50,6 +54,7 @@ class Memset:
         self.data = self.data[self.start_set:self.end_set+1]
         self.total = self.end_set+1 - self.start_set
     
+    # Gets current row, or a specific row if 'at' option is > 0
     def row(self, at=-1):
         if at == -1:
             return self.data[self.at()]
@@ -70,9 +75,13 @@ class Memset:
             return True
         return False
     
+    # calculate appropriate ratio from the matching video frames
     def setRatio(self, video_frames):
         self._ratio = self.total / float(video_frames)
-        
+    
+    def resetRatio(self):
+        self._ratio = 1.0
+    
     def at(self):
         return int(round(self._at, 0))
     
