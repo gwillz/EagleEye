@@ -126,7 +126,7 @@ class Mapper:
             
             # Quality control for solvePnP, skip data/frame if criteria not met
             # check negative position values, if on skip mapping at this frame
-            if(cfg.check_negatives == "on"):
+            if(cfg.check_negatives == True):
                 if(vicon_x < 0 or vicon_y < 0 or vicon_z < 0):
                     continue
                 

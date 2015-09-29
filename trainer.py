@@ -160,8 +160,8 @@ def main(sysargs):
         # visible reflectors status
         dataStatus = ""
         dataStatus_colour = (255,255,255)
-        visible = int(in_csv.row()[9])
         max_visible = int(in_csv.row()[8])
+        visible = int(in_csv.row()[9])
         qualityText = "Visible: {} , Max Visible: {}".format(visible, max_visible)
 
         dataQuality = True      # True = good, False = bad
@@ -174,7 +174,7 @@ def main(sysargs):
             dataText_colour = (0, 0, 255) # red
 
 
-        if(cfg.check_negatives == "on"):
+        if(cfg.check_negatives == True):
             if(vicon_x < 0 or vicon_y < 0 or vicon_z < 0):
                 dataQuality = False
                 dataText = " - Bad data!!"
@@ -215,7 +215,7 @@ def main(sysargs):
         
         # write data
         if params['status'] == Status.record:
-            if cfg.ignore_baddata == "on":
+            if cfg.ignore_baddata == True:
                 if dataQuality == True:
                     trainer_points[in_vid.at()] = (params['pos'], [vicon_x, vicon_y, vicon_z, rx, ry, rz], [visible, max_visible])
             else:
@@ -233,7 +233,7 @@ def main(sysargs):
         if len(trainer_points) == max_clicks:
             # TODO: Does this save as soon as last frame hits or does it record the click on the last frame?
             print "\nall clicks done"
-            if cfg.ignore_baddata == "on":
+            if cfg.ignore_baddata == True:
                 if dataQuality == True:
                     trainer_points[in_vid.at()] = (params['pos'], [vicon_x, vicon_y, vicon_z, rx, ry, rz], [visible, max_visible])
             else:
@@ -281,8 +281,8 @@ def main(sysargs):
             out_xml.element("vicon", 
                             x=str(data[0]), y=str(data[1]), z=str(data[2]))
             out_xml.element("visibility",
-                            visibleMax=str(visibility[0]),
-                            visible=str(visibility[1]))
+                            visibleMax=str(visibility[1]),
+                            visible=str(visibility[0]))
             out_xml.end()
         
         # clean up

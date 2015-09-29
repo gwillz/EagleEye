@@ -230,7 +230,7 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
                 # Still display bad data reprojection error but not used in calculation of mean
                 reprojErr = calReprojError(centre, trainer_pt)
                 reprojErr_txt = "Reprojection Error: {} pixels".format(str(reprojErr))
-                if(cfg.ignore_baddata == "on"):
+                if(cfg.ignore_baddata == True):
                     if(visible >= min_reflectors):
                         reprojerror_list.update({vidframe_no: {"rms": reprojErr,
                                                     "x1": trainer_pt[0],
