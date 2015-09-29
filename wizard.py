@@ -58,10 +58,11 @@ class Wizard(QMainWindow):
         self.actionOpen.triggered.connect(self.open_file)
         self.actionNew.triggered.connect(self.clear_data)
         
-        # about events
+        # other menu events
         self.actionAbout.triggered.connect(self.about)
         self.actionAbout_QT.triggered.connect(qApp.aboutQt)
         self.actionKill_Worker.triggered.connect(self.kill_worker)
+        self.actionExit.triggered.connect(self.close)
         
         # save checks
         self.dataset_name_edit.textChanged.connect(self.update_working_title)
