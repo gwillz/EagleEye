@@ -448,21 +448,12 @@
      <string>Help</string>
     </property>
     <addaction name="actionHelp_Dialogs"/>
+    <addaction name="actionKill_Worker"/>
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
     <addaction name="actionAbout_QT"/>
    </widget>
-   <widget class="QMenu" name="menuConfig">
-    <property name="title">
-     <string>Config</string>
-    </property>
-    <addaction name="actionOpen_Config"/>
-    <addaction name="actionEdit_Config"/>
-    <addaction name="separator"/>
-    <addaction name="action_config_status"/>
-   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuConfig"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -610,6 +601,14 @@
   <action name="actionHello_loo_loo">
    <property name="text">
     <string>Hello loo loo</string>
+   </property>
+  </action>
+  <action name="actionKill_Worker">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Kill Worker</string>
    </property>
   </action>
  </widget>

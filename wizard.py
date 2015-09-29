@@ -57,6 +57,7 @@ class Wizard(QMainWindow):
         # about events
         self.actionAbout.triggered.connect(self.about)
         self.actionAbout_QT.triggered.connect(qApp.aboutQt)
+        self.actionKill_Worker.triggered.connect(self.kill_worker)
         
         # save checks
         self.dataset_name_edit.textChanged.connect(self.update_working_title)
@@ -447,6 +448,7 @@ class Wizard(QMainWindow):
         self.trainer_csv_edit.clear()
         self.trainer_mov_edit.clear()
         self.trainer_xml_edit.clear()
+        self.trainer_map_edit.clear()
         self.vicondata_edit.clear()
         self.dataset_mov_edit.clear()
         self.dataset_map_edit.clear()
@@ -461,6 +463,8 @@ class Wizard(QMainWindow):
         self.check_annotate_enable()
         self.check_evaluate_enable()
         self.check_compare_enable()
+        self.check_trainer_compare_enable()
+        self.check_trainer_mapping_enable()
         
         return True
     
@@ -476,11 +480,17 @@ class Wizard(QMainWindow):
             print "exec:", " ".join(args)
             self.disable_tools()
             
+            self.actionKill_Worker.setEnabled(True)
             self.worker = worker
             return True, worker
         else:
             QMessageBox.warning(self, "Already running", "A tool is already running")
             return False, self.worker
+    
+    def kill_worker(self):
+        if 'worker' in self.__dict__ and self.worker.isRunning():
+            self.worker.terminate()
+            self.actionKill_Worker.setEnabled(False)
     
     def destroy_worker(self, obj):
         del self.worker
@@ -1067,56 +1077,49 @@ class Wizard(QMainWindow):
     ## button checker dealios (to ensure a correct pipeline workflow)
     @pyqtSlot()
     def check_trainer_enable(self):
-        if 'worker' not in self.__dict__ or self.worker.isRunning():
-            self.trainer_button.setEnabled(
-                        self.trainer_csv_edit.text() != "" and 
-                        self.trainer_mov_edit.text() != "")
+        self.trainer_button.setEnabled(
+                    self.trainer_csv_edit.text() != "" and 
+                    self.trainer_mov_edit.text() != "")
     
     @pyqtSlot()
     def check_mapping_enable(self):
-        if 'worker' not in self.__dict__ or self.worker.isRunning():
-            self.mapping_button.setEnabled(
-                        self.calibration_edit.text() != "" and 
-                        self.trainer_xml_edit.text() != "" and 
-                        self.vicondata_edit.text() != "")
+        self.mapping_button.setEnabled(
+                    self.calibration_edit.text() != "" and 
+                    self.trainer_xml_edit.text() != "" and 
+                    self.vicondata_edit.text() != "")
     
     @pyqtSlot()
     def check_annotate_enable(self):
-        if 'worker' not in self.__dict__ or self.worker.isRunning():
             self.annotation_button.setEnabled(
                         self.dataset_mov_edit.text() != "")
     
     @pyqtSlot()
     def check_compare_enable(self):
-        if 'worker' not in self.__dict__ or self.worker.isRunning():
-            self.comparison_button.setEnabled(
-                        self.dataset_mov_edit.text() != "" and 
-                        self.dataset_map_edit.text() != "" and 
-                        self.dataset_ann_edit.text() != "")
+        self.comparison_button.setEnabled(
+                    self.dataset_mov_edit.text() != "" and 
+                    self.dataset_map_edit.text() != "" and 
+                    self.dataset_ann_edit.text() != "")
     
     @pyqtSlot()
     def check_trainer_mapping_enable(self):
-        if 'worker' not in self.__dict__ or self.worker.isRunning():
-            self.trainer_map_button.setEnabled(
-                        self.trainer_xml_edit.text() != "" and 
-                        self.trainer_csv_edit.text() != "" and 
-                        self.calibration_edit.text() != "")
+        self.trainer_map_button.setEnabled(
+                    self.trainer_xml_edit.text() != "" and 
+                    self.trainer_csv_edit.text() != "" and 
+                    self.calibration_edit.text() != "")
     
     @pyqtSlot()
     def check_trainer_compare_enable(self):
-        if 'worker' not in self.__dict__ or self.worker.isRunning():
-            self.trainer_compare_button.setEnabled(
-                        self.trainer_map_edit.text() != "" and 
-                        self.trainer_mov_edit.text() != "" and 
-                        self.trainer_xml_edit.text() != "")
+        self.trainer_compare_button.setEnabled(
+                    self.trainer_map_edit.text() != "" and 
+                    self.trainer_mov_edit.text() != "" and 
+                    self.trainer_xml_edit.text() != "")
     
     
     @pyqtSlot()
     def check_evaluate_enable(self):
-        if 'worker' not in self.__dict__ or self.worker.isRunning():
-            self.evaluation_button.setEnabled(
-                        self.dataset_map_edit.text() != "" and 
-                        self.dataset_ann_edit.text() != "")
+        self.evaluation_button.setEnabled(
+                    self.dataset_map_edit.text() != "" and 
+                    self.dataset_ann_edit.text() != "")
     
     # loads directory of image paths into chessboard list
     @pyqtSlot()
@@ -1265,13 +1268,11 @@ class Wizard(QMainWindow):
     
     def closeEvent(self, ev):
         if not self.saved:
-            res = QMessageBox.question(self, "Wait a second!", 
-                                    "You haven't save this session, are you sure?",
-                                    QMessageBox.Save, QMessageBox.Discard)
+            if not self.clear_data():
+                ev.ignore()
+                return
             
-            if res == QMessageBox.Save:
-                self.save_file()
-        
+        ev.accept()
         sys.exit(0)
 
 ## Worker thread, for running CPU intensive tools
