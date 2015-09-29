@@ -8,13 +8,14 @@ import sys, os, cv2, numpy as np, glob, datetime, xml.etree.ElementTree as ET, t
 from elementtree.SimpleXMLWriter import XMLWriter
 from custom_widgets import *
 
+# ignore vicon capture errors because of PyVicon as it wont
+# import on linux/OSX or 64bit system - not compiled for them
+try: from vicon_capture import main as capture_main
+except: pass
+
 # tool imports
 error = False
 try:
-    # ignore vicon capture errors because of PyVicon
-    # will be reported seperately
-    try: from vicon_capture import main as capture_main
-    except: pass
     from extract_frames import main as chess_extract_main
     from dualcalib import main as calib_main
     from trainer import main as trainer_main

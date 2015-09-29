@@ -10,60 +10,43 @@ class SaveOptionsDialog(QDialog):
         self.edit_fields = edit_fields
         self.ui = uic.loadUi('custom_widgets/save_options.ui', self)
         
-        # load available fields
-        if "calibration" in edit_fields:
-            self.ui.calibration.setEnabled(True)
-            self.ui.calibration.setChecked(True)
-            
-            # only enable optionals if parents exist
-            if "chessboards" in edit_fields:
-                self.ui.chessboards.setEnabled(True)
-                self.ui.chessboards.setChecked(True)
-        
-        if "trainer_set" in edit_fields:
-            self.ui.trainer_set.setEnabled(True)
-            self.ui.trainer_set.setChecked(True)
-            
-            for i in ["trainer_csv", "trainer_mov", "trainer_map"]:
-                if i in edit_fields:
-                    self.ui.__dict__[i].setEnabled(True)
-                    self.ui.__dict__[i].setChecked(True)
-        
-        if "dataset_mov" in edit_fields:
-            self.ui.dataset_mov.setEnabled(True)
-            self.ui.dataset_mov.setChecked(True)
-            
-            if "vicondata" in edit_fields:
-                self.ui.vicondata.setEnabled(True)
-                self.ui.vicondata.setChecked(True)
-        
-        for i in ["dataset_map", "dataset_ann", "evaluation", "comparison"]:
-            if i in edit_fields:
-                self.ui.__dict__[i].setEnabled(True)
-                self.ui.__dict__[i].setChecked(True)
-        
-        # enable dataset group checkbox
-        if self.ui.dataset_map.isEnabled() \
-                or self.ui.dataset_ann.isEnabled():
-            self.ui.dataset_check.setEnabled(True)
-            self.ui.dataset_check.setChecked(True)
-        
-        # check-enable rules
+        # top-level/children toggle rules
         self.calibration.toggled.connect(self.check_children)
         self.trainer_set.toggled.connect(self.check_children)
         self.dataset_mov.toggled.connect(self.check_children)
         self.dataset_check.toggled.connect(self.check_children)
         
-        # presets
+        # preset buttons
         self.ui.everything_button.clicked.connect(self.preset_everything)
         self.ui.novideos_button.clicked.connect(self.preset_novideos)
         self.ui.typical_button.clicked.connect(self.preset_typical)
         self.ui.minimal_button.clicked.connect(self.preset_minimal)
         
-        self.ui.dataset_mov.clicked.connect(lambda: self.ui.novideos_button.setChecked(False))
-        self.ui.trainer_mov.clicked.connect(lambda: self.ui.novideos_button.setChecked(False))
-        self.ui.comparison.clicked.connect(lambda: self.ui.novideos_button.setChecked(False))
+        novideo_slot = lambda: self.ui.novideos_button.setChecked(False)
+        self.ui.dataset_mov.clicked.connect(novideo_slot)
+        self.ui.trainer_mov.clicked.connect(novideo_slot)
+        self.ui.comparison.clicked.connect(novideo_slot)
+        self.ui.everything_button.clicked.connect(novideo_slot)
+        self.ui.typical_button.clicked.connect(novideo_slot)
+        self.ui.minimal_button.clicked.connect(novideo_slot)
+        
+        # load all top-level fields
+        for i in ["calibration", "trainer_set", "dataset_mov", 
+                  "dataset_map", "dataset_ann", "evaluation", "comparison"]:
+            if i in edit_fields:
+                self.ui.__dict__[i].setEnabled(True)
+        
+        # enable top-level dataset if children exist
+        if self.ui.dataset_map.isEnabled() \
+                or self.ui.dataset_ann.isEnabled():
+            self.ui.dataset_check.setEnabled(True)
+            self.ui.dataset_check.setChecked(True)
+        
+        # now toggle everything!
+        self.ui.everything_button.click()
     
+    # this is called whenever a top-level check is toggled
+    # it will enable/disable child checks
     @pyqtSlot(bool)
     def check_children(self, val):
         children_fields = []
@@ -89,7 +72,8 @@ class SaveOptionsDialog(QDialog):
     
     @pyqtSlot()
     def preset_everything(self):
-        # check all parent toggles
+        # always toggle top-level checks first, then children 
+        # because check_children will need to resolve first
         self.toggle_these(["calibration", "trainer_set", "dataset_mov", "dataset_map",
                            "dataset_ann", "evaluation", "comparison",
                            "chessboards", "trainer_csv", "trainer_mov", 
@@ -114,13 +98,19 @@ class SaveOptionsDialog(QDialog):
     
     @pyqtSlot()
     def toggle_these(self, checkboxes, val):
+        # dataset_check is special (doesn't exist in edit_fields)
+        if "dataset_ann" in checkboxes \
+                or "dataset_map" in checkboxes:
+            self.ui.dataset_check.setChecked(True)
+        
+        # toggle if available and enabled
         for i in checkboxes:
             if i in self.edit_fields \
                     and i in self.ui.__dict__ \
                     and self.ui.__dict__[i].isEnabled():
                 self.ui.__dict__[i].setChecked(val)
     
-    # return a dict of checked fields with the respective input values
+    # return a dict of toggled fields with the respective input values
     def checked_fields(self):
         return_fields = {}
         
