@@ -448,7 +448,7 @@ class Wizard(QMainWindow):
                         
                         # load video marks if found
                         if 'mark_in' in video.attrib:
-                            self.training_marks = (video.attrib['mark_in'], video.attrib['mark_out'])
+                            self.trainer_marks = (video.attrib['mark_in'], video.attrib['mark_out'])
             
             # find data elements
             if raw_data is not None:
@@ -1239,14 +1239,6 @@ class Wizard(QMainWindow):
         
         self.num_vicondata.setText(str(len(self.vicondata)))
         self.mapping_button.setEnabled(len(self.vicondata) > 0)
-    
-    @pyqtSlot()
-    def set_trainer_marks(self, mark_in, mark_out):
-        self.trainer_marks = (mark_in, mark_out)
-        
-    @pyqtSlot()
-    def set_dataset_marks(self, mark_in, mark_out):
-        self.dataset_marks = (mark_in, mark_out)
     
     @pyqtSlot()
     def reset_trainer_marks(self):
