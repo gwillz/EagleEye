@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.11
+# version 0.2.12
 # 
 # Runs mapping routines on multiple CSV files and combipnes them into a single XML format.
 #
@@ -50,7 +50,11 @@ def main(sysargs):
 
     
     # open calib files
-    mapper = Mapper(args.calib, args.trainer, cfg)
+    try:
+        mapper = Mapper(args.calib, args.trainer, cfg)
+    except Exception as e:
+        print e.message
+        return 1
 
     # open destination XML
     with open(args.output, "w") as xmlfile:

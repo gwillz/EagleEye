@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.2.9
+# version 0.2.10
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
@@ -139,11 +139,11 @@ class Mapper:
     
     def calPose(self, cfg, mode=0):
         if(len(self.trainer_imgpts) < 4 or len(self.trainer_objpts) < 4):
-            print "Must have at least 4 training points."
-            return np.asarray([], dtype=np.float32), np.asarray([], dtype=np.float32)           # TODO: need to abort here, not a good abort atm
+            raise Exception("Must have at least 4 training points.")
+            
         if(len(self.trainer_imgpts) != len(self.trainer_objpts)):
-            print "Training image points and object points must be equal in size. image pts {}, obj pts {}".format(len(self.trainer_imgpts), len(self.trainer_objpts))
-            return np.asarray([], dtype=np.float32), np.asarray([], dtype=np.float32)           # TODO: need to abort here, not a good abort atm
+            raise Exception("Training image points and object points must be equal in size. "
+                            "image pts {}, obj pts {}".format(len(self.trainer_imgpts), len(self.trainer_objpts)))
         
         # TODO: customised solvePnP flags from config
         # levenberg-marquardt iterative method
@@ -173,7 +173,7 @@ class Mapper:
         
         # check, print, return
         if rv is None or rv is None or not retval:
-            raise Error("Error occurred when calculating rotation and translation vectors.")
+            raise Exception("Error occurred when calculating rotation and translation vectors.")
         
         print 'Rotation Vector:\n', rv
         print 'Translation Vector:\n', tv
