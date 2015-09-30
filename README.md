@@ -6,7 +6,7 @@ Eagle Eye Project
 TODO, introduce problem, describe solution, outputs, application, deliverables
 
 ### 1.1 Team
-__ITMS Team__
+__ITMS__
 - Gwilyn Saunders
 - Kin Kuen Liu
 - Manjung Kim
@@ -36,12 +36,25 @@ So unless you want to be recompiling it (you don't), stick to 32-bit.
 - *For Capture*
   - Vicon Tracker System (v1.2 32-bit)
   - Serial RS232 Serial connection
-  - [Flash Sync circuit](3-1-flash-sync-circuit)
+  - [Flash Sync circuit](3-1-4-flash-sync-circuit)
   - A camera flash w/ PC-SYNC connection
 
 
 ### 1.4 Install instructions
-include links
+
+Download and install the pre-requisities:
+- [Anaconda](https://repo.continuum.io/miniconda/Miniconda-latest-Windows-x86.exe)
+- [PyQt](http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt4-4.11.4-gpl-Py2.7-Qt4.8.7-x32.exe/download)
+- [OpenCV](http://sourceforge.net/projects/opencvlibrary/files/opencv-win/3.0.0/opencv-3.0.0.exe/download)
+
+TODO copy instructions for opencv-ffmpeg and cv2.pyd
+
+
+#### 1.4.1 Re-compiling PyVicon
+You really shouldn't need to do this unless you're not using a different 
+Vicon Tracker than the one at the UniSA Mawson Lakes campus.
+
+TODO
 
 
 2 Pipeline Overview
@@ -55,8 +68,8 @@ TODO description
 ------------
 
 ### 3.1 Vicon Capture
-This tool records object positional data into CSV files from the Vicon system.
-It includes quality verification and time synchronisation data.
+This tool records object positional data into [CSV files](#5-1-raw-dataset-csv) 
+from the Vicon system. It includes quality verification and time synchronisation data.
 
 #### 3.1.1 Preparation
 The Vicon system captures objects that are defined as unique "constellations"
@@ -65,9 +78,9 @@ in the *Vicon Tracker* software. Some experimental/working objects are
 stored in the [data/objects](data/objects) folder.
 
 Ensure your running time is sufficient, modify via the command line option or
-within the configuration file. 
+within the [config file](#6-1-Capture). 
 
-Ensure the correct serial port is defined in the configuration file.
+Ensure the correct serial port is defined in the config file.
 A list of available serial ports can be found with this command:
 ``` sh
 $ python -m serial.tools.list_ports
@@ -96,7 +109,7 @@ $ python vicon_capture.py {-output <folder> | -time <in minutes> | -config <file
 
 #### 3.1.4 Flash Sync Circuit
 This is a circuit by design of Peter Barsznica that triggers a camera flash when
-signalled from a Serial connection to the computer. This matches the flash data
+signalled from a serial connection to the computer. This matches the flash data
 fields in the CSV file in order to syncronise the video and data feeds.
 
 __This is the circuit detail__
@@ -204,19 +217,23 @@ $ python eval.py <annotated dataset> <mapped dataset>
 ---------------
 TODO description
 
-### 4.1 Chessboard Extractor
+### 4.1 Wizard
 TODO description
 
-#### 4.1.1 Procedure
-TODO
-
-#### 4.1.2 Command line Usage
+#### 4.1.1 Usage
+__Command line__
 ```sh
-$ python extract_frames.py <video file> <output image folder> {-prefix <output name> | -config <file>}
+$ python wizard.py
 ```
 
+__Shortcut__
+Generate a new shortcut with `gen_shortcut.bat`. This will produce a 
+_EagleEye Wizard_ file. Double click the shortcut.
 
-### 4.2 Trainer Comparison
+Be sure to re-generate the shortcut if you move the project folder.
+
+
+### 4.2 Chessboard Extractor
 TODO description
 
 #### 4.2.1 Procedure
@@ -224,17 +241,29 @@ TODO
 
 #### 4.2.2 Command line Usage
 ```sh
-$ python compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -config <file> | -export <file>}
+$ python extract_frames.py <video file> <output image folder> {-prefix <output name> | -config <file>}
 ```
 
 
-### 4.3 Dataset Comparison
+### 4.3 Trainer Comparison
 TODO description
 
 #### 4.3.1 Procedure
 TODO
 
 #### 4.3.2 Command line Usage
+```sh
+$ python compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -config <file> | -export <file>}
+```
+
+
+### 4.4 Dataset Comparison
+TODO description
+
+#### 4.4.1 Procedure
+TODO
+
+#### 4.4.2 Command line Usage
 ```sh
 $ python compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}
 ```
@@ -247,15 +276,6 @@ $ python compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_ou
 This is object data represented in the Vicon World Coordinates. Each file
 contains data for a single object captured. Containing positional, rotational,
 sychronisation and marker data.
-
-#### Synchronisation
--   . (dot) - is a regular frame
--   F - is a flash frame, there should only be 2 of these within a dataset
-
-#### Rotation
-The rotational X, Y, Z is a
-[Euler Vector](https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation),
-not to be mistaken with Euler Angles pitch, yaw, roll.
 
 | Column | Data        | Type  | Examples |
 |--------|-------------|-------|----------|
@@ -270,7 +290,19 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 | 8      | Max Markers | int   | 5        |
 | 9      | Visible     | int   | 4        |
 
+
+__Synchronisation__
+-   . (dot) - is a regular frame
+-   F - is a flash frame, there should only be 2 of these within a dataset
+
+___Rotation___
+The rotational X, Y, Z is a
+[Euler Vector](https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation),
+not to be mistaken with Euler Angles - pitch, yaw, roll.
+
 ### 5.2 Calibration XML
+TODO description
+
 ``` xml
 <?xml version='1.0'?>
 <StdIntrinsic>
@@ -281,6 +313,8 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 ```
 
 ### 5.3 Trainer XML
+TODO description
+
 ``` xml
 <?xml version='1.0'?>
 <TrainingSet>
@@ -300,6 +334,8 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 ```
 
 ### 5.4 Dataset XML
+TODO description
+
 ``` xml
 <?xml version='1.0'?>
 <dataset>
@@ -317,6 +353,8 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 TODO
 
 ### 5.6 Header XML
+TODO description
+
 ``` xml
 <?xml version='1.0'?>
 <datasetHeader date="2015-08-27" name="August27">
@@ -358,17 +396,17 @@ TODO description
 ### 6.1 Capture
 | Setting           | Default        |
 |-------------------|----------------|
-| ip\_address       | 192.168.10.1   |
+| ip_address        | 192.168.10.1   |
 | port              | 801            |
-| date\_format      | Y-%m-%d\_%H-%M |
-| flash\_delay      | 180            |
+| date_format       | Y-%m-%d\_%H-%M |
+| flash_delay       | 180            |
 | framerate         | 44.955         |
-| default\_time     | 180            |
-| default\_output   | data/raw       |
-| output\_delimiter | ,              |
-| serial\_device    | COM4           |
-| run\_serial       | True           |
-| trainer\_target   | Wand           |
+| default_time      | 180            |
+| default_output    | data/raw       |
+| output_delimiter  | ,              |
+| serial_device     | COM4           |
+| run_serial        | True           |
+| trainer_target    | Wand           |
 
 ### 6.2 Trainer
 | Setting           | Default        |
