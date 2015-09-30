@@ -124,6 +124,9 @@ class Wizard(QMainWindow):
         
         self.mapping_button.clicked.connect(self.run_mapping)
         self.dataset_map_edit.clicked.connect(self.browse_mapping_data)
+        self.trainer_map_button.clicked.connect(self.run_trainer_mapping)
+        self.trainer_compare_button.clicked.connect(self.run_trainer_compare)
+        self.trainer_map_edit.clicked.connect(self.browse_trainer_mapping)
         
         self.annotation_button.clicked.connect(self.run_annotation)
         self.dataset_ann_edit.clicked.connect(self.browse_annotation_data)
@@ -913,7 +916,7 @@ class Wizard(QMainWindow):
                                     "-trainer", str(self.trainer_xml_edit.text()),
                                     "-output", path,
                                     "-config", self.config_path,
-                                    trainer_csv.edit.text()])
+                                    str(self.trainer_csv_edit.text())])
         if stat: worker.start()
     
     @pyqtSlot()
@@ -1094,6 +1097,7 @@ class Wizard(QMainWindow):
             path = os.path.normpath(str(path))
             self.trainer_xml_edit.setText(path)
             self.check_mapping_enable()
+            self.check_trainer_mapping_enable()
     
     @pyqtSlot()
     def browse_vicondata(self):
@@ -1126,6 +1130,15 @@ class Wizard(QMainWindow):
             self.dataset_map_edit.setText(path)
             self.check_compare_enable()
             self.check_evaluate_enable()
+    
+    @pyqtSlot()
+    def browse_trainer_mapping(self):
+        path = QFileDialog.getOpenFileName(self, "Open Trainer Dataset XML (Mapped)", 
+                                           self.trainer_map_edit.text(), "XML File (*.xml)")
+        if path != "":
+            path = os.path.normpath(str(path))
+            self.trainer_map_edit.setText(path)
+            self.check_trainer_compare_enable()
     
     @pyqtSlot()
     def browse_annotation_data(self):
@@ -1293,6 +1306,8 @@ class Wizard(QMainWindow):
             self.check_annotate_enable()
             self.check_compare_enable()
             self.check_evaluate_enable()
+            self.check_trainer_compare_enable()
+            self.check_trainer_mapping_enable()
             self.load_chessboards()
             self.load_vicondata()
     
