@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.31
+# version 0.5.32
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -30,6 +30,7 @@
 
 import sys, cv2, numpy as np, time, os
 from eagleeye import BuffSplitCap, Memset, Key, EasyConfig, EasyArgs, marker_tool
+from eagleeye.display_text import *
 from elementtree.SimpleXMLWriter import XMLWriter
 
 def usage():
@@ -160,7 +161,6 @@ def main(sysargs):
         max_visible = int(in_csv.row()[8])
         
         # status text to write
-        textOffset = (5, 0)
         textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
         textquality = "Visible: {} , Max Visible: {}".format(visible, max_visible)
         textstatus = "{} | {}/{} clicks".format(in_vid.status(), len(trainer_points[lens]), max_clicks)
@@ -193,10 +193,10 @@ def main(sysargs):
             cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 15, cfg.font_colour, 1)
         
         # draw text and show
-        pos = displayText(frame, textrow, textOffset, cfg)
-        pos = displayText(frame, textquality, pos, cfg)
-        pos = displayText(frame, textstatus, pos, cfg)
-        pos = displayText(frame, dataStatus, pos[2:], cfg, dataStatus_colour)
+        displayText(frame, textrow, top=True)
+        displayText(frame, textquality)
+        displayText(frame, textstatus)
+        displayText(frame, dataStatus, endl=True, colour=dataStatus_colour)
         
         cv2.imshow(window_name, frame)
         
@@ -310,29 +310,6 @@ def main(sysargs):
     
     print "\nDone."
     return 0
-
-# calculate height offset of a line of text and display on top left
-def displayText(frame, text, pos, cfg, customColour=None):
-    if customColour is None:
-        customColour = cfg.font_colour
-    
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    y_spacing = 2
-    x_offset = 5
-    y_offset = 0
-    if len(pos) >= 2:
-        x_offset, y_offset = pos[:2]
-    
-    textSize, baseLine = cv2.getTextSize(text, font, cfg.font_scale, cfg.font_thick)
-    y_offset += textSize[1] + baseLine + y_spacing
-    
-    cv2.putText(frame, text, (x_offset, y_offset), 
-                font, cfg.font_scale, customColour, cfg.font_thick, cv2.LINE_AA)
-    
-    # no need to return frame, numpy treats it like a reference/pointed object
-    # return next line pos and end-of-line pos
-    return (x_offset, y_offset, textSize[0], pos[1])
-
 
 if __name__ == '__main__':
     exit(main(sys.argv))

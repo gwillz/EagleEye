@@ -12,6 +12,7 @@
 
 import sys, cv2, numpy as np, time, os
 from eagleeye import BuffCap, Xmlset, Xmltrainer, Xmlframe, EasyArgs, EasyConfig, Key, marker_tool
+from eagleeye.display_text import *
 from math import sqrt
 import csv
 
@@ -179,7 +180,6 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
         print "Current Object is:", obj
         print "Object info is:",  mapper_xml.data()[frame_no][obj]
         '''
-        textOffset = (5, 0)
 
         # Prepare Repojected Point
         pt1 = (int(float(mapper_xml.data()[xmlframe_no][obj]['box']['x'])), 
@@ -197,13 +197,13 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
 
         # Display Object Info
         frameObj_Txt = "Frame: {} | Trained Object: {}".format(vidframe_no, str(obj))
-        cvframe, textOffset, _topTextSize= displayText(cvframe, frameObj_Txt, textOffset, cfg)
+        displayText(cvframe, frameObj_Txt, top=True)
         
         reprojCentroid_txt = "Reprojected Centroid - x: {}, y: {}".format(centre[0],centre[1])
-        cvframe, textOffset, _topTextSize = displayText(cvframe, reprojCentroid_txt, textOffset, cfg)
+        displayText(cvframe, reprojCentroid_txt)
 
         visibility_txt = "Visible: {} , Max Visible: {}".format(visible, max_visible)
-        cvframe, _textOffset, _textSize = displayText(cvframe, visibility_txt, textOffset, cfg)
+        displayText(cvframe, visibility_txt)
 
         dataText = " - Good data!!"
         dataText_colour = (0, 255, 0) # green
@@ -241,14 +241,13 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
                 vicon_txt = "VICON - x:{} y:{} z:{}".format(float(trainer_frame["vicon"]["x"]),
                                                                 float(trainer_frame["vicon"]["y"]),
                                                                 float(trainer_frame["vicon"]["z"]))
-
         
-        cvframe, textOffset, _textSize = displayText(cvframe, dataText, (_textSize[0], textOffset[1]), cfg, customColour=dataText_colour)
-        cvframe, textOffset, _textSize = displayText(cvframe, trainer_txt, _textOffset, cfg)
-        cvframe, textOffset, _textSize = displayText(cvframe, vicon_txt, textOffset, cfg)
-        cvframe, textOffset, _textSize = displayText(cvframe, reprojErr_txt, textOffset, cfg)
-
-
+        displayText(cvframe, dataText, endl=True, colour=dataText_colour)
+        displayText(cvframe, trainer_txt)
+        displayText(cvframe, vicon_txt)
+        displayText(cvframe, reprojErr_txt)
+        
+    
     return cvframe, reprojerror_list
 
 def writeFile(filepath, reprojList):
@@ -290,26 +289,6 @@ def calReprojList(reprojerror_list):
         print ""
     else:
         print "Reprojection Error: No Data"
-
-# calculate height offset of a line of text and display on top left
-def displayText(frame, text, offset, cfg, customColour=None):
-    if(customColour is None):
-        customColour = cfg.font_colour
-
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    y_extraOffset = 2
-    x_offset = 5
-    y_offset = 0
-    if(len(offset) == 2):
-        x_offset = offset[0]
-        y_offset = offset[1]
-    
-    textSize, baseLine = cv2.getTextSize(text, font, cfg.font_scale, cfg.font_thick)
-    y_offset += textSize[1] + baseLine + y_extraOffset
-
-    cv2.putText(frame, text,
-        (x_offset, y_offset), font, cfg.font_scale, customColour, cfg.font_thick, cv2.LINE_AA)
-    return frame, (x_offset, y_offset), textSize
 
 # display all training points used
 def displayTrainPts(frame, mark_in, mark_out, trainerxml, cfg):
