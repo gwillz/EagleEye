@@ -196,8 +196,8 @@ class Wizard(QMainWindow):
             edit_fields['vicondata'] = str(self.vicondata_edit.text())
         if self.dataset_map_edit.text() != "":
             edit_fields['dataset_map'] = str(self.dataset_map_edit.text())
-        if self.trainer_map_edit.text() != "":
-            edit_fields['dataset_ann'] = str(self.datset_ann_edit.text())
+        if self.dataset_ann_edit.text() != "":
+            edit_fields['dataset_ann'] = str(self.dataset_ann_edit.text())
         if self.comparison_edit.text() != "":
             edit_fields['comparison'] = str(self.comparison_edit.text())
         if self.evaluation_edit.text() != "":
@@ -414,6 +414,7 @@ class Wizard(QMainWindow):
             training = root.find("training")
             raw_data = root.find("rawData")
             evaluation = root.find("evaluation")
+            comparison = root.find("comparison")
             mapping = root.find("datasets/mapping")
             annotation = root.find("datasets/annotation")
             
@@ -434,11 +435,14 @@ class Wizard(QMainWindow):
                 if xml is not None:
                     csv = training.find("csv")
                     video = training.find("video")
+                    map = training.find("map")
                     
                     # set edit boxes appropriately
                     self.trainer_xml_edit.setText(os.path.join(temp_dir, xml.text))
                     if csv is not None:
                         self.trainer_csv_edit.setText(os.path.join(temp_dir, csv.text))
+                    if map is not None:
+                        self.trainer_map_edit.setText(os.path.join(temp_dir, map.text))
                     if video is not None:
                         self.trainer_mov_edit.setText(os.path.join(temp_dir, video.text))
                         
@@ -465,6 +469,9 @@ class Wizard(QMainWindow):
             if evaluation is not None:
                 self.evaluation_edit.setText(os.path.join(temp_dir, evaluation.text))
             
+            if comparison is not None:
+                self.comparison_edit.setText(os.path.join(temp_dir, comparison.text))
+            
             if mapping is not None:
                 self.dataset_map_edit.setText(os.path.join(temp_dir, mapping.text))
             
@@ -476,7 +483,7 @@ class Wizard(QMainWindow):
         
         self.save_path = path
         self.saved = True
-        self.setWindowTitle(self._original_title)
+        self.update_working_title(self.dataset_name_edit.text())
         
         # run button checks
         self.load_chessboards()
