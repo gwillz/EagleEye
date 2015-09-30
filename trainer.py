@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.30
+# version 0.5.31
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -91,8 +91,11 @@ def main(sysargs):
     
     # working variables
     params = {'status': Status.skip, 'pos': None}
-    trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
     write_xml = False
+    if cfg.dual_mode:
+        trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
+    else:
+        trainer_points = {BuffSplitCap.both:{}}
     
     # ensure minimum is 4 as required by VICON system
     min_reflectors = cfg.min_reflectors if cfg.min_reflectors >= 4 else 4
@@ -119,8 +122,11 @@ def main(sysargs):
     print "Number of clicks at:", max_clicks
     print ""
     
-    # default left side
-    lens = BuffSplitCap.left
+    # default right side (buttonside)
+    if cfg.dual_mode:
+        lens = BuffSplitCap.right
+    else:
+        lens = BuffSplitCap.both
     
     # grab clicks (Process 2)
     while in_vid.isOpened():
@@ -133,7 +139,7 @@ def main(sysargs):
             write_xml = True
             print "\nend of video: {}/{}".format(in_vid.at(), mark_out -1)
             break
-
+        
         sys.stdout.write("Current Video Frame: {} / {}".format(in_vid.at(), mark_out -1)
                  + " | Clicks {} / {}\r".format(len(trainer_points), max_clicks))
         sys.stdout.flush()
@@ -156,9 +162,13 @@ def main(sysargs):
         # status text to write
         textOffset = (5, 0)
         textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
-        textstatus = "{} | {}/{} clicks".format(in_vid.status(), len(trainer_points[lens]), max_clicks)
-        textstatus += " - back side" if lens == BuffSplitCap.left else " - button side"
         textquality = "Visible: {} , Max Visible: {}".format(visible, max_visible)
+        textstatus = "{} | {}/{} clicks".format(in_vid.status(), len(trainer_points[lens]), max_clicks)
+        if lens == BuffSplitCap.left:
+            textstatus += " - back side"
+        elif lens == BuffSplitCap.right:
+            textstatus += " - button side"
+        #else none
         
         # assume good data, unless it fails the following tests
         dataStatus = " - Good data!!"
@@ -204,10 +214,10 @@ def main(sysargs):
                 params['status'] = Status.back
             elif key == Key.backspace:
                 params['status'] = Status.remove
-            elif Key.char(key, '1'):
+            elif Key.char(key, '1') and cfg.dual_mode:
                 params['status'] = Status.still
                 lens = BuffSplitCap.left
-            elif Key.char(key, '2'):
+            elif Key.char(key, '2') and cfg.dual_mode:
                 params['status'] = Status.still
                 lens = BuffSplitCap.right
             
@@ -263,8 +273,12 @@ def main(sysargs):
         
         # training point data
         for lens in trainer_points:
-            out_xml.start("buttonside" if lens == BuffSplitCap.right else "backside")
-            out_xml.start("frames")
+            if lens == BuffSplitCap.right:
+                out_xml.start("buttonside")
+            elif lens == BuffSplitCap.right:
+                out_xml.start("backside")
+            else: # non dualmode
+                out_xml.start("frames")
             
             for i in trainer_points[lens]:
                 pos, row, markers = trainer_points[lens][i]
@@ -286,7 +300,6 @@ def main(sysargs):
                 out_xml.end()
                 
             out_xml.end() # frames
-            out_xml.end() # buttonside/backside
         
         # clean up
         out_xml.close(doc)
