@@ -1,42 +1,105 @@
-# Eagle Eye Project
+Eagle Eye Project
+=================
 
-## 1 Overview
-
-
+1 Overview
+----------
 
 ### 1.1 Authors
-* Gwilyn Saunders
-* Kin Kuen Liu
-* Manjung Kim
-* Peter Barsznica
+
+-   Gwilyn Saunders
+-   Kin Kuen Liu
+-   Manjung Kim
+-   Peter Barsznica
 
 ### 1.2 Legal
-* The all-scientific CRAP License
-* http://matt.might.net/articles/crapl/CRAPL-LICENSE.txt
+
+-   The all-scientific CRAP License
+-   <http://matt.might.net/articles/crapl/CRAPL-LICENSE.txt>
 
 ### 1.3 Prerequisites
-Please ensure all software dependencies are the same architecture 
+
+Please ensure all software dependencies are the same architecture
 (32 or 64-bit). The PyVicon library is built for a 32-bit Vicon Tracking System.
 So unless you want to be recompiling it (you don't), stick to 32-bit.
-* Windows 7+
-* Python 2.7 (Anaconda)
-* PyQt 4.11 (Qt 4.8.7)
-* OpenCV 3.0
-* _For Capture_
-  * Vicon Tracker System (v1.2 32-bit)
-  * Serial RS232 Serial connection
-  * [Flash Sync circuit](3-1-flash-sync-circuit)
-  * A camera flash w/ PC-SYNC connection
+
+-   Windows 7+
+-   Python 2.7 (Anaconda)
+-   PyQt 4.11 (Qt 4.8.7)
+-   OpenCV 3.0
+-   *For Capture*
+    -   Vicon Tracker System (v1.2 32-bit)
+    -   Serial RS232 Serial connection
+    -   [Flash Sync circuit](3-1-flash-sync-circuit)
+    -   A camera flash w/ PC-SYNC connection
 
 ### 1.4 Install instructions
+
 include links
 
-## 2 Pipeline Overview
+2 Pipeline Overview
+-------------------
 
+![Data Flow](assets/dataflow.png)
 
-## 3 Core Tools
+3 Core Tools
+------------
 
 ### 3.1 Vicon Capture
+
+#### 3.1.1 Preparation
+
+The Vicon system captures objects that are defined as unique "constellations"
+of dots placed on physical objects within the lab. These objects are configured
+in the *Vicon Tracker* software. Some experimental/working objects are
+stored in the [data/objects](data/objects) folder.
+
+Ensure your running time is sufficient, modify via the command line option or
+within the configuration file. 
+
+Ensure the correct serial port is defined in the configuration file.
+A list of available serial ports can be found with this command:
+``` sh
+$ python -m serial.tools.list_ports
+```
+
+#### 3.1.2 Procedure
+The camera must not be moved between the calibration and capture steps. Thankfully, 
+the Ricoh Theta m15 can be remotely triggered via a smart phone or tablet.
+
+The tool will capture all active objects in the *Vicon Tracker* software. Be sure to
+only enable the objects for a given scenario.
+
+1. Ensure all preparations steps are completed
+2. Prepare the camera for recording
+3. Run the software (either by GUI or command line)
+4. After the first flash, start the camera recording
+5. The flash will trigger again, now start perform the scenario
+6. The last flash will signal the end of the dataset
+7. Stop the camera recording
+8. Check the output folder that the objects are all recorded
+
+#### 3.1.4 Command line Usage 
+```sh
+python vicon_capture.py {--output <folder> | --time <in minutes> | --config <file> | --training <file>}
+```
+
+#### 3.1.5 Flash Sync Circuit
+
+This is a circuit by design of Peter Barsznica that triggers a camera flash and
+an identifier in the software, in order to syncronise the video and data feeds.
+
+This is the circuit detail:
+![Circuit Sync](assets/sync_circuit_v2.2.png)
+
+The circuit connects to the serial GND and CTS pins:
+![Serial Pinout](assets/pinouts_serial.gif)
+
+#### 3.1.6 Synchronisation
+
+When running the software, the flash will trigger 3 times. This is a uncorrectable
+side-effect of the hardware, therefore the software will delay a number of frames
+(as specified in the [config file](#6-1-Capture)) before the first flash is triggered.
+There are still only 2 flashes recorded into the CSV.
 
 ### 3.2 Calibration
 
@@ -48,8 +111,8 @@ include links
 
 ### 3.6 Evaluation
 
-
-## 4 Utility Tools
+4 Utility Tools
+---------------
 
 ### 4.1 Chessboard Extractor
 
@@ -57,20 +120,28 @@ include links
 
 ### 4.3 Dataset Comparison
 
+5 Data Formats
+--------------
 
-## 5 Data Formats
+### 5.1 Raw Dataset CSV
 
-### 5.1 Raw Dataset CSV 
-This is object data represented in the Vicon World Coordinates. Each file 
-contains data for a single object captured. Containing positional, rotational, 
+This is object data represented in the Vicon World Coordinates. Each file
+contains data for a single object captured. Containing positional, rotational,
 sychronisation and marker data.
 
-The rotational X, Y, Z is a 
-[Euler Vector](https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation), 
-not to be mistaken with Euler Angles pitch, yaw, roll. 
+#### Synchronisation
+
+-   . (dot) - is a regular frame
+-   F - is a flash frame, there should only be 2 of these within a dataset
+
+#### Rotation
+
+The rotational X, Y, Z is a
+[Euler Vector](https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation),
+not to be mistaken with Euler Angles pitch, yaw, roll.
 
 | Column | Data        | Type  | Examples |
-| ------ | ----------- | ----- | -------- |
+|--------|-------------|-------|----------|
 | 0      | Timestamp   | float | 0.144    |
 | 1      | Sync        | char  | F, .     |
 | 2      | X-axis      | float | 5121.54  |
@@ -83,7 +154,8 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 | 9      | Visible     | int   | 4        |
 
 ### 5.2 Calibration XML
-```xml
+
+``` xml
 <?xml version='1.0'?>
 <StdIntrinsic>
     <CamMat cx="487.032967037" cy="444.164482209" fx="287.98587712" fy="295.556664123" />
@@ -91,8 +163,10 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
     <Error arth="0.426145384461" rms="3.32043177324" total="11.5059253805" />
 </StdIntrinsic>
 ```
+
 ### 5.3 Trainer XML
-```xml
+
+``` xml
 <?xml version='1.0'?>
 <TrainingSet>
     <video file="wand_right.avi" />
@@ -111,7 +185,8 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 ```
 
 ### 5.4 Dataset XML
-```xml
+
+``` xml
 <?xml version='1.0'?>
 <dataset>
     <frameInformation>
@@ -125,10 +200,12 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 ```
 
 ### 5.5 Evaluation XML
+
 TODO
 
 ### 5.6 Header XML
-```xml
+
+``` xml
 <?xml version='1.0'?>
 <datasetHeader date="2015-08-27" name="August27">
     <calibration>
@@ -161,5 +238,78 @@ TODO
 </datasetHeader>
 ```
 
-## 6 Configuration
+6 Configuration
+---------------
 
+### 6.1 Capture
+| Setting           | Default        |
+|-------------------|----------------|
+| ip\_address       | 192.168.10.1   |
+| port              | 801            |
+| date\_format      | Y-%m-%d\_%H-%M |
+| flash\_delay      | 180            |
+| framerate         | 44.955         |
+| default\_time     | 180            |
+| default\_output   | data/raw       |
+| output\_delimiter | ,              |
+| serial\_device    | COM4           |
+| run\_serial       | True           |
+| trainer\_target   | Wand           |
+
+### 6.2 Trainer
+| Setting           | Default        |
+|-------------------|----------------|
+| font_scale        | 0.4            | 
+| font_thick        | 1              | 
+| font_colour       | (255,255,255)  |
+| buffer_size       | 50             | 
+| default_clicks    | 9999           | 
+| quality_mode      | 1              | 
+| quality_threshold | 0.6            | 
+| min_reflectors    | 4              | 
+| check_negatives   | on             | 
+
+### 6.3 Mapper
+| Setting           | Default        |
+|-------------------|----------------|
+| min_reflectors    | 4              | 
+| check_negatives   | on             | 
+| pnp_flags         |                | 
+
+### 6.4 Calibration
+| Setting           | Default        |
+|-------------------|----------------|
+| default_squares   | 1.0            | 
+| default_chess     | (9,6)          | 
+| calib_flags       |                | 
+
+### 6.5 Compare
+| Setting           | Default        |
+|-------------------|----------------|
+| buffer_size       | 50             | 
+| xml1_colour       | (255,255,255)  |
+| xml2_colour       | (255,255,255)  |
+| fourcc            | DIVX           | 
+
+### 6.6 Compare Trainer
+| Setting           | Default        |
+|-------------------|----------------|
+| font_scale        | 0.4            | 
+| font_thick        | 1              | 
+| font_colour       | (255,255,255)  |
+| buffer_size       | 50             | 
+| trainer_colour    | (0,255,0)      |
+| mapper_colour     | (255,255,255)  |
+| object_target     | Ewad1          | 
+| fourcc            | DIVX           | 
+
+### 6.7 Chessboard Extractor
+| Setting           | Default        |
+|-------------------|----------------|
+| buffer_size       | 50             | 
+| split_side        | right          | 
+| rotate            | r270           | 
+| crop              | (0, 0, 120, 0) |
+| font_size         | 0.4            | 
+| font_thick        | 1              | 
+| font_colour       | (255,255,255)  |
