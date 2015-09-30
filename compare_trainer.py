@@ -13,6 +13,7 @@
 import sys, cv2, numpy as np, time, os
 from eagleeye import BuffCap, Xmlset, Xmltrainer, Xmlframe, EasyArgs, EasyConfig, Key, marker_tool
 from math import sqrt
+import csv
 
 def usage():
     print "usage: python2 compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -config <file> | -export <file>}"
@@ -126,7 +127,11 @@ def main(sysargs):
                 
                 calReprojList(reprojerror_list)
                 print "Fast forwarded to end of video"
-                return 1
+
+                print "Output to file"
+                writeFile("C:\\Anaconda\\awork\\wizardtool\\data\\compare_frames.csv", reprojerror_list)
+                break
+                #return 1
             elif key == Key.space:
                 ''' TODO: display all training points, may be abandoned
                 problems:
@@ -150,12 +155,18 @@ def main(sysargs):
 
 # Display 
 def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_list, cfg):
+
+    min_reflectors = int(cfg.min_reflectors)
+    if min_reflectors < 4:
+        min_reflectors = 4
+    
     xmlframe_no = 0
     if len(mapper_xml.data().keys()) > 0:
         xmlframe_no = mapper_xml.data().keys()[0] # get first key, should rewrite mapper xml reader(?)
     else:
         print "Corresponding frame is missing in the mapping XML at vidio frame: {}".format(vidframe_no)
         return cvframe
+
     sys.stdout.write("Reading Video Frame: {}".format(vidframe_no) + " | XML Frame number: {}\r".format(xmlframe_no))
     sys.stdout.flush()
     objs = mapper_xml.data()[xmlframe_no]
@@ -177,22 +188,33 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
                 pt1[1] + int(float(mapper_xml.data()[xmlframe_no][obj]['box']['height'])))
         centre = (int(float(mapper_xml.data()[xmlframe_no][obj]['centre']['x'])), 
                 int(float(mapper_xml.data()[xmlframe_no][obj]['centre']['y'])))
+        visible = int(mapper_xml.data()[xmlframe_no][obj]['visibility']['visible'])
+        max_visible =  int(mapper_xml.data()[xmlframe_no][obj]['visibility']['visibleMax'])
+        
         # Render Reprojected Point
         cv2.rectangle(cvframe, pt1, pt2, cfg.mapper_colour, 1)
         cv2.circle(cvframe, centre, 1, cfg.mapper_colour, 2)
 
         # Display Object Info
-        frameObjTxt = "Frame: {} | Object: {}".format(vidframe_no, str(obj))
-        cvframe, textOffset = displayText(cvframe, frameObjTxt, textOffset, cfg)
+        frameObj_Txt = "Frame: {} | Trained Object: {}".format(vidframe_no, str(obj))
+        cvframe, textOffset, _topTextSize= displayText(cvframe, frameObj_Txt, textOffset, cfg)
         
         reprojCentroid_txt = "Reprojected Centroid - x: {}, y: {}".format(centre[0],centre[1])
-        cvframe, textOffset = displayText(cvframe, reprojCentroid_txt, textOffset, cfg)
+        cvframe, textOffset, _topTextSize = displayText(cvframe, reprojCentroid_txt, textOffset, cfg)
 
+        visibility_txt = "Visible: {} , Max Visible: {}".format(visible, max_visible)
+        cvframe, _textOffset, _textSize = displayText(cvframe, visibility_txt, textOffset, cfg)
 
+        dataText = " - Good data!!"
+        dataText_colour = (0, 255, 0) # green
+        if(visible < min_reflectors):           # for when there isn't a matching trainer
+            dataText = " - Bad data!! Ignored."
+            dataText_colour = (0, 0, 255) # red
+        
         # Get trainer point if it exists at current frame
         vicon_txt = "VICON - x:{} y:{} z:{}".format("?", "?", "?")
         trainer_txt = "Trained Point: x:{} y: {}".format("?", "?")
-        reprojErr_txt = "Reprojection Error: {} pixels".format("No Data")
+        reprojErr_txt = "Reprojection Error: {}".format("No Data")
         trainer_frame = trainer_xml.data(str(vidframe_no))
 
         if obj == cfg.object_target:
@@ -205,27 +227,46 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
                 cv2.circle(cvframe, trainer_pt, 1, cfg.trainer_colour, 2)
 
                 # Calculate Reprojection Error at this frame
+                # Still display bad data reprojection error but not used in calculation of mean
                 reprojErr = calReprojError(centre, trainer_pt)
-                reprojerror_list.update({vidframe_no: reprojErr})
-
-                # VICON Data - Shouldn't appear here
+                reprojErr_txt = "Reprojection Error: {} pixels".format(str(reprojErr))
+                if(cfg.ignore_baddata == True):
+                    if(visible >= min_reflectors):
+                        reprojerror_list.update({vidframe_no: {"rms": reprojErr,
+                                                    "x1": trainer_pt[0],
+                                                    "y1": trainer_pt[1],
+                                                    "x2": pt1[0],
+                                                    "y2": pt1[1]}})
+                
                 vicon_txt = "VICON - x:{} y:{} z:{}".format(float(trainer_frame["vicon"]["x"]),
                                                                 float(trainer_frame["vicon"]["y"]),
                                                                 float(trainer_frame["vicon"]["z"]))
-                reprojErr_txt = "Reprojection Error: {} pixels".format(str(reprojErr))
 
-        cvframe, textOffset = displayText(cvframe, trainer_txt, textOffset, cfg)
-        cvframe, textOffset = displayText(cvframe, vicon_txt, textOffset, cfg)
-        cvframe, textOffset = displayText(cvframe, reprojErr_txt, textOffset, cfg)
+        
+        cvframe, textOffset, _textSize = displayText(cvframe, dataText, (_textSize[0], textOffset[1]), cfg, customColour=dataText_colour)
+        cvframe, textOffset, _textSize = displayText(cvframe, trainer_txt, _textOffset, cfg)
+        cvframe, textOffset, _textSize = displayText(cvframe, vicon_txt, textOffset, cfg)
+        cvframe, textOffset, _textSize = displayText(cvframe, reprojErr_txt, textOffset, cfg)
 
 
     return cvframe, reprojerror_list
+
+def writeFile(filepath, reprojList):
+    with open(filepath, "wb") as csvFile:
+        c = csv.writer(csvFile)
+        for data in reprojList:
+            c.writerow([data,
+                        reprojList[data]["x1"],
+                        reprojList[data]["x2"],
+                        reprojList[data]["y1"],
+                        reprojList[data]["y2"],
+                        reprojList[data]["rms"]])
 
 # calculate the difference between 2 points (manually picked & reprojected)
 def calReprojError(img_pt, reproj_pt):
     if img_pt and reproj_pt is not None:
         if not(img_pt < 0) and not(reproj_pt < 0):
-            return cv2.norm(img_pt, reproj_pt)        
+            return cv2.norm(img_pt, reproj_pt, cv2.NORM_L2) # Euclidean distance
     return -1.0
 
 def calReprojList(reprojerror_list):
@@ -234,14 +275,14 @@ def calReprojList(reprojerror_list):
     total_error = 0.0
     if (len(reprojerror_list) > 0):
         for frm in reprojerror_list:
-            total_error += float(reprojerror_list[frm])
+            total_error += float(reprojerror_list[frm]["rms"])
             
         arth_mean = total_error / len(reprojerror_list)
         rms = sqrt(arth_mean)      # according to opencv calibrateCamera2
         
         print "List of Reprojection Error:"
         for reproj in reprojerror_list:
-            print "Frame: {} | Reprojection Error: {}".format(reproj, reprojerror_list[reproj])
+            print "Frame: {} | Reprojection Error: {}".format(reproj, reprojerror_list[reproj]["rms"])
         print "\n"
         print "Number of matched training points: {}".format(len(reprojerror_list))
         print "RMS: {} pixels".format(rms)
@@ -268,7 +309,7 @@ def displayText(frame, text, offset, cfg, customColour=None):
 
     cv2.putText(frame, text,
         (x_offset, y_offset), font, cfg.font_scale, customColour, cfg.font_thick, cv2.LINE_AA)
-    return frame, (x_offset, y_offset)
+    return frame, (x_offset, y_offset), textSize
 
 # display all training points used
 def displayTrainPts(frame, mark_in, mark_out, trainerxml, cfg):
