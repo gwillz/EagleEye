@@ -128,6 +128,7 @@ def main(sysargs):
         if in_vid.at() < mark_in:
             in_vid.next()
             continue
+        # TODO: Last frame prints wrong frame number in console, something to do with the print position and loop
         if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
             write_xml = True
             print "\nend of video: {}/{}".format(in_vid.at(), mark_out -1)
@@ -140,8 +141,6 @@ def main(sysargs):
         # load frame
         frame = in_vid.frame(side=lens)
         
-        textOffset = (5, 0)
-        
         # prepare CSV data, click data
         tx = float(in_csv.row()[2])
         ty = float(in_csv.row()[3])
@@ -150,31 +149,34 @@ def main(sysargs):
         ry = float(in_csv.row()[6])
         rz = float(in_csv.row()[7])
         
-        textstatus = "timestamp: {:.3f}, {}".format(float(in_csv.row()[0]), in_vid.status())
-        textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
-        textclicks = "{}/{} clicks".format(len(trainer_points[lens]), max_clicks)
-        textclicks += " - back side" if lens == BuffSplitCap.left else " - button side"
-        
-        
         # data quality status
         visible = int(in_csv.row()[9])
         max_visible = int(in_csv.row()[8])
-        quality = float(visible) / float(max_visible)
+        
+        # status text to write
+        textOffset = (5, 0)
+        textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
+        textstatus = "{} | {}/{} clicks".format(in_vid.status(), len(trainer_points[lens]), max_clicks)
+        textstatus += " - back side" if lens == BuffSplitCap.left else " - button side"
+        textquality = "Visible: {} , Max Visible: {}".format(visible, max_visible)
         
         # assume good data, unless it fails the following tests
         dataStatus = " - Good data!!"
         dataStatus_colour = (0, 255, 0) # green
+        dataQuality = True      # True = good, False = bad
         
-        if cfg.check_negatives == "on":
-            if tx < 0 or ty < 0 or tz < 0:
-                dataStatus += " - Bad data!!"
-                dataStatus_colour = (0, 0, 255) # red
-        
-        # Minimum points of reflectors, must be at least 4 (or whatever the config speicifies)
+        # Minimum points of reflectors, must be at least 4 (or whatever the config specifies)
         if visible < min_reflectors:
+            dataQuality = False
             dataStatus = " - Bad data!!"
             dataStatus_colour = (0, 0, 255) # red
         
+        if cfg.check_negatives:
+            if tx < 0 or ty < 0 or tz < 0:
+                dataQuality = False
+                dataStatus += " - Bad data!!"
+                dataStatus_colour = (0, 0, 255) # red
+                
         # draw the trainer dot (if applicable)
         if in_vid.at() in trainer_points[lens]:
             cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 1, cfg.font_colour, 2)
@@ -182,8 +184,8 @@ def main(sysargs):
         
         # draw text and show
         pos = displayText(frame, textrow, textOffset, cfg)
+        pos = displayText(frame, textquality, pos, cfg)
         pos = displayText(frame, textstatus, pos, cfg)
-        pos = displayText(frame, textclicks, pos, cfg)
         pos = displayText(frame, dataStatus, pos[2:], cfg, dataStatus_colour)
         
         cv2.imshow(window_name, frame)
@@ -216,8 +218,10 @@ def main(sysargs):
         
         # write data
         if params['status'] == Status.record \
-                and len(trainer_points[lens]) != max_clicks:
-            trainer_points[lens][in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10])
+                and len(trainer_points[lens]) != max_clicks: # TODO: does this disable recording clicks on the last frame
+                
+            if not cfg.ignore_baddata or dataQuality:
+                trainer_points[lens][in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10])
             params['status'] = Status.skip
         
         # or remove it
@@ -276,8 +280,9 @@ def main(sysargs):
                                 y=str(pos[1]))
                 out_xml.element("vicon", 
                                 x=str(row[0]), y=str(row[1]), z=str(row[2]))
-                out_xml.element(visibility, visibleMax=str(markers[0]), 
-                                            visible=str(markers[1]))
+                out_xml.element("visibility", 
+                                visibleMax=str(markers[0]), 
+                                visible=str(markers[1]))
                 out_xml.end()
                 
             out_xml.end() # frames

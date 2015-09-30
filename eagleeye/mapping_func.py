@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.2.9
+# version 0.2.10
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
@@ -25,7 +25,7 @@ class Mapper:
         print "trainer img_pts {}".format(len(self.trainer_imgpts))
         print "trainer obj_pts {}".format(len(self.trainer_objpts))
         #calculate pose
-        self.rv, self.tv = self.calPose(cfg)
+        self.rv, self.tv = self.calPose(cfg, mode=0)
     
     # opens the Intrinsic calib xml file
     def parseCamIntr(self, xmlpath):
@@ -94,79 +94,58 @@ class Mapper:
         obj_pos = []
         trainer_imgpos = []
         trainer_objpos = []
-        qMode = cfg.quality_mode
-        quality_threshold = cfg.quality_threshold
         min_reflectors = cfg.min_reflectors
         # ensure minimum is 4 as required by VICON system
         if (min_reflectors < 4):
             min_reflectors = 4
-
-        qModeText = ""
-        # Minimum points of reflectors, must be at least 4
-        if qMode == 1:      qModeText = "min of {} visible".format(min_reflectors)
-        # Quality Threshold (No. of visible reflectors / Max reflectors on object)
-        elif qMode == 2:    qModeText = "threshold of {}".format(quality_threshold)
-        # 1 or 2
-        elif qMode == 3:    qModeText = "min of {} visible & threshold of {}".format(min_reflectors, quality_threshold)
-        # Both 1 & 2
-        elif qMode == 4:    qModeText = "min of {} visible & threshold of {}".format(min_reflectors, quality_threshold)
-        else:               qModeText = "No quality control mode has been set."
-        print "Trainer Quality Mode: {}. | Ignore Negative xyz: {}".format(qModeText, cfg.check_negatives)
         
+        qualityText = "min of {} visible \n".format(min_reflectors)
+        print qualityText
+
         for f in root.find('frames'):
+            # TODO: inconsistent get attrib names ??
             plane = f.find('plane').attrib
             vicon = f.find('vicon').attrib
-
+            visibility = f.find('visibility').attrib
+            
             x = float(plane['x'])
             y = float(plane['y'])
             vicon_x = float(vicon['x'])
             vicon_y = float(vicon['y'])
             vicon_z = float(vicon['z'])
-            visible = int(f.get('visible'))
-            max_visible = int(f.get('maxVisible'))
-            quality = float(f.get('quality'))
+            visible = int(visibility['visible'])
+            max_visible = int(visibility['visibleMax'])
 
-            # add to full sets first
+            # add to the complete set first
             img_pos.append((x, y))
             obj_pos.append((vicon_x, vicon_y, vicon_z))
 
-
+            # Minimum points of reflectors, must be at least 4
+            if (visible < min_reflectors):
+                continue    # skip frame
+            
             # Quality control for solvePnP, skip data/frame if criteria not met
             # check negative position values, if on skip mapping at this frame
-            if(cfg.check_negatives == "on"):
+            if(cfg.check_negatives == True):
                 if(vicon_x < 0 or vicon_y < 0 or vicon_z < 0):
                     continue
-            # Minimum points of reflectors, must be at least 4
-            if qMode == 1:
-                if (visible < min_reflectors):
-                    continue    # skip frame
-            # Quality Threshold (No. of visible reflectors / Max reflectors on object)
-            elif qMode == 2:
-                if (quality < quality_threshold):
-                    continue
-            # 1 or 2
-            elif qMode == 3:
-                if ((visible < min_reflectors) or (quality < quality_threshold)):
-                    continue
-            # Both 1 & 2
-            elif qMode == 4:
-                if ((visible < min_reflectors) and (quality < quality_threshold)):
-                    continue
-            else:
-                print 
-                #print "No quality control mode has been set."
                 
             # Add to trainer set if good
             trainer_imgpos.append((x, y))
             trainer_objpos.append((vicon_x, vicon_y, vicon_z))
-    
         
         return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32), np.asarray(trainer_imgpos, dtype=np.float32), np.asarray(trainer_objpos, dtype=np.float32)
     
     
     def calPose(self, cfg, mode=0):
-
-        # TODO: customised solvePnP flags form config
+        if(len(self.trainer_imgpts) < 4 or len(self.trainer_objpts) < 4):
+            raise Exception("Must have at least 4 training points.")
+            
+        if(len(self.trainer_imgpts) != len(self.trainer_objpts)):
+            raise Exception("Training image points and object points must be equal in size. "
+                            "image pts {}, obj pts {}".format(len(self.trainer_imgpts), len(self.trainer_objpts)))
+        
+        # TODO: customised solvePnP flags from config
         # levenberg-marquardt iterative method
         if mode == 0:
             retval, rv, tv = cv2.solvePnP(
@@ -194,7 +173,7 @@ class Mapper:
         
         # check, print, return
         if rv is None or rv is None or not retval:
-            raise Error("Error occurred when calculating rotation and translation vectors.")
+            raise Exception("Error occurred when calculating rotation and translation vectors.")
         
         print 'Rotation Vector:\n', rv
         print 'Translation Vector:\n', tv

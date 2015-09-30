@@ -38,6 +38,7 @@ class Xmlframe:
                     _obj[_objname] = {}
                     _obj[_objname]["box"] = obj.find("boxinfo").attrib
                     _obj[_objname]["centre"] = obj.find("centroid").attrib
+                    _obj[_objname]["visibility"] = obj.find("visibility").attrib
                     frame_objs.update(_obj)
                 xmlframe[frame_no] = frame_objs
                 self.frames.append(xmlframe)
