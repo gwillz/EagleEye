@@ -22,7 +22,7 @@ So unless you want to be recompiling it (you don't), stick to 32-bit.
 * Python 2.7 (Anaconda)
 * PyQt 4.11 (Qt 4.8.7)
 * OpenCV 3.0
-* For Capture
+* _For Capture_
   * Vicon Tracker System (v1.2 32-bit)
   * Serial RS232 Serial connection
   * [Flash Sync circuit](3-1-flash-sync-circuit)
@@ -61,18 +61,105 @@ include links
 ## 5 Data Formats
 
 ### 5.1 Raw Dataset CSV 
+This is object data represented in the Vicon World Coordinates. Each file 
+contains data for a single object captured. Containing positional, rotational, 
+sychronisation and marker data.
+
+The rotational X, Y, Z is a 
+[Euler Vector](https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation), 
+not to be mistaken with Euler Angles pitch, yaw, roll. 
+
+| Column | Data        | Type  | Examples |
+| ------ | ----------- | ----- | -------- |
+| 0      | Timestamp   | float | 0.144    |
+| 1      | Sync        | char  | F, .     |
+| 2      | X-axis      | float | 5121.54  |
+| 3      | Y-axis      | float | 1543.33  |
+| 4      | Z-axis      | float | 45.1431  |
+| 5      | X-rotate    | float | 0.1123   |
+| 6      | Y-rotate    | float | 0.2323   |
+| 7      | Z-rotate    | float | 2.1102   |
+| 8      | Max Markers | int   | 5        |
+| 9      | Visible     | int   | 4        |
 
 ### 5.2 Calibration XML
-
+```xml
+<?xml version='1.0'?>
+<StdIntrinsic>
+    <CamMat cx="487.032967037" cy="444.164482209" fx="287.98587712" fy="295.556664123" />
+    <DistCoe c1="0.0" c2="0.0" c3="0.0" c4="0.0" k1="-0.0206585491055" k2="0.00849952958576" k3="0.00380032047972" k4="0.0861709048126" k5="-0.00205536510651" k6="0.00844339783038" p1="0.00238980715215" p2="-0.00029672399339" />
+    <Error arth="0.426145384461" rms="3.32043177324" total="11.5059253805" />
+</StdIntrinsic>
+```
 ### 5.3 Trainer XML
+```xml
+<?xml version='1.0'?>
+<TrainingSet>
+    <video file="wand_right.avi" />
+    <csv file="2015-08-27_13-24_Wand.csv" />
+    <frames>
+        <frame num="46">
+            <plane x="252" y="567" />
+            <vicon x="6604.76905818057" y="1225.0367491552" z="71.7138299051588" />
+        </frame>
+        <frame num="101">
+            <plane x="453" y="673" />
+            <vicon x="6259.08569084885" y="1905.83353105066" z="69.601629741746" />
+        </frame>
+    </frames>
+</TrainingSet>
+```
 
 ### 5.4 Dataset XML
+```xml
+<?xml version='1.0'?>
+<dataset>
+    <frameInformation>
+        <frame number="1" />
+        <object id="1" name="EE1">
+            <boxinfo height="99" width="99" x="572.190673828" y="425.731567383" />
+            <centroid x="622.191" y="475.732" />
+        </object>
+    </frameInformation>
+</dataset>
+```
 
 ### 5.5 Evaluation XML
+TODO
 
+### 5.6 Header XML
+```xml
+<?xml version='1.0'?>
+<datasetHeader date="2015-08-27" name="August27">
+    <calibration>
+        <xml>calibration.xml</xml>
+        <chessboards path="chessboards/" size="4">
+            <file>Backside_10.jpg</file>
+            <file>Backside_11.jpg</file>
+            <file>Backside_12.jpg</file>
+            <file>Backside_14.jpg</file>
+        </chessboards>
+    </calibration>
+    <training>
+        <xml>training.xml</xml>
+        <video mark_in="28" mark_out="667">wand_right.avi</video>
+        <csv>2015-08-27_13-24_Wand.csv</csv>
+        <map>training_map.xml</map>
+    </training>
+    <rawData>
+        <video mark_in="32" mark_out="721">august27_right.avi</video>
+        <vicon path="vicondata/" size="1">
+            <file>2015-08-27_13-27_EE1.csv</file>
+        </vicon>
+    </rawData>
+    <datasets>
+        <mapping>dataset_mapping.xml</mapping>
+        <annotation>dataset_annotation.xml</annotation>
+    </datasets>
+    <evaluation>august27-evaluation.xml</evaluation>
+    <comparison>august27-compare.avi</comparison>
+</datasetHeader>
+```
 
 ## 6 Configuration
-
-
-
 
