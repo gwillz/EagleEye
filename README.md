@@ -3,51 +3,62 @@ Eagle Eye Project
 
 1 Overview
 ----------
+TODO, introduce problem, describe solution, outputs, application, deliverables
 
-### 1.1 Authors
+### 1.1 Team
+__ITMS Team__
+- Gwilyn Saunders
+- Kin Kuen Liu
+- Manjung Kim
 
--   Gwilyn Saunders
--   Kin Kuen Liu
--   Manjung Kim
--   Peter Barsznica
+__Engineering__
+- Peter Barsznica
+
+__Supervisors__
+- Victor Stamatescu
+- Russell Brinkworth
+
 
 ### 1.2 Legal
-
 -   The all-scientific CRAP License
 -   <http://matt.might.net/articles/crapl/CRAPL-LICENSE.txt>
 
-### 1.3 Prerequisites
 
+### 1.3 Prerequisites
 Please ensure all software dependencies are the same architecture
 (32 or 64-bit). The PyVicon library is built for a 32-bit Vicon Tracking System.
 So unless you want to be recompiling it (you don't), stick to 32-bit.
 
--   Windows 7+
--   Python 2.7 (Anaconda)
--   PyQt 4.11 (Qt 4.8.7)
--   OpenCV 3.0
--   *For Capture*
-    -   Vicon Tracker System (v1.2 32-bit)
-    -   Serial RS232 Serial connection
-    -   [Flash Sync circuit](3-1-flash-sync-circuit)
-    -   A camera flash w/ PC-SYNC connection
+- Windows 7+
+- Python 2.7 (Anaconda)
+- PyQt 4.11 (Qt 4.8.7)
+- OpenCV 3.0
+- *For Capture*
+  - Vicon Tracker System (v1.2 32-bit)
+  - Serial RS232 Serial connection
+  - [Flash Sync circuit](3-1-flash-sync-circuit)
+  - A camera flash w/ PC-SYNC connection
+
 
 ### 1.4 Install instructions
-
 include links
+
 
 2 Pipeline Overview
 -------------------
-
 ![Data Flow](assets/dataflow.png)
+
+TODO description
+
 
 3 Core Tools
 ------------
 
 ### 3.1 Vicon Capture
+This tool records object positional data into CSV files from the Vicon system.
+It includes quality verification and time synchronisation data.
 
 #### 3.1.1 Preparation
-
 The Vicon system captures objects that are defined as unique "constellations"
 of dots placed on physical objects within the lab. These objects are configured
 in the *Vicon Tracker* software. Some experimental/working objects are
@@ -78,64 +89,170 @@ only enable the objects for a given scenario.
 7. Stop the camera recording
 8. Check the output folder that the objects are all recorded
 
-#### 3.1.4 Command line Usage 
+#### 3.1.3 Command line Usage 
 ```sh
-python vicon_capture.py {--output <folder> | --time <in minutes> | --config <file> | --training <file>}
+$ python vicon_capture.py {-output <folder> | -time <in minutes> | -config <file> | -training <file>}
 ```
 
-#### 3.1.5 Flash Sync Circuit
+#### 3.1.4 Flash Sync Circuit
+This is a circuit by design of Peter Barsznica that triggers a camera flash when
+signalled from a Serial connection to the computer. This matches the flash data
+fields in the CSV file in order to syncronise the video and data feeds.
 
-This is a circuit by design of Peter Barsznica that triggers a camera flash and
-an identifier in the software, in order to syncronise the video and data feeds.
+__This is the circuit detail__
 
-This is the circuit detail:
 ![Circuit Sync](assets/sync_circuit_v2.2.png)
 
-The circuit connects to the serial GND and CTS pins:
+__The circuit connects to the serial GND and CTS pins__
+
 ![Serial Pinout](assets/pinouts_serial.gif)
 
-#### 3.1.6 Synchronisation
-
+#### 3.1.5 Synchronisation
 When running the software, the flash will trigger 3 times. This is a uncorrectable
 side-effect of the hardware, therefore the software will delay a number of frames
 (as specified in the [config file](#6-1-Capture)) before the first flash is triggered.
 There are still only 2 flashes recorded into the CSV.
 
+
+
 ### 3.2 Calibration
+A Camera Calibration Tool based on the OpenCV Library. This script detects 
+chessboard pattern from a set of images and determines the intrinsic and distortion
+parameters of the camera lens. It can highlight the corners of the chessboards, 
+provide an estimated error and sample rectified images.
+
+#### 3.2.1 Preparation
+TODO
+
+#### 3.2.2 Procedure
+TODO
+
+#### 3.2.3 Command line Usage
+```sh
+$ python stdcalib.py -output <file path> <multiple jpg files> {-chess_size <pattern: def. 9,6> | -square_size <in mm: def. 1.0> | -preview <preview file folder> | -config <file>}
+```
+
 
 ### 3.3 Trainer
+This tool creates a training set for the Mapping tool, using Vicon Wand positional
+data (from Vicon) and corresponding video capture. This is used to calculate the
+extrinsic parameters of the camera, and therefore its pose within the room.
+
+#### 3.2.1 Preparation
+TODO
+
+#### 3.2.2 Procedure
+TODO
+
+#### 3.2.3 Command line Usage
+```sh
+$ python trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out> | -clicks <num_clicks> | -config <file>}
+```
+
 
 ### 3.4 Mapping
+This software applies mapping routines to convert 3D raw data into 2D datasets 
+using models from the Training and Calibration tools.
+
+#### 3.2.1 Preparation
+TODO
+
+#### 3.2.2 Procedure
+TODO
+
+#### 3.2.3 Command line Usage
+```sh
+$ python mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {--config <file>}
+```
+
+
 
 ### 3.5 Annotation
+Takes raw camera footage or images from the Ricoh theta and applies automated 
+object detection algorithms. Includes manual adjustment of the annotations.
+Outputs an annotated video or image, depending on the input as well as an XML
+Dataset - of identical format to the Mapping Tool.
+
+#### 3.2.1 Preparation
+TODO
+
+#### 3.2.2 Procedure
+TODO
+
+#### 3.2.3 Command line Usage
+```sh
+$ python annotation.py
+```
+
 
 ### 3.6 Evaluation
+TODO description
+
+#### 3.2.1 Preparation
+TODO
+
+#### 3.2.2 Procedure
+TODO
+
+#### 3.2.3 Command line Usage
+```sh
+$ python eval.py <annotated dataset> <mapped dataset>
+```
+
 
 4 Utility Tools
 ---------------
+TODO description
 
 ### 4.1 Chessboard Extractor
+TODO description
 
-### 4.2 Trainer Verifier
+#### 4.1.1 Procedure
+TODO
+
+#### 4.1.2 Command line Usage
+```sh
+$ python extract_frames.py <video file> <output image folder> {-prefix <output name> | -config <file>}
+```
+
+
+### 4.2 Trainer Comparison
+TODO description
+
+#### 4.2.1 Procedure
+TODO
+
+#### 4.2.2 Command line Usage
+```sh
+$ python compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -config <file> | -export <file>}
+```
+
 
 ### 4.3 Dataset Comparison
+TODO description
+
+#### 4.3.1 Procedure
+TODO
+
+#### 4.3.2 Command line Usage
+```sh
+$ python compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}
+```
+
 
 5 Data Formats
 --------------
 
 ### 5.1 Raw Dataset CSV
-
 This is object data represented in the Vicon World Coordinates. Each file
 contains data for a single object captured. Containing positional, rotational,
 sychronisation and marker data.
 
 #### Synchronisation
-
 -   . (dot) - is a regular frame
 -   F - is a flash frame, there should only be 2 of these within a dataset
 
 #### Rotation
-
 The rotational X, Y, Z is a
 [Euler Vector](https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation),
 not to be mistaken with Euler Angles pitch, yaw, roll.
@@ -154,7 +271,6 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 | 9      | Visible     | int   | 4        |
 
 ### 5.2 Calibration XML
-
 ``` xml
 <?xml version='1.0'?>
 <StdIntrinsic>
@@ -165,7 +281,6 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 ```
 
 ### 5.3 Trainer XML
-
 ``` xml
 <?xml version='1.0'?>
 <TrainingSet>
@@ -185,7 +300,6 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 ```
 
 ### 5.4 Dataset XML
-
 ``` xml
 <?xml version='1.0'?>
 <dataset>
@@ -200,11 +314,9 @@ not to be mistaken with Euler Angles pitch, yaw, roll.
 ```
 
 ### 5.5 Evaluation XML
-
 TODO
 
 ### 5.6 Header XML
-
 ``` xml
 <?xml version='1.0'?>
 <datasetHeader date="2015-08-27" name="August27">
@@ -238,8 +350,10 @@ TODO
 </datasetHeader>
 ```
 
+
 6 Configuration
 ---------------
+TODO description
 
 ### 6.1 Capture
 | Setting           | Default        |
