@@ -275,7 +275,7 @@ def main(sysargs):
         for lens in trainer_points:
             if lens == BuffSplitCap.right:
                 out_xml.start("buttonside")
-            elif lens == BuffSplitCap.right:
+            elif lens == BuffSplitCap.left:
                 out_xml.start("backside")
             else: # non dualmode
                 out_xml.start("frames")
