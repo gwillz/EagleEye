@@ -3,10 +3,11 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version: 0.2.1
+# version: 0.2.2
 # 
-# Implements features from both BuffCapture and SplitCapture.
-# Can buffer and split, rotate, crop frames on-the-fly.
+# Implements features from both BuffCapture and SplitCapture
+# Can buffer and split, rotate, crop frames on-the-fly
+# Also include dataset limiting via restrict()
 #
 
 import cv2, numpy as np
@@ -21,7 +22,7 @@ class BuffSplitCap:
     r270 = 3
     
     # open a path, set the default transformations
-    def __init__(self, path, side=right, rotate=r270, crop=(0, 0, 120, 0), buff_max=30):
+    def __init__(self, path, side=both, rotate=r0, crop=(0, 0, 0, 0), buff_max=30):
         self._cap = cv2.VideoCapture(path)
         
         # buffer variables
@@ -85,7 +86,7 @@ class BuffSplitCap:
             ret, img = self._cap.read()
             
             if img is not None \
-                    and self.at() < self.mark_out - 1:
+                    and self.at() < self.mark_out:
                 self._frame_at += 1
                 self._buff.append(img)
                 self._buff.pop(0)
@@ -103,7 +104,7 @@ class BuffSplitCap:
     def back(self):
         # read backwards through the stack
         if self._buff_at > 0 \
-                and self.at() > self.mark_in + 1:
+                and self.at() > self.mark_in:
                 
             self._buff_at -= 1
             self._frame = self._buff[self._buff_at]
@@ -129,8 +130,9 @@ class BuffSplitCap:
             else:
                 break
         
-        self.mark_in = mark_in
-        self.mark_out = mark_out
+        # set marks, exclusive style (without flashes)
+        self.mark_in = mark_in + 1
+        self.mark_out = mark_out - 1
         self.marked = True
     
     def isOpened(self):
@@ -160,8 +162,8 @@ if __name__ == "__main__":
         exit(1)
     
     # open reader, window, etc
-    cap = BuffSplitCap(sys.argv[1])
-    side = cap.left if sys.argv[2] == 'left' else cap.right
+    side = BuffSplitCap.left if sys.argv[2] == 'left' else BuffSplitCap.right
+    cap = BuffSplitCap(sys.argv[1], side=side, rotate=BuffSplitCap.r270)
     
     window_name = "SplitCap test"
     cv2.namedWindow(window_name)

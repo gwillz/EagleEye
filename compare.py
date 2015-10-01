@@ -4,14 +4,14 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.12
+# version 0.2.13
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffCap, Xmlset, EasyArgs, EasyConfig, Key, marker_tool
+from eagleeye import BuffSplitCap, Xmlset, EasyArgs, EasyConfig, Key, marker_tool
 
 def usage():
     print "usage: python2 compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}"
@@ -44,19 +44,23 @@ def main(sysargs):
         return 1
     
     # open video files
-    vid = BuffCap(args[1], buff_max=cfg.buffer_size)
+    vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size)
     xml1 = Xmlset(args[2])
     xml2 = Xmlset(args[3])
     
+    # trim the video
+    vid.restrict(mark_in, mark_out)
+    
+    # trim the CSV
     cropped_total = mark_out - mark_in
     xml1.setRatio(cropped_total)
     print 'ratio at:', xml1._ratio
     
     # open export (if specified)
     if args.export:
-        in_fps  = vid._cap.get(cv2.CAP_PROP_FPS)
-        in_size = (int(vid._cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                   int(vid._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        in_fps  = vid.get(cv2.CAP_PROP_FPS)
+        in_size = (int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                   int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
         out_vid = cv2.VideoWriter(args.export,
                                   cv2.VideoWriter_fourcc(*cfg.fourcc),
@@ -64,15 +68,9 @@ def main(sysargs):
     else:
         cv2.namedWindow(window_name)
     
-    #count = 0
     while vid.isOpened():
-        #count += 1
-        print vid.at()
-        # restrict to flash marks
-        if vid.at() <= mark_in:
-            
-            vid.next()
-            continue
+        sys.stdout.write(vid.status() + "\r")
+        sys.stdout.flush()
         
         frame = vid.frame()
         
@@ -116,10 +114,9 @@ def main(sysargs):
                     xml1.next()
                     xml2.next()
             elif key == Key.left:
-                if(vid.at() - 1 != mark_in):
-                    if vid.back():
-                        xml1.back()
-                        xml2.back()
+                if vid.back():
+                    xml1.back()
+                    xml2.back()
     
     # clean up
     vid.release()
