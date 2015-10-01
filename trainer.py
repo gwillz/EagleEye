@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.31
+# version 0.5.32
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -274,11 +274,11 @@ def main(sysargs):
         # training point data
         for lens in trainer_points:
             if lens == BuffSplitCap.right:
-                out_xml.start("buttonside")
+                out_xml.start("buttonside", num=str(len(trainer_points[lens]))
             elif lens == BuffSplitCap.left:
-                out_xml.start("backside")
+                out_xml.start("backside", num=str(len(trainer_points[lens]))
             else: # non dualmode
-                out_xml.start("frames")
+                out_xml.start("frames", num=str(len(trainer_points[lens]))
             
             for i in trainer_points[lens]:
                 pos, row, markers = trainer_points[lens][i]

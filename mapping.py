@@ -99,7 +99,6 @@ def main(sysargs):
                 except:
                     print "Error occurred when converting VICON data at row {}".format(i)
                     return 1
-                    mode = cfg.quality_mode
                 
                 # run projection/mapping on VICON data
                 points = mapper.reprojpts((x, y, z))

@@ -228,7 +228,7 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
         trainer_txt = "Trained Point: x:{} y: {}".format(int(float(trainer_frame["plane"]["x"])),
                                                             int(float(trainer_frame["plane"]["y"])))
         # visualise trainer point
-        cv2.circle(cvframe, trainer_pt, 1, cfg.trainer_target, 2)
+        cv2.circle(cvframe, trainer_pt, 1, cfg.trainer_colour, 2)
 
         # Calculate Reprojection Error at this frame
         # Still display bad data reprojection error but not used in calculation of mean
@@ -245,12 +245,12 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
         vicon_txt = "VICON - x:{} y:{} z:{}".format(float(trainer_frame["vicon"]["x"]),
                                                         float(trainer_frame["vicon"]["y"]),
                                                         float(trainer_frame["vicon"]["z"]))
-
-        
-        cvframe, textOffset, _textSize = displayText(cvframe, dataText, (_textSize[0], textOffset[1]), cfg, customColour=dataText_colour)
-        cvframe, textOffset, _textSize = displayText(cvframe, trainer_txt, _textOffset, cfg)
-        cvframe, textOffset, _textSize = displayText(cvframe, vicon_txt, textOffset, cfg)
-        cvframe, textOffset, _textSize = displayText(cvframe, reprojErr_txt, textOffset, cfg)
+    
+    
+    cvframe, textOffset, _textSize = displayText(cvframe, dataText, (_textSize[0], textOffset[1]), cfg, customColour=dataText_colour)
+    cvframe, textOffset, _textSize = displayText(cvframe, trainer_txt, _textOffset, cfg)
+    cvframe, textOffset, _textSize = displayText(cvframe, vicon_txt, textOffset, cfg)
+    cvframe, textOffset, _textSize = displayText(cvframe, reprojErr_txt, textOffset, cfg)
 
     return cvframe, reprojerror_list
 
