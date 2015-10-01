@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.0.1
+# version 0.1.2
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
@@ -45,13 +45,19 @@ def main(sysargs):
         usage()
         return 1
     
-    # open video files
+    # open inouts files
     vid = BuffCap(args[1], buff_max=cfg.buffer_size)
     mapper_xml = Xmlframe(args[2])
     trainer_xml = Xmltrainer(args[3])
     reprojerror_list = {}     # list of reprojection error of all frames
     lastframe = False
     
+    # reject mapper_xml if it doesn't contain the trainer_target
+    if cfg.trainer_target not in mapper_xml.data()['1']:
+        print "Mapping file must contain training target:", cfg.trainer_target
+        return 1
+    
+    # sync the xml with the video
     cropped_total = mark_out - mark_in
     mapper_xml.setRatio(cropped_total)
     print 'ratio at:', mapper_xml._ratio, "\n"
@@ -143,6 +149,7 @@ def main(sysargs):
                     frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
                     showAll = False
                 '''
+                pass
     
     # clean up
     vid.release()
@@ -169,78 +176,75 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
 
     sys.stdout.write("Reading Video Frame: {}".format(vidframe_no) + " | XML Frame number: {}\r".format(xmlframe_no))
     sys.stdout.flush()
+    
+    trainer_obj = mapper_xml.data()[xmlframe_no][cfg.trainer_target]
     objs = mapper_xml.data()[xmlframe_no]
-    '''
-    print "ALL OBJECTS", objs
-    print "ALL OBJECTS KEY", xmlframe_no
-    '''
-    for obj in objs:
-        '''
-        print "Current Object is:", obj
-        print "Object info is:",  mapper_xml.data()[frame_no][obj]
-        '''
-        textOffset = (5, 0)
 
-        # Prepare Repojected Point
-        pt1 = (int(float(mapper_xml.data()[xmlframe_no][obj]['box']['x'])), 
-                int(float(mapper_xml.data()[xmlframe_no][obj]['box']['y'])))
-        pt2 = (pt1[0] + int(float(mapper_xml.data()[xmlframe_no][obj]['box']['width'])), 
-                pt1[1] + int(float(mapper_xml.data()[xmlframe_no][obj]['box']['height'])))
-        centre = (int(float(mapper_xml.data()[xmlframe_no][obj]['centre']['x'])), 
-                int(float(mapper_xml.data()[xmlframe_no][obj]['centre']['y'])))
-        visible = int(mapper_xml.data()[xmlframe_no][obj]['visibility']['visible'])
-        max_visible =  int(mapper_xml.data()[xmlframe_no][obj]['visibility']['visibleMax'])
+    textOffset = (5, 0)
+    
+    # Prepare Repojected Point
+    pt1 = (int(float(trainer_object['box']['x'])), 
+            int(float(trainer_object['box']['y'])))
+    
+    pt2 = (pt1[0] + int(float(trainer_object['box']['width'])), 
+            pt1[1] + int(float(trainer_object['box']['height'])))
+    
+    centre = (int(float(trainer_object['centre']['x'])), 
+                int(float(trainer_object['centre']['y'])))
+    
+    visible = int(trainer_object['visibility']['visible'])
+    max_visible =  int(trainer_object['visibility']['visibleMax'])
+    
+    
+    # Render Reprojected Point
+    cv2.rectangle(cvframe, pt1, pt2, cfg.mapper_colour, 1)
+    cv2.circle(cvframe, centre, 1, cfg.mapper_colour, 2)
+
+    # Display Object Info
+    frameObj_Txt = "Frame: {} | Trained Object: {}".format(vidframe_no, str(cfg.trainer_target))
+    cvframe, textOffset, _topTextSize= displayText(cvframe, frameObj_Txt, textOffset, cfg)
+    
+    reprojCentroid_txt = "Reprojected Centroid - x: {}, y: {}".format(centre[0],centre[1])
+    cvframe, textOffset, _topTextSize = displayText(cvframe, reprojCentroid_txt, textOffset, cfg)
+
+    visibility_txt = "Visible: {} , Max Visible: {}".format(visible, max_visible)
+    cvframe, _textOffset, _textSize = displayText(cvframe, visibility_txt, textOffset, cfg)
+    
+    dataText = " - Good data!!"
+    dataText_colour = (0, 255, 0) # green
+    if(visible < min_reflectors):           # for when there isn't a matching trainer
+        dataText = " - Bad data!! Ignored."
+        dataText_colour = (0, 0, 255) # red
+    
+    # Get trainer point if it exists at current frame
+    vicon_txt = "VICON - x:{} y:{} z:{}".format("?", "?", "?")
+    trainer_txt = "Trained Point: x:{} y: {}".format("?", "?")
+    reprojErr_txt = "Reprojection Error: {}".format("No Data")
+    trainer_frame = trainer_xml.data(str(vidframe_no))
+
+    if trainer_frame is not None:
+        trainer_pt = (int(float(trainer_frame["plane"]["x"])),
+                        int(float(trainer_frame["plane"]["y"])))
+        trainer_txt = "Trained Point: x:{} y: {}".format(int(float(trainer_frame["plane"]["x"])),
+                                                            int(float(trainer_frame["plane"]["y"])))
+        # visualise trainer point
+        cv2.circle(cvframe, trainer_pt, 1, cfg.trainer_target, 2)
+
+        # Calculate Reprojection Error at this frame
+        # Still display bad data reprojection error but not used in calculation of mean
+        reprojErr = calReprojError(centre, trainer_pt)
+        reprojErr_txt = "Reprojection Error: {} pixels".format(str(reprojErr))
+        if(cfg.ignore_baddata == True):
+            if(visible >= min_reflectors):
+                reprojerror_list.update({vidframe_no: {"rms": reprojErr,
+                                            "x1": trainer_pt[0],
+                                            "y1": trainer_pt[1],
+                                            "x2": pt1[0],
+                                            "y2": pt1[1]}})
         
-        # Render Reprojected Point
-        cv2.rectangle(cvframe, pt1, pt2, cfg.mapper_colour, 1)
-        cv2.circle(cvframe, centre, 1, cfg.mapper_colour, 2)
-
-        # Display Object Info
-        frameObj_Txt = "Frame: {} | Trained Object: {}".format(vidframe_no, str(obj))
-        cvframe, textOffset, _topTextSize= displayText(cvframe, frameObj_Txt, textOffset, cfg)
-        
-        reprojCentroid_txt = "Reprojected Centroid - x: {}, y: {}".format(centre[0],centre[1])
-        cvframe, textOffset, _topTextSize = displayText(cvframe, reprojCentroid_txt, textOffset, cfg)
-
-        visibility_txt = "Visible: {} , Max Visible: {}".format(visible, max_visible)
-        cvframe, _textOffset, _textSize = displayText(cvframe, visibility_txt, textOffset, cfg)
-
-        dataText = " - Good data!!"
-        dataText_colour = (0, 255, 0) # green
-        if(visible < min_reflectors):           # for when there isn't a matching trainer
-            dataText = " - Bad data!! Ignored."
-            dataText_colour = (0, 0, 255) # red
-        
-        # Get trainer point if it exists at current frame
-        vicon_txt = "VICON - x:{} y:{} z:{}".format("?", "?", "?")
-        trainer_txt = "Trained Point: x:{} y: {}".format("?", "?")
-        reprojErr_txt = "Reprojection Error: {}".format("No Data")
-        trainer_frame = trainer_xml.data(str(vidframe_no))
-
-        if obj == cfg.object_target:
-            if trainer_frame is not None:
-                trainer_pt = (int(float(trainer_frame["plane"]["x"])),
-                              int(float(trainer_frame["plane"]["y"])))
-                trainer_txt = "Trained Point: x:{} y: {}".format(int(float(trainer_frame["plane"]["x"])),
-                                                                  int(float(trainer_frame["plane"]["y"])))
-                # visualise trainer point
-                cv2.circle(cvframe, trainer_pt, 1, cfg.trainer_colour, 2)
-
-                # Calculate Reprojection Error at this frame
-                # Still display bad data reprojection error but not used in calculation of mean
-                reprojErr = calReprojError(centre, trainer_pt)
-                reprojErr_txt = "Reprojection Error: {} pixels".format(str(reprojErr))
-                if(cfg.ignore_baddata == True):
-                    if(visible >= min_reflectors):
-                        reprojerror_list.update({vidframe_no: {"rms": reprojErr,
-                                                    "x1": trainer_pt[0],
-                                                    "y1": trainer_pt[1],
-                                                    "x2": pt1[0],
-                                                    "y2": pt1[1]}})
-                
-                vicon_txt = "VICON - x:{} y:{} z:{}".format(float(trainer_frame["vicon"]["x"]),
-                                                                float(trainer_frame["vicon"]["y"]),
-                                                                float(trainer_frame["vicon"]["z"]))
+        vicon_txt = "VICON - x:{} y:{} z:{}".format(float(trainer_frame["vicon"]["x"]),
+                                                        float(trainer_frame["vicon"]["y"]),
+                                                        float(trainer_frame["vicon"]["z"]))
 
         
         cvframe, textOffset, _textSize = displayText(cvframe, dataText, (_textSize[0], textOffset[1]), cfg, customColour=dataText_colour)
@@ -248,8 +252,8 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
         cvframe, textOffset, _textSize = displayText(cvframe, vicon_txt, textOffset, cfg)
         cvframe, textOffset, _textSize = displayText(cvframe, reprojErr_txt, textOffset, cfg)
 
-
     return cvframe, reprojerror_list
+
 
 def writeFile(filepath, reprojList):
     with open(filepath, "wb") as csvFile:
