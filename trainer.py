@@ -134,14 +134,13 @@ def main(sysargs):
         if in_vid.at() < mark_in:
             in_vid.next()
             continue
-        # TODO: Last frame prints wrong frame number in console, something to do with the print position and loop
         if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
             write_xml = True
-            print "\nend of video: {}/{}".format(in_vid.at(), mark_out -1)
+            print "\nend of video: {}/{}".format(in_vid.at() -1, mark_out -1)
             break
         
         sys.stdout.write("Current Video Frame: {} / {}".format(in_vid.at(), mark_out -1)
-                 + " | Clicks {} / {}\r".format(len(trainer_points), max_clicks))
+                 + " | Clicks {} / {}\r".format(len(trainer_points[lens]), max_clicks))
         sys.stdout.flush()
         
         # load frame
@@ -179,12 +178,16 @@ def main(sysargs):
         if visible < min_reflectors:
             dataQuality = False
             dataStatus = " - Bad data!!"
+            if(cfg.ignore_baddata == True):
+                dataStatus += " Ignored."
             dataStatus_colour = (0, 0, 255) # red
         
         if cfg.check_negatives:
             if tx < 0 or ty < 0 or tz < 0:
                 dataQuality = False
-                dataStatus += " - Bad data!!"
+                dataStatus = " - Bad data!!"
+                if(cfg.ignore_baddata == True):
+                    dataStatus += " Ignored."
                 dataStatus_colour = (0, 0, 255) # red
                 
         # draw the trainer dot (if applicable)
@@ -236,7 +239,7 @@ def main(sysargs):
         
         # or remove it
         elif params['status'] == Status.remove \
-                and in_vid.at() in trainer_points:
+                and in_vid.at() in trainer_points[lens]:
             del trainer_points[lens][in_vid.at()]
             print "\nremoved dot"
         
@@ -247,7 +250,7 @@ def main(sysargs):
         
         # or load previous csv frame
         elif params['status'] == Status.back \
-                and in_vid.at() > mark_in:
+                and in_vid.at() - 1 > mark_in:
             # don't track before mark_in
             if in_vid.back():
                 in_csv.back()
