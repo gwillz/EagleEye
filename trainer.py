@@ -135,14 +135,13 @@ def main(sysargs):
         if in_vid.at() < mark_in:
             in_vid.next()
             continue
-        # TODO: Last frame prints wrong frame number in console, something to do with the print position and loop
         if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
             write_xml = True
-            print "\nend of video: {}/{}".format(in_vid.at(), mark_out -1)
+            print "\nend of video: {}/{}".format(in_vid.at() -1, mark_out -1)
             break
         
         sys.stdout.write("Current Video Frame: {} / {}".format(in_vid.at(), mark_out -1)
-                 + " | Clicks {} / {}\r".format(len(trainer_points), max_clicks))
+                 + " | Clicks {} / {}\r".format(len(trainer_points[lens]), max_clicks))
         sys.stdout.flush()
         
         # load frame
@@ -180,13 +179,17 @@ def main(sysargs):
             dataQuality = False
             dataStatus = " - Bad data!!"
             dataStatus_colour = (0, 0, 255) # red
+            if cfg.ignore_baddata:
+                dataStatus += " Ignored."
         
         if cfg.check_negatives:
             if tx < 0 or ty < 0 or tz < 0:
                 dataQuality = False
-                dataStatus += " - Bad data!!"
+                dataStatus = " - Bad data!!"
                 dataStatus_colour = (0, 0, 255) # red
-                
+                if cfg.ignore_baddata:
+                    dataStatus += " Ignored."
+        
         # draw the trainer dot (if applicable)
         if in_vid.at() in trainer_points[lens]:
             cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 1, cfg.dot_colour, 2)
@@ -236,7 +239,7 @@ def main(sysargs):
         
         # or remove it
         elif params['status'] == Status.remove \
-                and in_vid.at() in trainer_points:
+                and in_vid.at() in trainer_points[lens]:
             del trainer_points[lens][in_vid.at()]
             print "\nremoved dot"
         
@@ -247,7 +250,7 @@ def main(sysargs):
         
         # or load previous csv frame
         elif params['status'] == Status.back \
-                and in_vid.at() > mark_in:
+                and in_vid.at() - 1 > mark_in:
             # don't track before mark_in
             if in_vid.back():
                 in_csv.back()
@@ -274,11 +277,11 @@ def main(sysargs):
         # training point data
         for lens in trainer_points:
             if lens == BuffSplitCap.right:
-                out_xml.start("buttonside")
+                out_xml.start("buttonside", num=str(len(trainer_points[lens])))
             elif lens == BuffSplitCap.left:
-                out_xml.start("backside")
+                out_xml.start("backside", num=str(len(trainer_points[lens])))
             else: # non dualmode
-                out_xml.start("frames")
+                out_xml.start("frames", num=str(len(trainer_points[lens])))
             
             for i in trainer_points[lens]:
                 pos, row, markers = trainer_points[lens][i]
@@ -290,8 +293,8 @@ def main(sysargs):
                 
                 out_xml.start("frame", num=str(i))
                 out_xml.element("plane", 
-                                x=str(pos[0]), 
-                                y=str(pos[1]))
+                                x=str(x), 
+                                y=str(y))
                 out_xml.element("vicon", 
                                 x=str(row[0]), y=str(row[1]), z=str(row[2]))
                 out_xml.element("visibility", 

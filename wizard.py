@@ -922,6 +922,7 @@ class Wizard(QMainWindow):
                                     "-calib", str(self.calibration_edit.text()),
                                     "-trainer", str(self.trainer_xml_edit.text()),
                                     "-output", path,
+                                    "-map_trainer_mode",
                                     "-config", self.config_path,
                                     str(self.trainer_csv_edit.text())])
         if stat: worker.start()
@@ -940,7 +941,7 @@ class Wizard(QMainWindow):
             args += [str(mark_in), str(mark_out)]
         
         self.statusbar.showMessage("Running Trainer Comparison.")
-        stat, worker = self.run_tool(trainer_compare_main, args)
+        stat, worker = self.run_tool(compare_trainer_main, args)
         if stat: worker.start()
     
     @pyqtSlot()
