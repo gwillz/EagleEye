@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.4
+# version 0.1.5
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
@@ -88,10 +88,9 @@ def main(sysargs):
             
             out_vid.write(frame)
             
-            if(vid.at() < mark_out -1):
-                if vid.next():
-                    frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
-                    mapper_xml.next()
+            if vid.next():
+                frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
+                mapper_xml.next()
             else:
                 calReprojList(reprojerror_list)
                 print "\nend of video"
@@ -104,7 +103,7 @@ def main(sysargs):
             # controls
             if key == Key.esc:
                 print "\nexiting."
-                return 1
+                break
             elif key == Key.right:
                 if vid.next():
                     mapper_xml.next()

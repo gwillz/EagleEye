@@ -108,7 +108,7 @@ def main(sysargs):
             # controls
             if key == Key.esc:
                 print "exiting."
-                return 1
+                break
             elif key == Key.right:
                 if vid.next():
                     xml1.next()

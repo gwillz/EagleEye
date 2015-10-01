@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.32
+# version 0.5.33
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -91,11 +91,14 @@ def main(sysargs):
             params['status'] = Status.skip
     
     # working variables
-    params = {'status': Status.skip, 'pos': None}
+    params = {'status': Status.wait, 'pos': None}
     write_xml = False
     if cfg.dual_mode:
+        # default right side (buttonside)
+        lens = BuffSplitCap.right
         trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
     else:
+        lens = BuffSplitCap.both
         trainer_points = {BuffSplitCap.both:{}}
     
     # ensure minimum is 4 as required by VICON system
@@ -104,8 +107,7 @@ def main(sysargs):
         
     # load video (again)
     in_vid = BuffSplitCap(args[1], crop=(0,0,0,0), rotate=BuffSplitCap.r0, buff_max=cfg.buffer_size)
-    cv2.namedWindow(window_name)
-    cv2.setMouseCallback(window_name, on_mouse, params)
+    in_vid.restrict(mark_in, mark_out)
     
     # load csv (with appropriate ratio)
     in_csv = Memset(args[2])
@@ -123,29 +125,16 @@ def main(sysargs):
     print "Number of clicks at:", max_clicks
     print ""
     
-    # default right side (buttonside)
-    if cfg.dual_mode:
-        lens = BuffSplitCap.right
-    else:
-        lens = BuffSplitCap.both
+    cv2.namedWindow(window_name)
+    cv2.setMouseCallback(window_name, on_mouse, params)
     
     # grab clicks (Process 2)
     while in_vid.isOpened():
-        # restrict to flash marks
-        if in_vid.at() < mark_in:
-            in_vid.next()
-            continue
-        if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
-            write_xml = True
-            print "\nend of video: {}/{}".format(in_vid.at() -1, mark_out -1)
-            break
-        
-        sys.stdout.write("Current Video Frame: {} / {}".format(in_vid.at(), mark_out -1)
-                 + " | Clicks {} / {}\r".format(len(trainer_points[lens]), max_clicks))
-        sys.stdout.flush()
-        
-        # load frame
         frame = in_vid.frame(side=lens)
+        
+        sys.stdout.write(in_vid.status() + " | Clicks {} / {}\r".format(
+                                                len(trainer_points[lens]), max_clicks))
+        sys.stdout.flush()
         
         # prepare CSV data, click data
         tx = float(in_csv.row()[2])
@@ -163,6 +152,7 @@ def main(sysargs):
         textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
         textquality = "Visible: {} , Max Visible: {}".format(visible, max_visible)
         textstatus = "{} | {}/{} clicks".format(in_vid.status(), len(trainer_points[lens]), max_clicks)
+        
         if lens == BuffSplitCap.left:
             textstatus += " - back side"
         elif lens == BuffSplitCap.right:
@@ -247,11 +237,13 @@ def main(sysargs):
         if params['status'] == Status.skip:
             if in_vid.next():
                 in_csv.next()
+            else:
+                write_xml = True
+                print "\nend of video: {}/{}".format(in_vid.at() -1, mark_out -1)
+                break
         
         # or load previous csv frame
-        elif params['status'] == Status.back \
-                and in_vid.at() - 1 > mark_in:
-            # don't track before mark_in
+        elif params['status'] == Status.back:
             if in_vid.back():
                 in_csv.back()
         
