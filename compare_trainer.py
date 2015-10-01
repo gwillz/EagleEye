@@ -96,7 +96,7 @@ def main(sysargs):
                     mapper_xml.next()
             else:
                 calReprojList(reprojerror_list)
-                print "end of video\n"
+                print "\nend of video"
                 break
         else:
             cv2.imshow(window_name, frame)
@@ -105,7 +105,7 @@ def main(sysargs):
                 
             # controls
             if key == Key.esc:
-                print "exiting."
+                print "\nexiting."
                 return 1
             elif key == Key.right:
                 if(vid.at() < mark_out -1):
@@ -113,7 +113,7 @@ def main(sysargs):
                         mapper_xml.next()
                 else:
                     if lastframe is False:
-                        print "End of video"
+                        print "\nEnd of video"
                         calReprojList(reprojerror_list)
                     lastframe = True
             elif key == Key.left:
@@ -132,8 +132,7 @@ def main(sysargs):
                         frame = vid.frame()
                 
                 calReprojList(reprojerror_list)
-                print "Fast forwarded to end of video"
-
+                print "\nFast forwarded to end of video"
                 print "Output to file"
                 writeFile("C:\\Anaconda\\awork\\wizardtool\\data\\compare_frames.csv", reprojerror_list)
                 break
@@ -179,7 +178,7 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     
     trainer_object = mapper_xml.data()[xmlframe_no][cfg.trainer_target]
     objs = mapper_xml.data()[xmlframe_no]
-
+    
     textOffset = (5, 0)
     
     # Prepare Repojected Point
@@ -199,22 +198,25 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     # Render Reprojected Point
     cv2.rectangle(cvframe, pt1, pt2, cfg.mapper_colour, 1)
     cv2.circle(cvframe, centre, 1, cfg.mapper_colour, 2)
-
+    
     # Display Object Info
     frameObj_Txt = "Frame: {} | Trained Object: {}".format(vidframe_no, str(cfg.trainer_target))
     cvframe, textOffset, _topTextSize= displayText(cvframe, frameObj_Txt, textOffset, cfg)
     
     reprojCentroid_txt = "Reprojected Centroid - x: {}, y: {}".format(centre[0],centre[1])
     cvframe, textOffset, _topTextSize = displayText(cvframe, reprojCentroid_txt, textOffset, cfg)
-
+    
     visibility_txt = "Visible: {} , Max Visible: {}".format(visible, max_visible)
     cvframe, _textOffset, _textSize = displayText(cvframe, visibility_txt, textOffset, cfg)
     
     dataText = " - Good data!!"
     dataText_colour = (0, 255, 0) # green
-    if(visible < min_reflectors):           # for when there isn't a matching trainer
+    if visible < min_reflectors:           # for when there isn't a matching trainer
         dataText = " - Bad data!! Ignored."
         dataText_colour = (0, 0, 255) # red
+        
+        if cfg.ignore_baddata:
+            dataText += " Ignored."
     
     # Get trainer point if it exists at current frame
     vicon_txt = "VICON - x:{} y:{} z:{}".format("?", "?", "?")
