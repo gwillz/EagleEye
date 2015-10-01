@@ -189,8 +189,8 @@ def main(sysargs):
                 
         # draw the trainer dot (if applicable)
         if in_vid.at() in trainer_points[lens]:
-            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 1, cfg.font_colour, 2)
-            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 15, cfg.font_colour, 1)
+            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 1, cfg.dot_colour, 2)
+            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 15, cfg.dot`_colour, 1)
         
         # draw text and show
         displayText(frame, textrow, top=True)
