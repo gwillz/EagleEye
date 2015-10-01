@@ -12,7 +12,6 @@ if cv2.__version__ < '3.0.0':
 from easyargs import EasyArgs
 from easyconfig import EasyConfig
 from cv_keys import Key
-from buff_cap import BuffCap
 from buff_split_cap import BuffSplitCap
 from xmlset import Xmlset
 from mem_dataset import Memset

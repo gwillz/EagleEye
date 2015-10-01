@@ -11,7 +11,7 @@
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffCap, Xmlset, Xmltrainer, Xmlframe, EasyArgs, EasyConfig, Key, marker_tool
+from eagleeye import BuffSplitCap, Xmlset, Xmltrainer, Xmlframe, EasyArgs, EasyConfig, Key, marker_tool
 from eagleeye.display_text import *
 from math import sqrt
 import csv
@@ -47,7 +47,7 @@ def main(sysargs):
         return 1
     
     # open inouts files
-    vid = BuffCap(args[1], buff_max=cfg.buffer_size)
+    vid = BuffSplitCap(args[1], side=BuffSplitCap.right, buff_max=cfg.buffer_size)
     mapper_xml = Xmlframe(args[2])
     trainer_xml = Xmltrainer(args[3])
     reprojerror_list = {}     # list of reprojection error of all frames
@@ -58,16 +58,17 @@ def main(sysargs):
         print "Mapping file must contain training target:", cfg.trainer_target
         return 1
     
-    # sync the xml with the video
+    # sync the video and xml
+    vid.restrict(mark_in, mark_out)
     cropped_total = mark_out - mark_in
     mapper_xml.setRatio(cropped_total)
     print 'ratio at:', mapper_xml._ratio, "\n"
     
     # open export (if specified)
     if args.export:
-        in_fps  = vid._cap.get(cv2.CAP_PROP_FPS)
-        in_size = (int(vid._cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                   int(vid._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        in_fps  = vid.get(cv2.CAP_PROP_FPS)
+        in_size = (int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                   int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
         out_vid = cv2.VideoWriter(args.export,
                                   cv2.VideoWriter_fourcc(*cfg.fourcc),
@@ -75,16 +76,12 @@ def main(sysargs):
     else:
         cv2.namedWindow(window_name)
     
+    
     while vid.isOpened():
-        # restrict to flash marks
-        if vid.at() <= mark_in: 
-            vid.next()
-            continue
-        
         frame = vid.frame()
         frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
         
-        # elementtreet or navigate
+        # export or navigate
         if args.export:
             sys.stdout.write("Reading Video Frame: {} / {}\r".format(vid.at(), mark_out))
             sys.stdout.flush()
@@ -109,28 +106,29 @@ def main(sysargs):
                 print "\nexiting."
                 return 1
             elif key == Key.right:
-                if(vid.at() < mark_out -1):
-                    if vid.next():
-                        mapper_xml.next()
+                if vid.next():
+                    mapper_xml.next()
                 else:
                     if lastframe is False:
                         print "\nEnd of video"
                         calReprojList(reprojerror_list)
                     lastframe = True
+                    
             elif key == Key.left:
-                if(vid.at() - 1 != mark_in):
-                    if vid.back():
-                        mapper_xml.back()
+                if vid.back():
+                    mapper_xml.back()
+            
             elif key == Key.enter:
-                while (vid.at() < mark_out):
-                    if (vid.at() > mark_out -1):
-                        break
-
+                while True:
                     frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
                     cv2.imshow(window_name, frame)
+                    
                     if vid.next():
                         mapper_xml.next()
                         frame = vid.frame()
+                    
+                    # break when over
+                    else: break
                 
                 calReprojList(reprojerror_list)
                 print "\nFast forwarded to end of video"
@@ -138,6 +136,7 @@ def main(sysargs):
                 writeFile("C:\\Anaconda\\awork\\wizardtool\\data\\compare_frames.csv", reprojerror_list)
                 break
                 #return 1
+            
             elif key == Key.space:
                 ''' TODO: display all training points, may be abandoned
                 problems:

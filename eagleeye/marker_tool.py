@@ -4,16 +4,16 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.2
+# version 0.1.3
 #
 
-from buff_cap import BuffCap
+from buff_split_cap import BuffSplitCap
 from cv_keys import Key
 import cv2
 
 def marker_tool(video_path, buffer_size=50, window_name="Marking Tool"):
     # load video, create window
-    cap = BuffCap(video_path, buff_max=buffer_size)
+    cap = BuffSplitCap(video_path, buff_max=buffer_size)
     cv2.namedWindow(window_name)
     
     # working vars
