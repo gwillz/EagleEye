@@ -13,19 +13,19 @@ class Mapper:
         # variables
         self.rv = np.asarray([], dtype=np.float32)  # rotation
         self.tv = np.asarray([], dtype=np.float32)  # translation
-
+        
+        # load some configs, required by solvePnP eventually
+        #self.cfg = cfg
+        
         # open intrinsic, trainer files
         self.cam, self.distort = self.parseCamIntr(intrinsic)
-        # first 2 are full sets of data
-        # trainer pts are filtered by quality control for generating consistent PnP result
-        self.img_pts, self.obj_pts, self.trainer_imgpts, self.trainer_objpts = self.parseTrainer(trainer, cfg)
-
+        self.img_pts, self.obj_pts = self.parseTrainer(trainer)
+        
         print "img_pts {}".format(len(self.img_pts))
         print "obj_pts {}".format(len(self.obj_pts))
-        print "trainer img_pts {}".format(len(self.trainer_imgpts))
-        print "trainer obj_pts {}".format(len(self.trainer_objpts))
+        
         #calculate pose
-        self.rv, self.tv = self.calPose(cfg, mode=0)
+        self.rv, self.tv = self.calPose(mode=0)
     
     # opens the Intrinsic calib xml file
     def parseCamIntr(self, xmlpath):
@@ -81,7 +81,7 @@ class Mapper:
         return cm, dc
     
     
-    def parseTrainer(self, xmlpath, cfg):
+    def parseTrainer(self, xmlpath):
         if xmlpath is None:
             raise IOError('Invalid file path to XML file.')
         
@@ -90,19 +90,14 @@ class Mapper:
         
         if len(root) == 0:
                 raise IOError('XML file is empty.')
+        
+        frames = root.find('frames')
+        self.num_training = int(frames.attrib["num"])
+        
         img_pos = []
         obj_pos = []
-        trainer_imgpos = []
-        trainer_objpos = []
-        min_reflectors = cfg.min_reflectors
-        # ensure minimum is 4 as required by VICON system
-        if (min_reflectors < 4):
-            min_reflectors = 4
         
-        qualityText = "min of {} visible \n".format(min_reflectors)
-        print qualityText
-
-        for f in root.find('frames'):
+        for f in frames:
             # TODO: inconsistent get attrib names ??
             plane = f.find('plane').attrib
             vicon = f.find('vicon').attrib
@@ -113,50 +108,33 @@ class Mapper:
             vicon_x = float(vicon['x'])
             vicon_y = float(vicon['y'])
             vicon_z = float(vicon['z'])
-            visible = int(visibility['visible'])
-            max_visible = int(visibility['visibleMax'])
-
-            # add to the complete set first
+            
             img_pos.append((x, y))
             obj_pos.append((vicon_x, vicon_y, vicon_z))
-
-            # Minimum points of reflectors, must be at least 4
-            if (visible < min_reflectors):
-                continue    # skip frame
-            
-            # Quality control for solvePnP, skip data/frame if criteria not met
-            # check negative position values, if on skip mapping at this frame
-            if(cfg.check_negatives == True):
-                if(vicon_x < 0 or vicon_y < 0 or vicon_z < 0):
-                    continue
-                
-            # Add to trainer set if good
-            trainer_imgpos.append((x, y))
-            trainer_objpos.append((vicon_x, vicon_y, vicon_z))
         
-        return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32), np.asarray(trainer_imgpos, dtype=np.float32), np.asarray(trainer_objpos, dtype=np.float32)
+        return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32)
     
     
-    def calPose(self, cfg, mode=0):
-        if(len(self.trainer_imgpts) < 4 or len(self.trainer_objpts) < 4):
+    def calPose(self, mode=0):
+        if len(self.img_pts) < 4 or len(self.obj_pts) < 4:
             raise Exception("Must have at least 4 training points.")
             
-        if(len(self.trainer_imgpts) != len(self.trainer_objpts)):
+        if len(self.img_pts) != len(self.obj_pts):
             raise Exception("Training image points and object points must be equal in size. "
-                            "image pts {}, obj pts {}".format(len(self.trainer_imgpts), len(self.trainer_objpts)))
+                            "image pts {}, obj pts {}".format(len(self.img_pts), len(self.obj_pts)))
         
         # TODO: customised solvePnP flags from config
         # levenberg-marquardt iterative method
         if mode == 0:
             retval, rv, tv = cv2.solvePnP(
-                                self.trainer_objpts, self.trainer_imgpts, 
+                                self.obj_pts, self.img_pts, 
                                 self.cam, self.distort,
                                 None, None, cv2.SOLVEPNP_ITERATIVE)
             '''
             NOT RUNNING
             http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
             rv, tv, inliners = cv2.solvePnPRansac(
-                                self.trainer_objpts, self.trainer_imgpts, 
+                                self.obj_pts, self.img_pts, 
                                 self.cam, self.distort)
             '''
         # alternate, loopy style iterative method (could be the same, idk)
@@ -164,7 +142,7 @@ class Mapper:
             rv, tv = None, None
             for i in range(0, len(data)):
                 retval, _rv, _tv = cv2.solvePnP(
-                                    self.trainer_objpts[i], self.trainer_imgpts[i],
+                                    self.obj_pts[i], self.img_pts[i],
                                     self.cam, self.distort,
                                     rv, tv, useExtrinsicGuess=True)
                 #append if 'good'

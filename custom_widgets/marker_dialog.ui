@@ -145,11 +145,11 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>run_button</tabstop>
-  <tabstop>continue_button</tabstop>
-  <tabstop>cancel_button</tabstop>
   <tabstop>markin_edit</tabstop>
   <tabstop>markout_edit</tabstop>
+  <tabstop>continue_button</tabstop>
+  <tabstop>run_button</tabstop>
+  <tabstop>cancel_button</tabstop>
  </tabstops>
  <resources/>
  <connections>

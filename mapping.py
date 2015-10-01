@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.12
+# version 0.2.13
 # 
 # Runs mapping routines on multiple CSV files and combipnes them into a single XML format.
 #
@@ -15,7 +15,7 @@ from elementtree.SimpleXMLWriter import XMLWriter
 from eagleeye import Memset, EasyArgs, EasyConfig, Mapper
 
 def usage():
-    print "python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> [<multiple csv files>] {--config <file>}"
+    print "python2 mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {-map_trainer_mode | -config <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
@@ -28,6 +28,11 @@ def main(sysargs):
         
     if len(args) == 1:
         print "Not enough input CSV files"
+        usage()
+        return 1
+    
+    if len(args) > 2 and args.map_trainer_mode:
+        print "Too many CSV for trainer-mapping mode"
         usage()
         return 1
     
@@ -47,7 +52,10 @@ def main(sysargs):
         if len(csvs[i].row()) < 10:
             print "CSV file:", args[i], "contains no marker data!\nAborting."
             return 1
-
+    
+    # override csv name
+    if args.map_trainer_mode:
+        csvs[1]._name = cfg.trainer_target
     
     # open calib files
     try:
@@ -91,7 +99,6 @@ def main(sysargs):
                 except:
                     print "Error occurred when converting VICON data at row {}".format(i)
                     return 1
-                    mode = cfg.quality_mode
                 
                 # run projection/mapping on VICON data
                 points = mapper.reprojpts((x, y, z))

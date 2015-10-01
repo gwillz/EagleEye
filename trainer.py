@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.31
+# version 0.5.32
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -178,18 +178,18 @@ def main(sysargs):
         if visible < min_reflectors:
             dataQuality = False
             dataStatus = " - Bad data!!"
-            if(cfg.ignore_baddata == True):
-                dataStatus += " Ignored."
             dataStatus_colour = (0, 0, 255) # red
+            if cfg.ignore_baddata:
+                dataStatus += " Ignored."
         
         if cfg.check_negatives:
             if tx < 0 or ty < 0 or tz < 0:
                 dataQuality = False
                 dataStatus = " - Bad data!!"
-                if(cfg.ignore_baddata == True):
-                    dataStatus += " Ignored."
                 dataStatus_colour = (0, 0, 255) # red
-                
+                if cfg.ignore_baddata:
+                    dataStatus += " Ignored."
+        
         # draw the trainer dot (if applicable)
         if in_vid.at() in trainer_points[lens]:
             cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 1, cfg.font_colour, 2)
@@ -277,11 +277,11 @@ def main(sysargs):
         # training point data
         for lens in trainer_points:
             if lens == BuffSplitCap.right:
-                out_xml.start("buttonside")
-            elif lens == BuffSplitCap.right:
-                out_xml.start("backside")
+                out_xml.start("buttonside", num=str(len(trainer_points[lens])))
+            elif lens == BuffSplitCap.left:
+                out_xml.start("backside", num=str(len(trainer_points[lens])))
             else: # non dualmode
-                out_xml.start("frames")
+                out_xml.start("frames", num=str(len(trainer_points[lens])))
             
             for i in trainer_points[lens]:
                 pos, row, markers = trainer_points[lens][i]
@@ -293,8 +293,8 @@ def main(sysargs):
                 
                 out_xml.start("frame", num=str(i))
                 out_xml.element("plane", 
-                                x=str(pos[0]), 
-                                y=str(pos[1]))
+                                x=str(x), 
+                                y=str(y))
                 out_xml.element("vicon", 
                                 x=str(row[0]), y=str(row[1]), z=str(row[2]))
                 out_xml.element("visibility", 
