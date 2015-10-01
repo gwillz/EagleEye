@@ -92,6 +92,9 @@ class Mapper:
                 raise IOError('XML file is empty.')
         
         frames = root.find('frames')
+        if "num" not in frames.attrib:
+            raise Exception("Outdated trainer file, missing frame num attrib.")
+        
         self.num_training = int(frames.attrib["num"])
         
         img_pos = []

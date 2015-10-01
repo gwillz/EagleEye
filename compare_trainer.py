@@ -47,7 +47,7 @@ def main(sysargs):
         return 1
     
     # open inouts files
-    vid = BuffSplitCap(args[1], side=BuffSplitCap.right, buff_max=cfg.buffer_size)
+    vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size)
     mapper_xml = Xmlframe(args[2])
     trainer_xml = Xmltrainer(args[3])
     reprojerror_list = {}     # list of reprojection error of all frames
