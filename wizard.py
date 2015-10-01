@@ -922,6 +922,7 @@ class Wizard(QMainWindow):
                                     "-calib", str(self.calibration_edit.text()),
                                     "-trainer", str(self.trainer_xml_edit.text()),
                                     "-output", path,
+                                    "-map_trainer_mode",
                                     "-config", self.config_path,
                                     str(self.trainer_csv_edit.text())])
         if stat: worker.start()

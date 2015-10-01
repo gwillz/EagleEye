@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.2
+# version 0.1.3
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
@@ -53,7 +53,7 @@ def main(sysargs):
     lastframe = False
     
     # reject mapper_xml if it doesn't contain the trainer_target
-    if cfg.trainer_target not in mapper_xml.data()['1']:
+    if cfg.trainer_target not in mapper_xml.data(0)['0']:
         print "Mapping file must contain training target:", cfg.trainer_target
         return 1
     
@@ -177,7 +177,7 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     sys.stdout.write("Reading Video Frame: {}".format(vidframe_no) + " | XML Frame number: {}\r".format(xmlframe_no))
     sys.stdout.flush()
     
-    trainer_obj = mapper_xml.data()[xmlframe_no][cfg.trainer_target]
+    trainer_object = mapper_xml.data()[xmlframe_no][cfg.trainer_target]
     objs = mapper_xml.data()[xmlframe_no]
 
     textOffset = (5, 0)
