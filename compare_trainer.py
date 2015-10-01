@@ -90,7 +90,7 @@ def main(sysargs):
                     mapper_xml.next()
             else:
                 calReprojList(reprojerror_list)
-                print "end of video\n"
+                print "\nend of video"
                 break
         else:
             cv2.imshow(window_name, frame)
@@ -99,7 +99,7 @@ def main(sysargs):
                 
             # controls
             if key == Key.esc:
-                print "exiting."
+                print "\nexiting."
                 return 1
             elif key == Key.right:
                 if(vid.at() < mark_out -1):
@@ -107,7 +107,7 @@ def main(sysargs):
                         mapper_xml.next()
                 else:
                     if lastframe is False:
-                        print "End of video"
+                        print "\nEnd of video"
                         calReprojList(reprojerror_list)
                     lastframe = True
             elif key == Key.left:
@@ -126,8 +126,7 @@ def main(sysargs):
                         frame = vid.frame()
                 
                 calReprojList(reprojerror_list)
-                print "Fast forwarded to end of video"
-
+                print "\nFast forwarded to end of video"
                 print "Output to file"
                 writeFile("C:\\Anaconda\\awork\\wizardtool\\data\\compare_frames.csv", reprojerror_list)
                 break
@@ -175,10 +174,12 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     print "ALL OBJECTS KEY", xmlframe_no
     '''
     for obj in objs:
+
         '''
         print "Current Object is:", obj
-        print "Object info is:",  mapper_xml.data()[frame_no][obj]
+        print "Object info is:",  mapper_xml.data()[xmlframe_no][obj]
         '''
+        
         textOffset = (5, 0)
 
         # Prepare Repojected Point
@@ -208,7 +209,9 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
         dataText = " - Good data!!"
         dataText_colour = (0, 255, 0) # green
         if(visible < min_reflectors):           # for when there isn't a matching trainer
-            dataText = " - Bad data!! Ignored."
+            dataText = " - Bad data!!"
+            if(cfg.ignore_baddata == True):
+                dataText += " Ignored."
             dataText_colour = (0, 0, 255) # red
         
         # Get trainer point if it exists at current frame
