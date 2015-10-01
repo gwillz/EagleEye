@@ -184,7 +184,7 @@ def main(sysargs):
         if cfg.check_negatives:
             if tx < 0 or ty < 0 or tz < 0:
                 dataQuality = False
-                dataStatus += " - Bad data!!"
+                dataStatus = " - Bad data!!"
                 dataStatus_colour = (0, 0, 255) # red
                 
         # draw the trainer dot (if applicable)
@@ -236,7 +236,7 @@ def main(sysargs):
         
         # or remove it
         elif params['status'] == Status.remove \
-                and in_vid.at() in trainer_points:
+                and in_vid.at() in trainer_points[lens]:
             del trainer_points[lens][in_vid.at()]
             print "\nremoved dot"
         
@@ -274,11 +274,11 @@ def main(sysargs):
         # training point data
         for lens in trainer_points:
             if lens == BuffSplitCap.right:
-                out_xml.start("buttonside", num=str(len(trainer_points[lens]))
+                out_xml.start("buttonside", num=str(len(trainer_points[lens])))
             elif lens == BuffSplitCap.left:
-                out_xml.start("backside", num=str(len(trainer_points[lens]))
+                out_xml.start("backside", num=str(len(trainer_points[lens])))
             else: # non dualmode
-                out_xml.start("frames", num=str(len(trainer_points[lens]))
+                out_xml.start("frames", num=str(len(trainer_points[lens])))
             
             for i in trainer_points[lens]:
                 pos, row, markers = trainer_points[lens][i]
@@ -290,8 +290,8 @@ def main(sysargs):
                 
                 out_xml.start("frame", num=str(i))
                 out_xml.element("plane", 
-                                x=str(pos[0]), 
-                                y=str(pos[1]))
+                                x=str(x), 
+                                y=str(y))
                 out_xml.element("vicon", 
                                 x=str(row[0]), y=str(row[1]), z=str(row[2]))
                 out_xml.element("visibility", 
