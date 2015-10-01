@@ -940,7 +940,7 @@ class Wizard(QMainWindow):
             args += [str(mark_in), str(mark_out)]
         
         self.statusbar.showMessage("Running Trainer Comparison.")
-        stat, worker = self.run_tool(trainer_compare_main, args)
+        stat, worker = self.run_tool(compare_trainer_main, args)
         if stat: worker.start()
     
     @pyqtSlot()
