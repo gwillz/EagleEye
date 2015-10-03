@@ -53,8 +53,6 @@ def main(sysargs):
     max_clicks = args.clicks or cfg.default_clicks
     window_name = "EagleEye Trainer"
     
-    textstatus = ""
-    
     # grab marks from args
     if len(args) > 5:
         mark_in = args[4]
@@ -93,11 +91,14 @@ def main(sysargs):
     # working variables
     params = {'status': Status.wait, 'pos': None}
     write_xml = False
+    textstatus = ""
+    dataQuality = 0   # 0 = good, >0 = bad/potentially bad
+    
+    # default right side (buttonside)
     if cfg.dual_mode:
-        # default right side (buttonside)
         lens = BuffSplitCap.right
         trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
-    else:
+    else: # both sides otherwise
         lens = BuffSplitCap.both
         trainer_points = {BuffSplitCap.both:{}}
     
@@ -157,28 +158,29 @@ def main(sysargs):
             textstatus += " - back side"
         elif lens == BuffSplitCap.right:
             textstatus += " - button side"
-        #else none
+        #else none, no lens split
         
-        # assume good data, unless it fails the following tests
-        dataStatus = " - Good data!!"
-        dataStatus_colour = (0, 255, 0) # green
-        dataQuality = True      # True = good, False = bad
+        # if data is qualified bad, reduce timeout by one
+        if dataQuality > 0:
+            dataQuality -= 1
         
-        # Minimum points of reflectors, must be at least 4 (or whatever the config specifies)
-        if visible < min_reflectors:
-            dataQuality = False
+        if dataQuality == 0:
+            dataStatus = " - Good data!!"
+            dataStatus_colour = (0, 255, 0) # green
+        else:
+            dataStatus = " - Potentially bad data (wait {})".format(dataQuality)
+            dataStatus_colour = (0, 255, 255) # yellow
+        
+        # Data tests
+        # values must be above 0 and minimum reflectors
+        if (cfg.check_negatives and (tx <= 0 or ty <= 0 or tz <= 0)) \
+                or visible < min_reflectors:
             dataStatus = " - Bad data!!"
             dataStatus_colour = (0, 0, 255) # red
+            
             if cfg.ignore_baddata:
                 dataStatus += " Ignored."
-        
-        if cfg.check_negatives:
-            if tx < 0 or ty < 0 or tz < 0:
-                dataQuality = False
-                dataStatus = " - Bad data!!"
-                dataStatus_colour = (0, 0, 255) # red
-                if cfg.ignore_baddata:
-                    dataStatus += " Ignored."
+                dataQuality = 1 + cfg.quality_delay
         
         # draw the trainer dot (if applicable)
         if in_vid.at() in trainer_points[lens]:
@@ -223,7 +225,7 @@ def main(sysargs):
         if params['status'] == Status.record \
                 and len(trainer_points[lens]) != max_clicks: # TODO: does this disable recording clicks on the last frame
                 
-            if not cfg.ignore_baddata or dataQuality:
+            if dataQuality == 0:
                 trainer_points[lens][in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10])
             params['status'] = Status.skip
         
