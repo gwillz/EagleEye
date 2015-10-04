@@ -19,4 +19,3 @@ from sleeper import Sleeper
 from marker_tool import marker_tool
 from mapping_func import Mapper
 from xml_trainer import Xmltrainer
-from xml_frame import Xmlframe
