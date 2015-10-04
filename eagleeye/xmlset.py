@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.4
+# version 0.2.6
 # 
 # Reads an XML Dataset file into memory
 # Provides synchronisation techniques - via setRatio()
@@ -13,8 +13,12 @@ import xml.etree.ElementTree as ET
 from math import ceil, floor
 
 class Xmlset:
-    def __init__(self, path=None, offset=0):
+    off_by_frame = 0
+    off_by_ratio = 1
+    
+    def __init__(self, path=None, offset=0, offmode=off_by_frame):
         self.offset = offset
+        self.offmode = offmode
         if path is not None:
             self.open(path)
     
@@ -22,6 +26,12 @@ class Xmlset:
         self.path = path
         tree = ET.parse(path)
         self.root = tree.getroot()
+        
+        if len(self.root) == 0:
+            raise IOError('XML file is empty.')
+        
+        if self.root.tag != "dataset":
+            raise IOError("Wrong input file, needs a dataset xml file.")
         
         self._frames = {}
         self._at = 0.0
@@ -70,6 +80,17 @@ class Xmlset:
             return int(ceil(self._at)) + self.offset
         else:
             return int(floor(self._at)) + self.offset
+    
+    def offset(self, mode=None):
+        if mode is not None:
+            self.offmode = mode
+        if self.offmode == self.off_by_frame:
+            return self.offset
+        if self.offmode == self.off_by_ratio:
+            return self.offset * self._ratio
+    
+    def ratio(self):
+        return self._ratio
     
     # calculate appropriate ratio from the matching video frames
     def setRatio(self, video_frames):
