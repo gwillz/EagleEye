@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.33
+# version 0.5.34
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -102,9 +102,7 @@ def main(sysargs):
         lens = BuffSplitCap.both
         trainer_points = {BuffSplitCap.both:{}}
     
-    # ensure minimum is 4 as required by VICON system
-    min_reflectors = cfg.min_reflectors if cfg.min_reflectors >= 4 else 4
-    print "Minimum reflectors: {} | Ignore Negative xyz: {}".format(min_reflectors, cfg.check_negatives)
+    print "Minimum reflectors: {} | Ignore Negative xyz: {}".format(cfg.min_reflectors, cfg.check_negatives)
         
     # load video (again)
     in_vid = BuffSplitCap(args[1], crop=(0,0,0,0), rotate=BuffSplitCap.r0, buff_max=cfg.buffer_size)
@@ -174,7 +172,7 @@ def main(sysargs):
         # Data tests
         # values must be above 0 and minimum reflectors
         if (cfg.check_negatives and (tx <= 0 or ty <= 0 or tz <= 0)) \
-                or visible < min_reflectors:
+                or visible < cfg.min_reflectors:
             dataStatus = " - Bad data!!"
             dataStatus_colour = (0, 0, 255) # red
             
