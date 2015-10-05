@@ -48,7 +48,7 @@ def main(sysargs):
     
     # open inouts files
     vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size)
-    mapper_xml = Xmlset(args[2])
+    mapper_xml = Xmlset(args[2], offset=cfg.offset, offmode=Xmlset.__dict__[cfg.offset_mode])
     trainer_xml = Xmltrainer(args[3])
     reprojerror_list = {}     # list of reprojection error of all frames
     lastframe = False
@@ -63,7 +63,11 @@ def main(sysargs):
     vid.restrict(mark_in, mark_out)
     cropped_total = mark_out - mark_in
     mapper_xml.setRatio(cropped_total)
-    print 'ratio at:', mapper_xml.ratio(), "\n"
+    
+    # status
+    print "ratio at:", mapper_xml.ratio()
+    print "offset by:", cfg.offset, "in", cfg.offset_mode, "mode"
+    print ""
     
     # open export (if specified)
     if args.video_export:
@@ -74,8 +78,10 @@ def main(sysargs):
         out_vid = cv2.VideoWriter(args.video_export,
                                   cv2.VideoWriter_fourcc(*cfg.fourcc),
                                   in_fps, vid.shape[:2])
+        print "exporting to:", args.video_export
     else:
         cv2.namedWindow(window_name)
+        print "interactive mode"
     
     
     # main loop
