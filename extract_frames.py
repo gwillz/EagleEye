@@ -11,6 +11,7 @@
 
 import sys, cv2, os
 from eagleeye import EasyArgs, BuffSplitCap, Key, EasyConfig
+from eagleeye.display_text import *
 
 def usage():
     print "usage: python2 extract_frames.py <video file> <output image folder> {-split <left|right> | -prefix <output name> | --config <file>}"
@@ -44,8 +45,7 @@ def main(sysargs):
         
         # display status
         textframe = frame.copy()
-        cv2.putText(textframe, cap.status(),
-                    (5,15), font, cfg.font_size, cfg.font_colour, cfg.font_thick, cv2.LINE_AA)
+        displayText(textframe, cap.status(), top=True)
         cv2.imshow(window_name, textframe)
         
         # controls

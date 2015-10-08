@@ -3,10 +3,11 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version: 0.1.1
+# version: 0.2.2
 # 
-# Implements features from both BuffCapture and SplitCapture.
-# Can buffer and split, rotate, crop frames on-the-fly.
+# Implements features from both BuffCapture and SplitCapture
+# Can buffer and split, rotate, crop frames on-the-fly
+# Also include dataset limiting via restrict()
 #
 
 import cv2, numpy as np
@@ -21,13 +22,13 @@ class BuffSplitCap:
     r270 = 3
     
     # open a path, set the default transformations
-    def __init__(self, path, side=right, rotate=r270, crop=(0, 0, 120, 0), buff_max=30):
+    def __init__(self, path, side=both, rotate=r0, crop=(0, 0, 0, 0), buff_max=30):
         self._cap = cv2.VideoCapture(path)
         
         # buffer variables
-        self.buff_max = buff_max
-        self.buff = []
-        self.buff_at = 0
+        self._buff_max = buff_max
+        self._buff = []
+        self._buff_at = 0
         self._frame_at = buff_max
         
         # splitter variables
@@ -41,15 +42,21 @@ class BuffSplitCap:
         
         # load up the buffer
         for i in xrange(0, buff_max):
-            self.buff.append(self._cap.read()[1])
+            self._buff.append(self._cap.read()[1])
         
-        if len(self.buff) == 0 or self.buff[0] is None:
+        if len(self._buff) == 0 or self._buff[0] is None:
             raise IOError("Empty/missing video file")
         
-        self._frame = self.buff[0]
+        self._frame = self._buff[0]
         self.shape = self._frame.shape
         self.total = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
+        # default mark values
+        self.mark_in = 0
+        self.mark_out = self.total
+        self.marked = False
+        
+    
     # internal routine - runs transformations on a single frame
     def _transform(self, frame, side, rotate, crop):
         # crop and split
@@ -75,13 +82,14 @@ class BuffSplitCap:
     
     def next(self):
         # load new frames if at head of the stack
-        if self.buff_at >= self.buff_max -1 and self._cap.isOpened():
+        if self._buff_at >= self._buff_max -1 and self._cap.isOpened():
             ret, img = self._cap.read()
             
-            if img is not None:
+            if img is not None \
+                    and self.at() < self.mark_out:
                 self._frame_at += 1
-                self.buff.append(img)
-                self.buff.pop(0)
+                self._buff.append(img)
+                self._buff.pop(0)
                 self._frame = img
                 return True
             else:
@@ -89,16 +97,43 @@ class BuffSplitCap:
         
         # otherwise read from within the buffer
         else: 
-            self.buff_at += 1
-            self._frame = self.buff[self.buff_at]
+            self._buff_at += 1
+            self._frame = self._buff[self._buff_at]
             return True
     
     def back(self):
         # read backwards through the stack
-        ret = self.buff_at > 0
-        if self.buff_at > 0: self.buff_at -= 1
-        self._frame = self.buff[self.buff_at]
-        return ret
+        if self._buff_at > 0 \
+                and self.at() > self.mark_in:
+                
+            self._buff_at -= 1
+            self._frame = self._buff[self._buff_at]
+            return True
+        else:
+            return False
+    
+    # restrict back/next navigation within these marks
+    def restrict(self, mark_in, mark_out):
+        # only allow restrict once
+        if self.marked:
+            print "cannot restrict() twice"
+            return
+        
+        if self.at() > 0:
+            print "restrict() must be called before next()"
+            return
+        
+        # reel up to the first frame
+        while True:
+            if mark_in >= self.at():
+                self.next()
+            else:
+                break
+        
+        # set marks, exclusive style (without flashes)
+        self.mark_in = mark_in + 1
+        self.mark_out = mark_out - 1
+        self.marked = True
     
     def isOpened(self):
         return self._cap.isOpened()
@@ -110,11 +145,11 @@ class BuffSplitCap:
         return self._cap.get(flag)
     
     def at(self):
-        return self._frame_at + self.buff_at - self.buff_max
+        return self._frame_at + self._buff_at - self._buff_max
     
     def status(self):
         return "frame: {:0>2d}/{:d} buffer: {:0>2d}/{:0>2d}"\
-            .format(self.at(), self.total, self.buff_at+1, self.buff_max)
+            .format(self.at(), self.total, self._buff_at+1, self._buff_max)
 
 # testing script
 if __name__ == "__main__":
@@ -127,8 +162,8 @@ if __name__ == "__main__":
         exit(1)
     
     # open reader, window, etc
-    cap = BuffSplitCap(sys.argv[1])
-    side = cap.left if sys.argv[2] == 'left' else cap.right
+    side = BuffSplitCap.left if sys.argv[2] == 'left' else BuffSplitCap.right
+    cap = BuffSplitCap(sys.argv[1], side=side, rotate=BuffSplitCap.r270)
     
     window_name = "SplitCap test"
     cv2.namedWindow(window_name)
@@ -136,11 +171,15 @@ if __name__ == "__main__":
     # loop
     while cap.isOpened():
         cv2.imshow(window_name, cap.frame(side))
+        sys.stdout.write(cap.status() + "\r")
+        sys.stdout.flush()
         
         # controls
         key = cv2.waitKey(0)
         if key == 0xFF & ord('q'):
             break
+        elif key == 0xFF & ord(' '):
+            cap.restrict(27, 1267)
         elif key == 0xFF & ord('.'):
             cap.next()
         elif key == 0xFF & ord(','):

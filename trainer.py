@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.32
+# version 0.5.34
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -30,6 +30,7 @@
 
 import sys, cv2, numpy as np, time, os
 from eagleeye import BuffSplitCap, Memset, Key, EasyConfig, EasyArgs, marker_tool
+from eagleeye.display_text import *
 from elementtree.SimpleXMLWriter import XMLWriter
 
 def usage():
@@ -51,8 +52,6 @@ def main(sysargs):
     cfg = EasyConfig(args.config, group="trainer")
     max_clicks = args.clicks or cfg.default_clicks
     window_name = "EagleEye Trainer"
-    
-    textstatus = ""
     
     # grab marks from args
     if len(args) > 5:
@@ -90,21 +89,24 @@ def main(sysargs):
             params['status'] = Status.skip
     
     # working variables
-    params = {'status': Status.skip, 'pos': None}
+    params = {'status': Status.wait, 'pos': None}
     write_xml = False
+    textstatus = ""
+    dataQuality = 0   # 0 = good, >0 = bad/potentially bad
+    
+    # default right side (buttonside)
     if cfg.dual_mode:
+        lens = BuffSplitCap.right
         trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
-    else:
+    else: # both sides otherwise
+        lens = BuffSplitCap.both
         trainer_points = {BuffSplitCap.both:{}}
     
-    # ensure minimum is 4 as required by VICON system
-    min_reflectors = cfg.min_reflectors if cfg.min_reflectors >= 4 else 4
-    print "Minimum reflectors: {} | Ignore Negative xyz: {}".format(min_reflectors, cfg.check_negatives)
+    print "Minimum reflectors: {} | Ignore Negative xyz: {}".format(cfg.min_reflectors, cfg.check_negatives)
         
     # load video (again)
     in_vid = BuffSplitCap(args[1], crop=(0,0,0,0), rotate=BuffSplitCap.r0, buff_max=cfg.buffer_size)
-    cv2.namedWindow(window_name)
-    cv2.setMouseCallback(window_name, on_mouse, params)
+    in_vid.restrict(mark_in, mark_out)
     
     # load csv (with appropriate ratio)
     in_csv = Memset(args[2])
@@ -122,29 +124,16 @@ def main(sysargs):
     print "Number of clicks at:", max_clicks
     print ""
     
-    # default right side (buttonside)
-    if cfg.dual_mode:
-        lens = BuffSplitCap.right
-    else:
-        lens = BuffSplitCap.both
+    cv2.namedWindow(window_name)
+    cv2.setMouseCallback(window_name, on_mouse, params)
     
     # grab clicks (Process 2)
     while in_vid.isOpened():
-        # restrict to flash marks
-        if in_vid.at() < mark_in:
-            in_vid.next()
-            continue
-        if in_vid.at() >= (mark_in + cropped_total) or in_vid.at() >= mark_out:
-            write_xml = True
-            print "\nend of video: {}/{}".format(in_vid.at() -1, mark_out -1)
-            break
-        
-        sys.stdout.write("Current Video Frame: {} / {}".format(in_vid.at(), mark_out -1)
-                 + " | Clicks {} / {}\r".format(len(trainer_points[lens]), max_clicks))
-        sys.stdout.flush()
-        
-        # load frame
         frame = in_vid.frame(side=lens)
+        
+        sys.stdout.write(in_vid.status() + " | Clicks {} / {}\r".format(
+                                                len(trainer_points[lens]), max_clicks))
+        sys.stdout.flush()
         
         # prepare CSV data, click data
         tx = float(in_csv.row()[2])
@@ -159,47 +148,48 @@ def main(sysargs):
         max_visible = int(in_csv.row()[8])
         
         # status text to write
-        textOffset = (5, 0)
         textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
         textquality = "Visible: {} , Max Visible: {}".format(visible, max_visible)
         textstatus = "{} | {}/{} clicks".format(in_vid.status(), len(trainer_points[lens]), max_clicks)
+        
         if lens == BuffSplitCap.left:
             textstatus += " - back side"
         elif lens == BuffSplitCap.right:
             textstatus += " - button side"
-        #else none
+        #else none, no lens split
         
-        # assume good data, unless it fails the following tests
-        dataStatus = " - Good data!!"
-        dataStatus_colour = (0, 255, 0) # green
-        dataQuality = True      # True = good, False = bad
+        # if data is qualified bad, reduce timeout by one
+        if dataQuality > 0:
+            dataQuality -= 1
         
-        # Minimum points of reflectors, must be at least 4 (or whatever the config specifies)
-        if visible < min_reflectors:
-            dataQuality = False
+        if dataQuality == 0:
+            dataStatus = " - Good data!!"
+            dataStatus_colour = (0, 255, 0) # green
+        else:
+            dataStatus = " - Potentially bad data (wait {})".format(dataQuality)
+            dataStatus_colour = (0, 255, 255) # yellow
+        
+        # Data tests
+        # values must be above 0 and minimum reflectors
+        if (cfg.check_negatives and (tx <= 0 or ty <= 0 or tz <= 0)) \
+                or visible < cfg.min_reflectors:
             dataStatus = " - Bad data!!"
             dataStatus_colour = (0, 0, 255) # red
+            
             if cfg.ignore_baddata:
                 dataStatus += " Ignored."
-        
-        if cfg.check_negatives:
-            if tx < 0 or ty < 0 or tz < 0:
-                dataQuality = False
-                dataStatus = " - Bad data!!"
-                dataStatus_colour = (0, 0, 255) # red
-                if cfg.ignore_baddata:
-                    dataStatus += " Ignored."
+                dataQuality = 1 + cfg.quality_delay
         
         # draw the trainer dot (if applicable)
         if in_vid.at() in trainer_points[lens]:
-            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 1, cfg.font_colour, 2)
-            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 15, cfg.font_colour, 1)
+            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 1, cfg.dot_colour, 2)
+            cv2.circle(frame, trainer_points[lens][in_vid.at()][0], 15, cfg.dot_colour, 1)
         
         # draw text and show
-        pos = displayText(frame, textrow, textOffset, cfg)
-        pos = displayText(frame, textquality, pos, cfg)
-        pos = displayText(frame, textstatus, pos, cfg)
-        pos = displayText(frame, dataStatus, pos[2:], cfg, dataStatus_colour)
+        displayText(frame, textrow, top=True)
+        displayText(frame, textquality)
+        displayText(frame, textstatus)
+        displayText(frame, dataStatus, endl=True, colour=dataStatus_colour)
         
         cv2.imshow(window_name, frame)
         
@@ -233,7 +223,7 @@ def main(sysargs):
         if params['status'] == Status.record \
                 and len(trainer_points[lens]) != max_clicks: # TODO: does this disable recording clicks on the last frame
                 
-            if not cfg.ignore_baddata or dataQuality:
+            if dataQuality == 0:
                 trainer_points[lens][in_vid.at()] = (params['pos'], in_csv.row()[2:5], in_csv.row()[8:10])
             params['status'] = Status.skip
         
@@ -247,11 +237,13 @@ def main(sysargs):
         if params['status'] == Status.skip:
             if in_vid.next():
                 in_csv.next()
+            else:
+                write_xml = True
+                print "\nend of video: {}/{}".format(in_vid.at() -1, mark_out -1)
+                break
         
         # or load previous csv frame
-        elif params['status'] == Status.back \
-                and in_vid.at() - 1 > mark_in:
-            # don't track before mark_in
+        elif params['status'] == Status.back:
             if in_vid.back():
                 in_csv.back()
         
@@ -313,29 +305,6 @@ def main(sysargs):
     
     print "\nDone."
     return 0
-
-# calculate height offset of a line of text and display on top left
-def displayText(frame, text, pos, cfg, customColour=None):
-    if customColour is None:
-        customColour = cfg.font_colour
-    
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    y_spacing = 2
-    x_offset = 5
-    y_offset = 0
-    if len(pos) >= 2:
-        x_offset, y_offset = pos[:2]
-    
-    textSize, baseLine = cv2.getTextSize(text, font, cfg.font_scale, cfg.font_thick)
-    y_offset += textSize[1] + baseLine + y_spacing
-    
-    cv2.putText(frame, text, (x_offset, y_offset), 
-                font, cfg.font_scale, customColour, cfg.font_thick, cv2.LINE_AA)
-    
-    # no need to return frame, numpy treats it like a reference/pointed object
-    # return next line pos and end-of-line pos
-    return (x_offset, y_offset, textSize[0], pos[1])
-
 
 if __name__ == '__main__':
     exit(main(sys.argv))

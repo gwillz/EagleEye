@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.2.10
+# version 0.2.11
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
@@ -29,9 +29,8 @@ class Mapper:
     
     # opens the Intrinsic calib xml file
     def parseCamIntr(self, xmlpath):
-        if xmlpath is None:
-            raise IOError('Invalid file path to XML file.')
         
+        cm, dc = [], []
         cm_dict = {'fx': None, 'fy': None, 'cx': None, 'cy': None}
         dc_dict = {'k1': 0.0, 'k2': 0.0,
                    'k3': 0.0, 'k4': 0.0,
@@ -41,13 +40,17 @@ class Mapper:
                    'c3': 0.0, 'c4': 0.0
                    }
         
-        cm, dc = [], []
+        if xmlpath is None:
+            raise IOError('Invalid file path to XML file.')
         
         tree = ET.parse(xmlpath)
         root = tree.getroot()
         
         if len(root) == 0:
             raise IOError('XML file is empty.')
+        
+        if root.tag != "StdIntrinsic":
+            raise IOError("Wrong input file, needs a StdIntrinsic xml file.")
         
         for elem in root.iter():
             if elem.tag == 'CamMat':
@@ -89,9 +92,15 @@ class Mapper:
         root = tree.getroot()
         
         if len(root) == 0:
-                raise IOError('XML file is empty.')
+            raise IOError('XML file is empty.')
+        
+        if root.tag != "TrainingSet":
+            raise IOError("Wrong input file, needs a TrainingSet xml file.")
         
         frames = root.find('frames')
+        if "num" not in frames.attrib:
+            raise Exception("Outdated trainer file, missing frame num attrib.")
+        
         self.num_training = int(frames.attrib["num"])
         
         img_pos = []

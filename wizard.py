@@ -31,9 +31,14 @@ class Wizard(QMainWindow):
         QMainWindow.__init__(self)
         uic.loadUi('wizard.ui', self)
         
+        # config stuff
+        if len(qApp.arguments()) > 2:
+            self.config_path = str(qApp.arguments()[2])
+        else:
+            self.config_path = "eagleeye.cfg"
+        
         # process for annotation tool
         self.annotation_process = QProcess()
-        self.reset_statusbar()
         
         # current directory, save status
         self.saved = True # new session is empty, doesn't need saving
@@ -41,11 +46,9 @@ class Wizard(QMainWindow):
         self.save_date = None
         self._original_title = self.windowTitle() # for newaction
         self._working_title = self.windowTitle()
+        self.reset_statusbar()
         
-        # config stuff
-        self.config_path = "eagleeye.cfg"
-        #TODO loading config files, editing and junk
-        
+        # working variables
         self.trainer_marks = (0,0)
         self.dataset_marks = (0,0)
         self.buttonside_images = []
