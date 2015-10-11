@@ -286,23 +286,18 @@ def calReprojList(reprojerror_list):
     # print reprojection error at end of vid
     print "\n"
     total_error = 0.0
+    error_sq = 0.0
     if len(reprojerror_list) > 0:
         for frm in reprojerror_list:
-            total_error += float(reprojerror_list[frm]["rms"])
-            
-        arth_mean = total_error / len(reprojerror_list)
-        rms = sqrt(arth_mean)      # according to opencv calibrateCamera2
-        
-        print "List of Reprojection Error:"
-        for reproj in reprojerror_list:
-            print "Frame: {} | Reprojection Error: {}".format(reproj, reprojerror_list[reproj]["rms"])
-        print "\n"
-        print "Number of matched training points: {}".format(len(reprojerror_list))
-        print "RMS: {} pixels".format(rms)
-        print "Arithmetical mean: {} pixels".format(arth_mean)
-        print ""
+            total_error += float(reprojerror_list[frm]["rms"]) # I hope this is Euclidean and not "RMS". RMS of a single number is still the single number!
+            error_sq += (float(reprojerror_list[frm]["rms"]))*(float(reprojerror_list[frm]["rms"])) # Each error squared before accumulating.          
+        mean = total_error / len(reprojerror_list) # = average
+        rootMS = sqrt(error_sq / len(reprojerror_list)) # RMS is sqrt((a^2+b^2...N^2)/N)
+        print "Re-projection Error:\n"
+        print "\tMean:\t{} pixels".format(mean)
+        print "\tRMS:\t{} pixels\n".format(rootMS)
     else:
-        print "Reprojection Error: No Data"
+        print "Re-projection Error: No Data"
 
 
 # display all training points used
