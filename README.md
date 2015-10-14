@@ -7,14 +7,17 @@ TODO, introduce problem, describe solution, outputs, application, deliverables
 
 ### 1.1 Team
 __ITMS__
+
 - Gwilyn Saunders
 - Kin Kuen Liu
 - Manjung Kim
 
 __Engineering__
+
 - Peter Barsznica
 
 __Supervisors__
+
 - Victor Stamatescu
 - Russell Brinkworth
 
@@ -71,7 +74,8 @@ TODO description
 This tool records object positional data into [CSV files](#5-1-raw-dataset-csv) 
 from the Vicon system. It includes quality verification and time synchronisation data.
 
-#### 3.1.1 Preparation
+__Preparation__
+
 The Vicon system captures objects that are defined as unique "constellations"
 of dots placed on physical objects within the lab. These objects are configured
 in the *Vicon Tracker* software. Some experimental/working objects are
@@ -86,7 +90,8 @@ A list of available serial ports can be found with this command:
 $ python -m serial.tools.list_ports
 ```
 
-#### 3.1.2 Procedure
+__Procedure__
+
 The camera must not be moved between the calibration and capture steps. Thankfully, 
 the Ricoh Theta m15 can be remotely triggered via a smart phone or tablet.
 
@@ -102,25 +107,27 @@ only enable the objects for a given scenario.
 7. Stop the camera recording
 8. Check the output folder that the objects are all recorded
 
-#### 3.1.3 Command line Usage 
+__Command line Usage__
+
 ```sh
 $ python vicon_capture.py {-output <folder> | -time <in minutes> | -config <file> | -training <file>}
 ```
 
-#### 3.1.4 Flash Sync Circuit
+#### 3.1.1 Flash Sync Circuit
 This is a circuit by design of Peter Barsznica that triggers a camera flash when
 signalled from a serial connection to the computer. This matches the flash data
 fields in the CSV file in order to syncronise the video and data feeds.
 
 __This is the circuit detail__
 
-![Circuit Sync](assets/sync_circuit_v2.2.png)
+![Circuit Sync](assets/sync_circuit_3.png)
 
 __The circuit connects to the serial GND and CTS pins__
 
 ![Serial Pinout](assets/pinouts_serial.gif)
 
-#### 3.1.5 Synchronisation
+
+#### 3.1.2 Synchronisation
 When running the software, the flash will trigger 3 times. This is a uncorrectable
 side-effect of the hardware, therefore the software will delay a number of frames
 (as specified in the [config file](#6-1-Capture)) before the first flash is triggered.
@@ -134,13 +141,16 @@ chessboard pattern from a set of images and determines the intrinsic and distort
 parameters of the camera lens. It can highlight the corners of the chessboards, 
 provide an estimated error and sample rectified images.
 
-#### 3.2.1 Preparation
+__Preparation__
+
 TODO
 
-#### 3.2.2 Procedure
+__Procedure__
+
 TODO
 
-#### 3.2.3 Command line Usage
+__Command line Usage__
+
 ```sh
 $ python stdcalib.py -output <file path> <multiple jpg files> {-chess_size <pattern: def. 9,6> | -square_size <in mm: def. 1.0> | -preview <preview file folder> | -config <file>}
 ```
@@ -151,13 +161,16 @@ This tool creates a training set for the Mapping tool, using Vicon Wand position
 data (from Vicon) and corresponding video capture. This is used to calculate the
 extrinsic parameters of the camera, and therefore its pose within the room.
 
-#### 3.2.1 Preparation
+__Preparation__
+
 TODO
 
-#### 3.2.2 Procedure
+__Procedure__
+
 TODO
 
-#### 3.2.3 Command line Usage
+__Command line Usage__
+
 ```sh
 $ python trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out> | -clicks <num_clicks> | -config <file>}
 ```
@@ -167,13 +180,16 @@ $ python trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out
 This software applies mapping routines to convert 3D raw data into 2D datasets 
 using models from the Training and Calibration tools.
 
-#### 3.2.1 Preparation
+__Preparation__
+
 TODO
 
-#### 3.2.2 Procedure
+__Procedure__
+
 TODO
 
-#### 3.2.3 Command line Usage
+__Command line Usage__
+
 ```sh
 $ python mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {--config <file>}
 ```
@@ -186,13 +202,16 @@ object detection algorithms. Includes manual adjustment of the annotations.
 Outputs an annotated video or image, depending on the input as well as an XML
 Dataset - of identical format to the Mapping Tool.
 
-#### 3.2.1 Preparation
+__Preparation__
+
 TODO
 
-#### 3.2.2 Procedure
+__Procedure__
+
 TODO
 
-#### 3.2.3 Command line Usage
+__Command line Usage__
+
 ```sh
 $ python annotation.py
 ```
@@ -201,13 +220,16 @@ $ python annotation.py
 ### 3.6 Evaluation
 TODO description
 
-#### 3.2.1 Preparation
+__Preparation__
+
 TODO
 
-#### 3.2.2 Procedure
+__Procedure__
+
 TODO
 
-#### 3.2.3 Command line Usage
+__Command line Usage__
+
 ```sh
 $ python eval.py <annotated dataset> <mapped dataset>
 ```
@@ -220,14 +242,13 @@ TODO description
 ### 4.1 Wizard
 TODO description
 
-#### 4.1.1 Usage
-__Command line__
+__Usage__
+
 ```sh
 $ python wizard.py
 ```
 
-__Shortcut__
-Generate a new shortcut with `gen_shortcut.bat`. This will produce a 
+Or generate a new shortcut with `gen_shortcut.bat`. This will produce a 
 _EagleEye Wizard_ file. Double click the shortcut.
 
 Be sure to re-generate the shortcut if you move the project folder.
@@ -236,10 +257,12 @@ Be sure to re-generate the shortcut if you move the project folder.
 ### 4.2 Chessboard Extractor
 TODO description
 
-#### 4.2.1 Procedure
+__Procedure__
+
 TODO
 
-#### 4.2.2 Command line Usage
+__Command line Usage__
+
 ```sh
 $ python extract_frames.py <video file> <output image folder> {-prefix <output name> | -config <file>}
 ```
@@ -248,10 +271,12 @@ $ python extract_frames.py <video file> <output image folder> {-prefix <output n
 ### 4.3 Trainer Comparison
 TODO description
 
-#### 4.3.1 Procedure
+__Procedure__
+
 TODO
 
-#### 4.3.2 Command line Usage
+__Command line Usage__
+
 ```sh
 $ python compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -config <file> | -export <file>}
 ```
@@ -260,10 +285,12 @@ $ python compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <
 ### 4.4 Dataset Comparison
 TODO description
 
-#### 4.4.1 Procedure
+__Procedure__
+
 TODO
 
-#### 4.4.2 Command line Usage
+__Command line Usage__
+
 ```sh
 $ python compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}
 ```
@@ -292,13 +319,16 @@ sychronisation and marker data.
 
 
 __Synchronisation__
+
 -   . (dot) - is a regular frame
 -   F - is a flash frame, there should only be 2 of these within a dataset
 
-___Rotation___
+__Rotation__
+
 The rotational X, Y, Z is a
 [Euler Vector](https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation),
 not to be mistaken with Euler Angles - pitch, yaw, roll.
+
 
 ### 5.2 Calibration XML
 TODO description
