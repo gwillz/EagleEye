@@ -44,8 +44,7 @@ class Wizard(QMainWindow):
         self.saved = True # new session is empty, doesn't need saving
         self.save_path = None
         self.save_date = None
-        self._original_title = self.windowTitle() # for newaction
-        self._working_title = self.windowTitle()
+        self._original_title = self.windowTitle()
         self.reset_statusbar()
         
         # working variables
@@ -68,8 +67,6 @@ class Wizard(QMainWindow):
         self.actionExit.triggered.connect(self.close)
         
         # save checks
-        self.dataset_name_edit.textChanged.connect(self.update_working_title)
-        self.dataset_name_edit.textChanged.connect(self.set_unsaved)
         self.chessboard_edit.textChanged.connect(self.set_unsaved)
         self.trainer_csv_edit.textChanged.connect(self.set_unsaved)
         self.trainer_mov_edit.textChanged.connect(self.set_unsaved)
@@ -146,26 +143,14 @@ class Wizard(QMainWindow):
             if self.save_path is None:
                 self.save_file_as()
             else:
-                # check valid name first
-                name = self.dataset_name_edit.text()
-                if name == "":
-                    QMessageBox.warning(self, "Error Saving File", "The name parameter was not specified")
-                    return
-                
-                self.savezip(self.save_path, name)
+                self.savezip(self.save_path)
             
     @pyqtSlot()
     def save_file_as(self):
-        # check valid name first
-        name = self.dataset_name_edit.text()
-        if name == "":
-            QMessageBox.warning(self, "Error Saving File", "The name parameter was not specified")
-            return
-                
         # open file dialog
         path = QFileDialog.getSaveFileName(self, "Save Dataset As...", "./", "Zip file (*.zip)")
         if path != "":
-            self.savezip(path, name)
+            self.savezip(path)
     
     @pyqtSlot()
     def open_file(self):
@@ -173,8 +158,7 @@ class Wizard(QMainWindow):
         if path != "":
             self.openzip(path)
     
-    def savezip(self, path, name):
-        name = str(name)
+    def savezip(self, path):
         path = str(path)
         temp_date = datetime.date.today().strftime("%Y-%m-%d")
         
@@ -217,6 +201,10 @@ class Wizard(QMainWindow):
         if not ok: return
         edit_fields = dialog.checked_fields()
         
+        # determine set name
+        name = os.path.basename(path)
+        name = re.match("(.*)\.zip", name).group(1)
+        
         # add zip extension if not already present
         if not path.lower().endswith(".zip"):
             path += ".zip"
@@ -232,6 +220,9 @@ class Wizard(QMainWindow):
             
             # zips things while at the same time 
             # recording them into the header xml
+            
+            if self.description_edit.text() != "":
+                w.element("description", str(self.description_edit.text()))
             
             # calibration xml
             file_path = edit_fields.get("calibration")
@@ -378,7 +369,7 @@ class Wizard(QMainWindow):
         self.save_date = temp_date
         self.save_path = path
         self.saved = True
-        self.setWindowTitle(self._working_title)
+        self.setWindowTitle(self._original_title + ": " + name)
         
     def openzip(self, path):
         # test file valid-ness
@@ -408,11 +399,12 @@ class Wizard(QMainWindow):
                 QMessageBox.error(self, "Not a valid dataset", "The header.xml file is corrupt.")
                 return
             
-            # load dataset name
-            self.dataset_name_edit.setText(root.attrib["name"])
+            # load stuff
+            self.setWindowTitle(self._original_title + ": " +  root.attrib["name"])
             self.save_date = root.attrib["date"]
             
             # find root elements
+            description = root.find("description")
             calib = root.find("calibration")
             training = root.find("training")
             raw_data = root.find("rawData")
@@ -420,6 +412,10 @@ class Wizard(QMainWindow):
             comparison = root.find("comparison")
             mapping = root.find("datasets/mapping")
             annotation = root.find("datasets/annotation")
+            
+            # load description
+            if description is not None:
+                self.description_edit.setText(description.text)
             
             # find calib elements
             if calib is not None:
@@ -486,7 +482,6 @@ class Wizard(QMainWindow):
         
         self.save_path = path
         self.saved = True
-        self.update_working_title(self.dataset_name_edit.text())
         
         # run button checks
         self.load_chessboards()
@@ -518,7 +513,6 @@ class Wizard(QMainWindow):
         self.save_date = None
         self.setWindowTitle(self._original_title)
         
-        self.dataset_name_edit.clear()
         self.chessboard_edit.clear()
         self.calibration_edit.clear()
         self.trainer_csv_edit.clear()
@@ -1256,12 +1250,6 @@ class Wizard(QMainWindow):
     @pyqtSlot()
     def set_unsaved(self):
         self.saved = False
-        self.setWindowTitle(self._working_title + "*")
-    
-    @pyqtSlot('QString')
-    def update_working_title(self, text):
-        self._working_title = "{} - {}".format(self._original_title, text)
-        self.setWindowTitle(self._working_title + "*")
     
     @pyqtSlot()
     def reset_statusbar(self):
