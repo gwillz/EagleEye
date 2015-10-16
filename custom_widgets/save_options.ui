@@ -177,6 +177,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QRadioButton" name="training_button">
+          <property name="text">
+           <string>Training</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QRadioButton" name="everything_button">
           <property name="text">
            <string>Everything</string>
