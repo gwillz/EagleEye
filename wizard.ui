@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>599</width>
-    <height>925</height>
+    <width>547</width>
+    <height>701</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>EagleEye Wizard</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout" columnstretch="10,10,10,20,20,0">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="10,10,0,20,20,0">
     <property name="leftMargin">
      <number>20</number>
     </property>
@@ -40,7 +40,7 @@
        <string>&lt;h3&gt;Comparison Tool&lt;/h3&gt;</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
       </property>
       <property name="indent">
        <number>10</number>
@@ -79,7 +79,7 @@
        <string>&lt;h3&gt;Annotation Tool&lt;/h3&gt;</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
       </property>
       <property name="indent">
        <number>10</number>
@@ -264,7 +264,7 @@
        <string>&lt;h3&gt;Mapping Tool&lt;/h3&gt;</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
       </property>
       <property name="indent">
        <number>10</number>
@@ -297,7 +297,7 @@
        <string>&lt;h3&gt;Training Tool&lt;/h3&gt;</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
       </property>
       <property name="indent">
        <number>10</number>
@@ -310,7 +310,7 @@
        <string>&lt;h3&gt;Calibration Tool&lt;/h3&gt;</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
       </property>
       <property name="indent">
        <number>10</number>
@@ -323,7 +323,7 @@
        <string>&lt;h3&gt;Capture Tool&lt;/h3&gt;</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
       </property>
       <property name="indent">
        <number>10</number>
@@ -399,6 +399,9 @@
       <property name="indent">
        <number>10</number>
       </property>
+      <property name="buddy">
+       <cstring>description_edit</cstring>
+      </property>
      </widget>
     </item>
    </layout>
@@ -408,8 +411,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>599</width>
-     <height>29</height>
+     <width>547</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -421,6 +424,7 @@
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_As"/>
+    <addaction name="actionExport"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -590,6 +594,11 @@
    </property>
    <property name="text">
     <string>Kill Worker</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="text">
+    <string>Export...</string>
    </property>
   </action>
  </widget>
