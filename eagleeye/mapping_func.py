@@ -3,29 +3,39 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.2.11
+# version 0.3.11
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
+magnitude = lambda x: np.sqrt(np.vdot(x, x))
+unit = lambda x: x / magnitude(x)
 
 class Mapper:
-    def __init__(self, intrinsic, trainer, cfg):
+    SINGLE     = 0
+    BUTTONSIDE = 1
+    BACKSIDE   = 2
+    
+    def __init__(self, intrinsic, trainer, cfg, mode=SINGLE):
         # variables
         self.rv = np.asarray([], dtype=np.float32)  # rotation
         self.tv = np.asarray([], dtype=np.float32)  # translation
+        self.mode = mode
         
         # load some configs, required by solvePnP eventually
-        #self.cfg = cfg
+        self.cfg = cfg
+        self.halfcos_fov = np.cos(cfg.camera_fov / 2)
         
         # open intrinsic, trainer files
         self.cam, self.distort = self.parseCamIntr(intrinsic)
         self.img_pts, self.obj_pts = self.parseTrainer(trainer)
         
+        print "\nside:", "Buttonside" if mode == self.BUTTONSIDE else "Backside" if mode == self.BACKSIDE else "SINGLE"
         print "img_pts {}".format(len(self.img_pts))
         print "obj_pts {}".format(len(self.obj_pts))
         
         #calculate pose
-        self.rv, self.tv = self.calPose(mode=0)
+        self.rv, self.tv = self.calPose()
+        self.rv_unit = unit(self.rv)
     
     # opens the Intrinsic calib xml file
     def parseCamIntr(self, xmlpath):
@@ -49,10 +59,17 @@ class Mapper:
         if len(root) == 0:
             raise IOError('XML file is empty.')
         
-        if root.tag != "StdIntrinsic":
+        if root.tag != "StdIntrinsic" and self.mode == self.SINGLE:
             raise IOError("Wrong input file, needs a StdIntrinsic xml file.")
+        elif root.tag != "dual_intrinsic" and self.mode != self.SINGLE:
+            raise IOError("Wrong input file, needs a dual_intrinsic xml file.")
         
-        for elem in root.iter():
+        if self.mode == self.BUTTONSIDE:
+            root = root.find("Buttonside")
+        elif self.mode == self.BACKSIDE:
+            root = root.find("Backside")
+        
+        for elem in root:
             if elem.tag == 'CamMat':
                 cm_dict.update(elem.attrib)
             if elem.tag =='DistCoe':
@@ -97,7 +114,20 @@ class Mapper:
         if root.tag != "TrainingSet":
             raise IOError("Wrong input file, needs a TrainingSet xml file.")
         
-        frames = root.find('frames')
+        if self.mode == self.BUTTONSIDE:
+            frames = root.find('buttonside')
+            if frames is None:
+                raise Exception("Training file missing Buttonside data")
+        
+        elif self.mode == self.BACKSIDE:
+            frames = root.find('backside')
+            if frames is None:
+                raise Exception("Training file missing Backside data")
+        else:
+            frames = root.find('frames')
+            if frames is None:
+                raise Exception("Wrong training file for SINGLE mode")
+        
         if "num" not in frames.attrib:
             raise Exception("Outdated trainer file, missing frame num attrib.")
         
@@ -123,8 +153,7 @@ class Mapper:
         
         return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32)
     
-    
-    def calPose(self, mode=0):
+    def calPose(self):
         if len(self.img_pts) < 4 or len(self.obj_pts) < 4:
             raise Exception("Must have at least 4 training points.")
             
@@ -134,29 +163,17 @@ class Mapper:
         
         # TODO: customised solvePnP flags from config
         # levenberg-marquardt iterative method
-        if mode == 0:
-            retval, rv, tv = cv2.solvePnP(
-                                self.obj_pts, self.img_pts, 
-                                self.cam, self.distort,
-                                None, None, cv2.SOLVEPNP_ITERATIVE)
-            '''
-            NOT RUNNING
-            http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
-            rv, tv, inliners = cv2.solvePnPRansac(
-                                self.obj_pts, self.img_pts, 
-                                self.cam, self.distort)
-            '''
-        # alternate, loopy style iterative method (could be the same, idk)
-        else:
-            rv, tv = None, None
-            for i in range(0, len(data)):
-                retval, _rv, _tv = cv2.solvePnP(
-                                    self.obj_pts[i], self.img_pts[i],
-                                    self.cam, self.distort,
-                                    rv, tv, useExtrinsicGuess=True)
-                #append if 'good'
-                if retval: 
-                    rv, tv = _rv, _tv
+        retval, rv, tv = cv2.solvePnP(
+                            self.obj_pts, self.img_pts, 
+                            self.cam, self.distort,
+                            None, None, cv2.SOLVEPNP_ITERATIVE)
+        '''
+        NOT RUNNING
+        http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
+        rv, tv, inliners = cv2.solvePnPRansac(
+                            self.obj_pts, self.img_pts, 
+                            self.cam, self.distort)
+        '''
         
         # check, print, return
         if rv is None or rv is None or not retval:
@@ -167,17 +184,23 @@ class Mapper:
         
         return rv, tv
     
+    def isVisible(self, pt):
+        obj = np.array(pt).reshape((3, 1))
+        
+        # determine line and direction to object
+        cam_to_obj = self.tv - obj
+        obj_dir = unit(cam_to_obj)
+        
+        # test within FOV
+        cosTheta = np.vdot(self.rv_unit, obj_dir)
+        return cosTheta < self.halfcos_fov
     
     def reprojpts(self, obj_pts):
-        #if len(obj_pts) == 0:
-        #    raise Error('No points to project.')
+        if len(obj_pts) == 0:
+            raise Exception('No points to project.')
         
         proj_imgpts, jac = cv2.projectPoints(np.asarray([obj_pts], dtype=np.float32), self.rv, self.tv, self.cam, self.distort)
         proj_imgpts = proj_imgpts.reshape((len(proj_imgpts), -1))
-        
-        #print 'Project Point Coordinates:'
-        #for n in range(0, len(proj_imgpts)):
-        #    print 'Point', n+1, ':', proj_imgpts[n]
         
         return proj_imgpts[0]
 

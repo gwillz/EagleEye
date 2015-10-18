@@ -281,7 +281,7 @@ def main(sysargs):
                 
                 # add 960 for rightside
                 if lens == BuffSplitCap.right:
-                    x =+ 960
+                    x += 960
                 
                 out_xml.start("frame", num=str(i))
                 out_xml.element("plane", 

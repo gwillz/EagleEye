@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.13
+# version 0.3.13
 # 
 # Runs mapping routines on multiple CSV files and combipnes them into a single XML format.
 #
@@ -59,11 +59,14 @@ def main(sysargs):
     
     # open calib files
     try:
-        mapper = Mapper(args.calib, args.trainer, cfg)
+        buttonside = Mapper(args.calib, args.trainer, cfg, Mapper.BUTTONSIDE)
+        backside = Mapper(args.calib, args.trainer, cfg, Mapper.BACKSIDE)
     except Exception as e:
         print e.message
         return 1
-
+    
+    bts, bks = 0, 0
+    
     # open destination XML
     with open(args.output, "w") as xmlfile:
         w = XMLWriter(xmlfile)
@@ -92,7 +95,7 @@ def main(sysargs):
                     y = float(c.row()[3])
                     z = float(c.row()[4])
                     
-                    # TODO: Render Orientation Here
+                    # TODO: Render Orientation Here?
                     rx = float(c.row()[5])
                     ry = float(c.row()[6])
                     rz = float(c.row()[7])
@@ -101,7 +104,12 @@ def main(sysargs):
                     return 1
                 
                 # run projection/mapping on VICON data
-                points = mapper.reprojpts((x, y, z))
+                if buttonside.isVisible((x,y,z)):
+                    points = buttonside.reprojpts((x, y, z))
+                    bts += 1
+                else:
+                    points = backside.reprojpts((x, y, z))
+                    bks += 1
 
                 # TODO: Change DTD and double check with Manjung
                 w.start("object", id=str(i), name=c.name())
@@ -128,6 +136,9 @@ def main(sysargs):
                 csvs[i].next()
         
         w.close(doc)
+        
+        print "buttonside", bts
+        print "backside", bks
         
     return 0
 
