@@ -3,17 +3,15 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.3.11
+# version 0.3.12
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
+from theta_sides import Theta
 magnitude = lambda x: np.sqrt(np.vdot(x, x))
 unit = lambda x: x / magnitude(x)
 
 class Mapper:
-    SINGLE     = 0
-    BUTTONSIDE = 1
-    BACKSIDE   = 2
     
     def __init__(self, intrinsic, trainer, cfg, mode=SINGLE):
         # variables
@@ -29,7 +27,7 @@ class Mapper:
         self.cam, self.distort = self.parseCamIntr(intrinsic)
         self.img_pts, self.obj_pts = self.parseTrainer(trainer)
         
-        print "\nside:", "Buttonside" if mode == self.BUTTONSIDE else "Backside" if mode == self.BACKSIDE else "SINGLE"
+        print "\nside:", Theta.name(mode)
         print "img_pts {}".format(len(self.img_pts))
         print "obj_pts {}".format(len(self.obj_pts))
         
@@ -64,9 +62,9 @@ class Mapper:
         elif root.tag != "dual_intrinsic" and self.mode != self.SINGLE:
             raise IOError("Wrong input file, needs a dual_intrinsic xml file.")
         
-        if self.mode == self.BUTTONSIDE:
+        if self.mode == Theta.Buttonside:
             root = root.find("Buttonside")
-        elif self.mode == self.BACKSIDE:
+        elif self.mode == Theta.Backide:
             root = root.find("Backside")
         
         for elem in root:
@@ -114,19 +112,19 @@ class Mapper:
         if root.tag != "TrainingSet":
             raise IOError("Wrong input file, needs a TrainingSet xml file.")
         
-        if self.mode == self.BUTTONSIDE:
+        if self.mode == Theta.Buttonside:
             frames = root.find('buttonside')
             if frames is None:
                 raise Exception("Training file missing Buttonside data")
         
-        elif self.mode == self.BACKSIDE:
+        elif self.mode == Theta.Backside:
             frames = root.find('backside')
             if frames is None:
                 raise Exception("Training file missing Backside data")
         else:
             frames = root.find('frames')
             if frames is None:
-                raise Exception("Wrong training file for SINGLE mode")
+                raise Exception("Wrong training file for single data")
         
         if "num" not in frames.attrib:
             raise Exception("Outdated trainer file, missing frame num attrib.")

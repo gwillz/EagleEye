@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.34
+# version 0.5.35
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -29,7 +29,7 @@
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffSplitCap, Memset, Key, EasyConfig, EasyArgs, marker_tool
+from eagleeye import BuffSplitCap, Memset, Key, EasyConfig, EasyArgs, marker_tool, Theta
 from eagleeye.display_text import *
 from elementtree.SimpleXMLWriter import XMLWriter
 
@@ -96,11 +96,11 @@ def main(sysargs):
     
     # default right side (buttonside)
     if cfg.dual_mode:
-        lens = BuffSplitCap.right
-        trainer_points = {BuffSplitCap.left:{}, BuffSplitCap.right:{}}
+        lens = Theta.Right
+        trainer_points = {Theta.Right:{}, Theta.Right:{}}
     else: # both sides otherwise
-        lens = BuffSplitCap.both
-        trainer_points = {BuffSplitCap.both:{}}
+        lens = Theta.Both
+        trainer_points = {Theta.Both:{}}
     
     print "Minimum reflectors: {} | Ignore Negative xyz: {}".format(cfg.min_reflectors, cfg.check_negatives)
         
@@ -152,9 +152,9 @@ def main(sysargs):
         textquality = "Visible: {} , Max Visible: {}".format(visible, max_visible)
         textstatus = "{} | {}/{} clicks".format(in_vid.status(), len(trainer_points[lens]), max_clicks)
         
-        if lens == BuffSplitCap.left:
+        if lens == Theta.Left:
             textstatus += " - back side"
-        elif lens == BuffSplitCap.right:
+        elif lens == Theta.Right:
             textstatus += " - button side"
         #else none, no lens split
         
@@ -209,10 +209,10 @@ def main(sysargs):
                 params['status'] = Status.remove
             elif Key.char(key, '1') and cfg.dual_mode:
                 params['status'] = Status.still
-                lens = BuffSplitCap.left
+                lens = Theta.Left
             elif Key.char(key, '2') and cfg.dual_mode:
                 params['status'] = Status.still
-                lens = BuffSplitCap.right
+                lens = Theta.Right
             
         # catch exit status
         if params['status'] == Status.stop:
@@ -268,9 +268,9 @@ def main(sysargs):
         
         # training point data
         for lens in trainer_points:
-            if lens == BuffSplitCap.right:
+            if lens == Theta.Right:
                 out_xml.start("buttonside", num=str(len(trainer_points[lens])))
-            elif lens == BuffSplitCap.left:
+            elif lens == Theta.Left:
                 out_xml.start("backside", num=str(len(trainer_points[lens])))
             else: # non dualmode
                 out_xml.start("frames", num=str(len(trainer_points[lens])))
@@ -280,7 +280,7 @@ def main(sysargs):
                 x, y = pos
                 
                 # add 960 for rightside
-                if lens == BuffSplitCap.right:
+                if lens == Theta.Right:
                     x += 960
                 
                 out_xml.start("frame", num=str(i))

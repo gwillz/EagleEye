@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1
+# version 0.1.1
 #
 #
 # Options:
@@ -11,10 +11,10 @@
 #
 
 import cv2, sys, os, numpy as np, random
-from eagleeye import EasyArgs, EasyConfig, Key, Mapper, xml_trainer
+from eagleeye import EasyArgs, EasyConfig, Key, Mapper, xml_trainer, Theta
 
 def usage():
-    print "usage: trace.py <calib xml> <trainer xml>  {-height | -width | -max_height | -config <file>}"
+    print "usage: trace.py <calib xml> <trainer xml>  {-height | -width | -max_height | -config <file> | -export <file>}"
 
 magnitude = lambda x: np.sqrt(np.vdot(x, x))
 unit = lambda x: x / magnitude(x)
@@ -49,15 +49,15 @@ colour = (255,255,255)
 # a frame to paste the trace on
 baseframe = np.zeros((img_h,img_w,3), np.uint8)
 
-backside = Mapper(args[1], args[2], cfg, Mapper.BACKSIDE)
-buttonside = Mapper(args[1], args[2], cfg, Mapper.BUTTONSIDE)
+backside = Mapper(args[1], args[2], cfg, Theta.Backside)
+buttonside = Mapper(args[1], args[2], cfg, Theta.Buttonside)
 #single = Mapper(args[1], args[2], cfg, Mapper.SINGLE)
 
 #for m in [single]:
 for m in [backside, buttonside]:
-    colour = (100+random.random()*155,
-              100+random.random()*155,
-              100+random.random()*155)
+    colour = (55+random.random()*200,
+              55+random.random()*200,
+              55+random.random()*200)
     
     tv = np.abs(m.tv)
     rv = unit(m.rv)
@@ -85,6 +85,9 @@ for m in [backside, buttonside]:
 
 cv2.imshow(window_name, baseframe)
 cv2.waitKey(0)
+
+if args.export:
+    cv2.imwrite(args.export, baseframe)
 
 cv2.destroyAllWindows()
 
