@@ -19,3 +19,4 @@ from sleeper import Sleeper
 from marker_tool import marker_tool
 from mapping_func import Mapper
 from xml_trainer import Xmltrainer
+from theta_sides import Theta
