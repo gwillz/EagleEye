@@ -19,7 +19,7 @@ def usage():
 
 def main(sysargs):
     args = EasyArgs(sysargs)
-    cfg = EasyConfig(args.cfg, group="mapper")
+    cfg = EasyConfig(args.config, group="mapper")
 
     if ["calib", "trainer", "output"] not in args:
         print "Must specify: -calib, -trainer, -output files"
@@ -104,12 +104,12 @@ def main(sysargs):
                     return 1
                 
                 # run projection/mapping on VICON data
-                if buttonside.isVisible((x,y,z)):
-                    points = buttonside.reprojpts((x, y, z))
-                    bts += 1
-                else:
+                if backside.isVisible((x,y,z)):
                     points = backside.reprojpts((x, y, z))
                     bks += 1
+                else:
+                    points = buttonside.reprojpts((x, y, z))
+                    bts += 1
 
                 # TODO: Change DTD and double check with Manjung
                 w.start("object", id=str(i), name=c.name())

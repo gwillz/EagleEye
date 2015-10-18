@@ -137,10 +137,9 @@ class Mapper:
         obj_pos = []
         
         for f in frames:
-            # TODO: inconsistent get attrib names ??
             plane = f.find('plane').attrib
             vicon = f.find('vicon').attrib
-            visibility = f.find('visibility').attrib
+            #visibility = f.find('visibility').attrib
             
             x = float(plane['x'])
             y = float(plane['y'])
