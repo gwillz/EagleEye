@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.7
+# version 0.1.8
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
@@ -206,11 +206,7 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     
     visible = int(mapped_object['visibility']['visible'])
     max_visible =  int(mapped_object['visibility']['visibleMax'])
-    
-    if 'lens' in mapped_object:
-        lens_side = Theta.resolve(mapped_object['lens'])
-    else:
-        lens_side = Theta.NonDual
+    lens_side = mapped_object['lens']
     
     # Render Reprojected Point
     cv2.rectangle(cvframe, pt1, pt2, cfg.mapper_colour, 1)

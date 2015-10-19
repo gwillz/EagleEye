@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>547</width>
+    <width>464</width>
     <height>701</height>
    </rect>
   </property>
@@ -175,6 +175,12 @@
     </item>
     <item row="5" column="3" colspan="3">
      <widget class="HighlightEdit" name="calibration_edit">
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>0</height>
+       </size>
+      </property>
       <property name="placeholderText">
        <string>calibration.xml</string>
       </property>
@@ -186,7 +192,7 @@
        <string>&lt;h4&gt;Outputs&lt;/h4&gt;</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+       <set>Qt::AlignHCenter|Qt::AlignTop</set>
       </property>
       <property name="indent">
        <number>12</number>
@@ -411,7 +417,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>547</width>
+     <width>464</width>
      <height>21</height>
     </rect>
    </property>

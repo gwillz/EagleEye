@@ -2,19 +2,21 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.1
+# version 0.1.2
 #
 #
 # Options:
 #   -max_height      : to adjust the scaling (in pixels)
 #   -width & -height : adjusts the bounds of the lab floor (in milimetres) 
-#
+#   -export          : save a png image 
+#   -singlemode      : load a 
 
 import cv2, sys, os, numpy as np, random
 from eagleeye import EasyArgs, EasyConfig, Key, Mapper, xml_trainer, Theta
+from eagleeye.display_text import *
 
 def usage():
-    print "usage: trace.py <calib xml> <trainer xml>  {-height | -width | -max_height | -config <file> | -export <file>}"
+    print "usage: trainer_trace.py <calib xml> <trainer xml>  {-height <mm> | -width <mm> | -max_height <px> | -singlemode | -config <file> | -export <file>}"
 
 magnitude = lambda x: np.sqrt(np.vdot(x, x))
 unit = lambda x: x / magnitude(x)
@@ -49,12 +51,15 @@ colour = (255,255,255)
 # a frame to paste the trace on
 baseframe = np.zeros((img_h,img_w,3), np.uint8)
 
-backside = Mapper(args[1], args[2], cfg, Theta.Backside)
-buttonside = Mapper(args[1], args[2], cfg, Theta.Buttonside)
-#single = Mapper(args[1], args[2], cfg, Mapper.SINGLE)
+if not args.singlemode:
+    mappers = [Mapper(args[1], args[2], cfg, Theta.Backside),
+               Mapper(args[1], args[2], cfg, Theta.Buttonside)]
+else:
+    mappers = [Mapper(args[1], args[2], cfg, Theta.NonDual)]
 
-#for m in [single]:
-for m in [backside, buttonside]:
+#displayText(baseframe, "single mode" if args.singlemode else "dual mode", top=True)
+
+for m in mappers:
     colour = (55+random.random()*200,
               55+random.random()*200,
               55+random.random()*200)
@@ -71,11 +76,10 @@ for m in [backside, buttonside]:
     x, y, z = end
     pt2 = (int(x*scale), img_h-int(y*scale))
     
-    print pt1, pt2
-    
     cv2.circle(baseframe, pt1, 2, colour, 2)
     cv2.arrowedLine(baseframe, pt1, pt2, colour, 2)
     
+    displayText(baseframe, "{}: {}{}".format(Theta.name(m.mode), x, y))
     
     for i in pts:
         print i

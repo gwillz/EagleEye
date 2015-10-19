@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.35
+# version 0.5.36
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -97,7 +97,7 @@ def main(sysargs):
     # default right side (buttonside)
     if cfg.dual_mode:
         lens = Theta.Right
-        trainer_points = {Theta.Right:{}, Theta.Right:{}}
+        trainer_points = {Theta.Right:{}, Theta.Left:{}}
     else: # both sides otherwise
         lens = Theta.Both
         trainer_points = {Theta.Both:{}}

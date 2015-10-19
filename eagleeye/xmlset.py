@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.7
+# version 0.2.8
 # 
 # Reads an XML Dataset file into memory
 # Provides synchronisation techniques - via setRatio()
@@ -11,6 +11,7 @@
 
 import xml.etree.ElementTree as ET
 from math import ceil, floor
+from theta_sides import Theta
 
 class Xmlset:
     off_by_frame = 0
@@ -47,7 +48,11 @@ class Xmlset:
                 objects[name]["box"] = obj.find('boxinfo').attrib
                 objects[name]["centre"] = obj.find('centroid').attrib
                 objects[name]["visibility"] = obj.find("visibility").attrib
-                objects[name]["lens"] = obj.attrib['lens']
+                
+                if 'lens' in obj.attrib:
+                    objects[name]["lens"] = Theta.resolve(obj.attrib['lens'])
+                else:
+                    objects[name]["lens"] = Theta.NonDual
             
             self._frames[num] = objects
         
