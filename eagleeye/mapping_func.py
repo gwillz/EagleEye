@@ -3,17 +3,19 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.3.12
+# version 0.3.14
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
 from theta_sides import Theta
+from xml_trainer import Xmltrainer
+
 magnitude = lambda x: np.sqrt(np.vdot(x, x))
 unit = lambda x: x / magnitude(x)
 
 class Mapper:
     
-    def __init__(self, intrinsic, trainer, cfg, mode=SINGLE):
+    def __init__(self, intrinsic, trainer, cfg, mode=Theta.NonDual):
         # variables
         self.rv = np.asarray([], dtype=np.float32)  # rotation
         self.tv = np.asarray([], dtype=np.float32)  # translation
@@ -57,14 +59,14 @@ class Mapper:
         if len(root) == 0:
             raise IOError('XML file is empty.')
         
-        if root.tag != "StdIntrinsic" and self.mode == self.SINGLE:
+        if root.tag != "StdIntrinsic" and self.mode == Theta.NonDual:
             raise IOError("Wrong input file, needs a StdIntrinsic xml file.")
-        elif root.tag != "dual_intrinsic" and self.mode != self.SINGLE:
+        elif root.tag != "dual_intrinsic" and self.mode != Theta.NonDual:
             raise IOError("Wrong input file, needs a dual_intrinsic xml file.")
         
         if self.mode == Theta.Buttonside:
             root = root.find("Buttonside")
-        elif self.mode == Theta.Backide:
+        elif self.mode == Theta.Backside:
             root = root.find("Backside")
         
         for elem in root:
@@ -100,55 +102,14 @@ class Mapper:
     
     
     def parseTrainer(self, xmlpath):
-        if xmlpath is None:
-            raise IOError('Invalid file path to XML file.')
+        trainer = Xmltrainer(xmlpath, self.mode)
+        self.num_training = trainer.total
         
-        tree = ET.parse(xmlpath)
-        root = tree.getroot()
+        img_pts = np.asarray(trainer.img_pts(), np.float32)
+        obj_pts = np.asarray(trainer.obj_pts(), np.float32)
         
-        if len(root) == 0:
-            raise IOError('XML file is empty.')
-        
-        if root.tag != "TrainingSet":
-            raise IOError("Wrong input file, needs a TrainingSet xml file.")
-        
-        if self.mode == Theta.Buttonside:
-            frames = root.find('buttonside')
-            if frames is None:
-                raise Exception("Training file missing Buttonside data")
-        
-        elif self.mode == Theta.Backside:
-            frames = root.find('backside')
-            if frames is None:
-                raise Exception("Training file missing Backside data")
-        else:
-            frames = root.find('frames')
-            if frames is None:
-                raise Exception("Wrong training file for single data")
-        
-        if "num" not in frames.attrib:
-            raise Exception("Outdated trainer file, missing frame num attrib.")
-        
-        self.num_training = int(frames.attrib["num"])
-        
-        img_pos = []
-        obj_pos = []
-        
-        for f in frames:
-            plane = f.find('plane').attrib
-            vicon = f.find('vicon').attrib
-            #visibility = f.find('visibility').attrib
-            
-            x = float(plane['x'])
-            y = float(plane['y'])
-            vicon_x = float(vicon['x'])
-            vicon_y = float(vicon['y'])
-            vicon_z = float(vicon['z'])
-            
-            img_pos.append((x, y))
-            obj_pos.append((vicon_x, vicon_y, vicon_z))
-        
-        return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32)
+        return img_pts, obj_pts
+    
     
     def calPose(self):
         if len(self.img_pts) < 4 or len(self.obj_pts) < 4:

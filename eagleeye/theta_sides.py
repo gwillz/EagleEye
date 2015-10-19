@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1
+# version 0.1.1
 # 
 
 class Theta:
@@ -25,10 +25,10 @@ class Theta:
     @staticmethod
     def resolve(var):
         var = var.lower()
-        if 'backside' in var \
+        if 'back' in var \
                 or 'left' in var:
             return Theta.Left
-        elif 'buttonside' in var \
+        elif 'button' in var \
                 or 'right' in var:
             return Theta.Right
         else:
