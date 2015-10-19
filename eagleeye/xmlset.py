@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.6
+# version 0.2.7
 # 
 # Reads an XML Dataset file into memory
 # Provides synchronisation techniques - via setRatio()
@@ -47,6 +47,7 @@ class Xmlset:
                 objects[name]["box"] = obj.find('boxinfo').attrib
                 objects[name]["centre"] = obj.find('centroid').attrib
                 objects[name]["visibility"] = obj.find("visibility").attrib
+                objects[name]["lens"] = obj.attrib['lens']
             
             self._frames[num] = objects
         

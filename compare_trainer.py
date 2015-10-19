@@ -11,18 +11,17 @@
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffSplitCap, Xmlset, Xmltrainer, EasyArgs, EasyConfig, Key, marker_tool
+from eagleeye import BuffSplitCap, Xmlset, Xmltrainer, EasyArgs, EasyConfig, Key, marker_tool, Theta
 from eagleeye.display_text import *
 from math import sqrt
 import csv
 
 def usage():
-    print "usage: python2 compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -config <file> | -video_export <file> | -compare_export <file>}"
+    print "usage: python2 compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -side <buttonside|backside|single> | -config <file> | -video_export <file> | -compare_export <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.cfg, group="compare_trainer")
-    font = cv2.FONT_HERSHEY_SIMPLEX
     window_name = "EagleEye Comparator"
     
     # grab marks from args
@@ -46,10 +45,13 @@ def main(sysargs):
         usage()
         return 1
     
+    # determine sides
+    side = Theta.resolve(args.side or 'buttonside')
+    
     # open inouts files
-    vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size)
+    vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size, side=side)
     mapper_xml = Xmlset(args[2], offset=cfg.offset, offmode=Xmlset.__dict__[cfg.offset_mode])
-    trainer_xml = Xmltrainer(args[3])
+    trainer_xml = Xmltrainer(args[3], side=side)
     reprojerror_list = {}     # list of reprojection error of all frames
     lastframe = False
     
@@ -57,6 +59,15 @@ def main(sysargs):
     if cfg.trainer_target not in mapper_xml.data(0):
         print "Mapping file must contain training target:", cfg.trainer_target
         print mapper_xml.data(0)
+        return 1
+    
+    # also reject if it's lens data doesn't match the trainer_xml
+    _test_lens = mapper_xml.data(0)[cfg.trainer_target]
+    if 'lens' in _test_lens and side == Theta.NonDual \
+            or 'lens' not in _test_lens and side != Theta.NonDual:
+        
+        print "Mapping file doesn't match training file"
+        print "map:", _test_lens['lens'], "trainer:", side
         return 1
     
     # sync the video and xml
@@ -181,50 +192,36 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     sys.stdout.write("Reading Video Frame: {}".format(vidframe_no) + " | XML Frame number: {}\r".format(xmlframe_no))
     sys.stdout.flush()
     
-    trainer_object = mapper_xml.data(xmlframe_no)[cfg.trainer_target]
+    mapped_object = mapper_xml.data(xmlframe_no)[cfg.trainer_target]
     
     # Prepare Repojected Point
-    pt1 = (int(float(trainer_object['box']['x'])), 
-            int(float(trainer_object['box']['y'])))
+    pt1 = (int(float(mapped_object['box']['x'])), 
+            int(float(mapped_object['box']['y'])))
     
-    pt2 = (pt1[0] + int(float(trainer_object['box']['width'])), 
-            pt1[1] + int(float(trainer_object['box']['height'])))
+    pt2 = (pt1[0] + int(float(mapped_object['box']['width'])), 
+            pt1[1] + int(float(mapped_object['box']['height'])))
     
-    centre = (int(float(trainer_object['centre']['x'])), 
-                int(float(trainer_object['centre']['y'])))
+    centre = (int(float(mapped_object['centre']['x'])), 
+                int(float(mapped_object['centre']['y'])))
     
-    visible = int(trainer_object['visibility']['visible'])
-    max_visible =  int(trainer_object['visibility']['visibleMax'])
+    visible = int(mapped_object['visibility']['visible'])
+    max_visible =  int(mapped_object['visibility']['visibleMax'])
     
+    if 'lens' in mapped_object:
+        lens_side = Theta.resolve(mapped_object['lens'])
+    else:
+        lens_side = Theta.NonDual
     
     # Render Reprojected Point
     cv2.rectangle(cvframe, pt1, pt2, cfg.mapper_colour, 1)
     cv2.circle(cvframe, centre, 1, cfg.mapper_colour, 2)
-    
-    # Display Object Info
-    frameObj_Txt = "Frame: {} | Trained Object: {}".format(vidframe_no, cfg.trainer_target)
-    displayText(cvframe, frameObj_Txt, top=True)
-    
-    reprojCentroid_txt = "Reprojected Centroid - x: {}, y: {}".format(centre[0],centre[1])
-    displayText(cvframe, reprojCentroid_txt)
-    
-    visibility_txt = "Visible: {} , Max Visible: {}".format(visible, max_visible)
-    displayText(cvframe, visibility_txt)
-    
-    dataText = " - Good data!!"
-    dataText_colour = (0, 255, 0) # green
-    if visible < cfg.min_reflectors:           # for when there isn't a matching trainer
-        dataText = " - Bad data!!"
-        dataText_colour = (0, 0, 255) # red
-        if cfg.ignore_baddata:
-            dataText += " Ignored."
     
     # Get trainer point if it exists at current frame
     vicon_txt = "VICON - x: ?, y: ?, z: ?"
     trainer_txt = "Trained Point: x: ?, y: ?"
     reprojErr_txt = "Reprojection Error: No Data"
     
-    if vidframe_no in trainer_xml.data():
+    if vidframe_no in trainer_xml.data() and lens_side == trainer_xml.side:
         trainer_frame = trainer_xml.data()[vidframe_no]
     
         vicon_txt = "VICON - x: {:.4f}, y: {:.4f}, z: {:.4f}".format(
@@ -253,6 +250,25 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
                                             "y1": trainer_pt[1],
                                             "x2": pt1[0],
                                             "y2": pt1[1]}})
+    
+    # Display Object Info
+    frameObj_Txt = "Frame: {} | Trained Object: {} | Comparing: {}".format(
+                        vidframe_no, cfg.trainer_target, Theta.name(trainer_xml.side))
+    reprojCentroid_txt = "Reprojected Centroid - x: {}, y: {}, on: {}".format(
+                                                    centre[0], centre[1], Theta.name(lens_side))
+    visibility_txt = "Visible: {} , Max Visible: {}".format(visible, max_visible)
+    
+    displayText(cvframe, frameObj_Txt, top=True)
+    displayText(cvframe, reprojCentroid_txt)
+    displayText(cvframe, visibility_txt)
+    
+    dataText = " - Good data!!"
+    dataText_colour = (0, 255, 0) # green
+    if visible < cfg.min_reflectors:           # for when there isn't a matching trainer
+        dataText = " - Bad data!!"
+        dataText_colour = (0, 0, 255) # red
+        if cfg.ignore_baddata:
+            dataText += " Ignored."
     
     displayText(cvframe, dataText, endl=True, colour=dataText_colour)
     displayText(cvframe, trainer_txt)

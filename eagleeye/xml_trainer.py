@@ -3,13 +3,12 @@
 # Group 15 - UniSA 2015
 # 
 # Kin Kuen Liu, Gwilyn Saunders
-# version 0.2.2
+# version 0.2.4
 
 import xml.etree.ElementTree as ET
 from theta_sides import Theta
 
 class Xmltrainer:
-    
     def __init__(self, path=None, side=Theta.NonDual):
         self.side = side
         if path is not None:
@@ -38,10 +37,11 @@ class Xmltrainer:
         else:
             frames = self.root.find("frames")
         
+        # even more error checking
         if frames is None:
             raise Exception("Wrong input file for {} mode".format(Theta.name(self.side)))
         if "num" not in frames.attrib:
-            raise Exception("Outdated trainer file, missing {} num attrib.".format(s))
+            raise Exception("Outdated trainer file, missing num attrib.")
             
         # storage vars
         self.frames = {}
