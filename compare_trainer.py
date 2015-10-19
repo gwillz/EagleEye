@@ -4,17 +4,16 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.8
+# version 0.1.9
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
 # 
 
-import sys, cv2, numpy as np, time, os
+import sys, cv2, numpy as np, time, os, csv
 from eagleeye import BuffSplitCap, Xmlset, Xmltrainer, EasyArgs, EasyConfig, Key, marker_tool, Theta
 from eagleeye.display_text import *
 from math import sqrt
-import csv
 
 def usage():
     print "usage: python2 compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -side <buttonside|backside|single> | -config <file> | -video_export <file> | -compare_export <file>}"
@@ -50,7 +49,7 @@ def main(sysargs):
     
     # open inouts files
     vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size, side=side)
-    mapper_xml = Xmlset(args[2], offset=cfg.offset, offmode=Xmlset.__dict__[cfg.offset_mode])
+    mapper_xml = Xmlset(args[2], offset=cfg.offset, offmode=Xmlset.offset_mode(cfg.offset_mode))
     trainer_xml = Xmltrainer(args[3], side=side)
     reprojerror_list = {}     # list of reprojection error of all frames
     lastframe = False
@@ -63,11 +62,10 @@ def main(sysargs):
     
     # also reject if it's lens data doesn't match the trainer_xml
     _test_lens = mapper_xml.data(0)[cfg.trainer_target]
-    if 'lens' in _test_lens and side == Theta.NonDual \
-            or 'lens' not in _test_lens and side != Theta.NonDual:
-        
+    if _test_lens == Theta.NonDual \
+            or (side != Theta.NonDual and _test_lens != Theta.NonDual):
         print "Mapping file doesn't match training file"
-        print "map:", _test_lens['lens'], "trainer:", side
+        print "map:", Theta.name(_test_lens['lens']), "trainer:", Theta.name(side)
         return 1
     
     # sync the video and xml

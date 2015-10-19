@@ -14,10 +14,15 @@ from math import ceil, floor
 from theta_sides import Theta
 
 class Xmlset:
-    off_by_frame = 0
-    off_by_ratio = 1
+    off_by_mov = 0
+    off_by_csv = 1
     
-    def __init__(self, path=None, offset=0, offmode=off_by_frame):
+    @staticmethod
+    def offset_mode(var):
+        if 'csv' in var: return Xmlset.off_by_csv
+        else: return Xmlset.off_by_mov
+    
+    def __init__(self, path=None, offset=0, offmode=off_by_csv):
         self.offset = offset
         self.offmode = offmode
         if path is not None:
@@ -86,14 +91,6 @@ class Xmlset:
             return int(ceil(self._at)) + self.offset
         else:
             return int(floor(self._at)) + self.offset
-    
-    def offset(self, mode=None):
-        if mode is not None:
-            self.offmode = mode
-        if self.offmode == self.off_by_frame:
-            return self.offset
-        if self.offmode == self.off_by_ratio:
-            return self.offset * self._ratio
     
     def ratio(self):
         return self._ratio
