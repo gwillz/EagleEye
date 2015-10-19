@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.2
+# version 0.1.3
 #
 #
 # Options:
@@ -64,7 +64,12 @@ for m in mappers:
               55+random.random()*200,
               55+random.random()*200)
     
-    tv = np.abs(m.tv)
+    # stupid
+    #tv = np.abs(m.tv)
+    
+    R = cv2.Rodrigues(m.rv)[0]
+    tv = -np.matrix(R).T * np.matrix(m.tv)
+    
     rv = unit(m.rv)
     pts = m.obj_pts
     
@@ -79,10 +84,10 @@ for m in mappers:
     cv2.circle(baseframe, pt1, 2, colour, 2)
     cv2.arrowedLine(baseframe, pt1, pt2, colour, 2)
     
-    displayText(baseframe, "{}: {}{}".format(Theta.name(m.mode), x, y))
+    displayText(baseframe, "{}: {}{}{}".format(Theta.name(m.mode), *tv))
     
     for i in pts:
-        print i
+        #print i
         x, y, z = i
         p = (int(x*scale), img_h-int(y*scale))
         cv2.circle(baseframe, p, 1, colour, 2)

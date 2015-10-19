@@ -40,8 +40,10 @@ class Xmltrainer:
         # even more error checking
         if frames is None:
             raise Exception("Wrong input file for {} mode".format(Theta.name(self.side)))
-        if "num" not in frames.attrib:
-            raise Exception("Outdated trainer file, missing num attrib.")
+        
+        # TODO ignore this one for now
+        #if "num" not in frames.attrib:
+        #    raise Exception("Outdated trainer file, missing num attrib.")
             
         # storage vars
         self.frames = {}
