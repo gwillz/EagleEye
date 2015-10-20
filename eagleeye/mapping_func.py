@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.3.14
+# version 0.3.15
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
@@ -23,7 +23,8 @@ class Mapper:
         
         # load some configs, required by solvePnP eventually
         self.cfg = cfg
-        self.halfcos_fov = np.cos(cfg.camera_fov / 2)
+        self.halfcos_fov = np.cos(np.radians(cfg.camera_fov) / 2)
+        self.half_fov = np.radians(cfg.camera_fov) / 2
         
         # open intrinsic, trainer files
         self.cam, self.distort = self.parseCamIntr(intrinsic)
@@ -143,15 +144,20 @@ class Mapper:
         return rv, tv
     
     def isVisible(self, pt):
-        obj = np.array(pt).reshape((3, 1))
+        obj = np.array(pt).reshape(3, 1)
         
         # determine line and direction to object
-        cam_to_obj = self.tv - obj
+        cam_to_obj = obj - self.tv
         obj_dir = unit(cam_to_obj)
         
         # test within FOV
         cosTheta = np.vdot(self.rv_unit, obj_dir)
-        return cosTheta < self.halfcos_fov
+        
+        #print np.rad2deg(np.arccos(cosTheta)), "<", np.rad2deg(np.arccos(self.halfcos_fov))
+        
+        # are 'cos' comparisons backwards?
+        #return np.arccos(cosTheta) < self.half_fov
+        return cosTheta > self.halfcos_fov
     
     def reprojpts(self, obj_pts):
         if len(obj_pts) == 0:

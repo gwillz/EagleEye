@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.3
+# version 0.1.5
 #
 #
 # Options:
@@ -18,8 +18,25 @@ from eagleeye.display_text import *
 def usage():
     print "usage: trainer_trace.py <calib xml> <trainer xml>  {-height <mm> | -width <mm> | -max_height <px> | -singlemode | -config <file> | -export <file>}"
 
+
+# extra stuff
 magnitude = lambda x: np.sqrt(np.vdot(x, x))
 unit = lambda x: x / magnitude(x)
+invert_colour = lambda x: 255 - x
+
+def draw_arrow(frame, position, direction, colour, length=750):
+    end = position + length * direction
+    
+    x, y, z = position
+    pt1 = (int(x*scale), img_h-int(y*scale))
+    x, y, z = end
+    pt2 = (int(x*scale), img_h-int(y*scale))
+    
+    # draw
+    cv2.circle(frame, pt1, 2, colour, 2)
+    cv2.arrowedLine(frame, pt1, pt2, colour, 2)
+
+
 
 args = EasyArgs()
 
@@ -57,41 +74,53 @@ if not args.singlemode:
 else:
     mappers = [Mapper(args[1], args[2], cfg, Theta.NonDual)]
 
-#displayText(baseframe, "single mode" if args.singlemode else "dual mode", top=True)
+# set fake camera pos
+fake_tv = np.array((4250, 1550, 400), np.float32).reshape(3,1)
+fake_rv = np.array((1, 0, 0)).reshape(3,1)
+
+#mappers[0].tv = mappers[1].tv = fake_tv
+#mappers[0].rv = fake_rv * -1
+#mappers[1].rv = fake_rv
 
 for m in mappers:
     colour = (55+random.random()*200,
               55+random.random()*200,
               55+random.random()*200)
     
-    # stupid
-    #tv = np.abs(m.tv)
-    
     R = cv2.Rodrigues(m.rv)[0]
-    tv = -np.matrix(R).T * np.matrix(m.tv)
+    Rt = np.matrix(R).T
+    tv = -Rt * np.matrix(m.tv)
     
-    rv = unit(m.rv)
+    
+    #rv = -Rt[2].reshape(3,1)
+    rv = cv2.Rodrigues(Rt)[0]
+    
+    # fake camera pos
+    #m.rv_unit = unit(m.rv)
+    #tv = m.tv
+    #rv = m.rv
+    
+    vis = 0
     pts = m.obj_pts
     
-    end = tv + 750 * rv
-    
-    # draw
-    x, y, z = tv
-    pt1 = (int(x*scale), img_h-int(y*scale))
-    x, y, z = end
-    pt2 = (int(x*scale), img_h-int(y*scale))
-    
-    cv2.circle(baseframe, pt1, 2, colour, 2)
-    cv2.arrowedLine(baseframe, pt1, pt2, colour, 2)
-    
-    displayText(baseframe, "{}: {}{}{}".format(Theta.name(m.mode), *tv))
-    
     for i in pts:
-        #print i
+        # draw points
         x, y, z = i
         p = (int(x*scale), img_h-int(y*scale))
         cv2.circle(baseframe, p, 1, colour, 2)
+        
+        # test visibility
+        if m.isVisible((x,y,z)): vis += 1
+        else: 
+            cv2.circle(baseframe, p, 6, colour, 1)
+            print "invisible:", x, y, z
+    
+    # draw
+    draw_arrow(baseframe, tv, rv, colour)
+    displayText(baseframe, "{}: {}, {}, {}".format(Theta.name(m.mode), *tv), colour=colour)
+    displayText(baseframe, " visible: {}/{}".format(vis, len(pts)), endl=True, colour=colour)
 
+# clean up
 cv2.imshow(window_name, baseframe)
 cv2.waitKey(0)
 
