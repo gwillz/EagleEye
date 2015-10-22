@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.6
+# version 0.2.7
 # 
 # Loads a whole CSV dataset into memory
 # Provides flash detection and set restriction
@@ -39,12 +39,12 @@ class Memset:
                 
                 if row[1] == 'F' and flash == 0:
                     flash = 1
-                    self.start_set = self.total
+                    self.start_set = self.total + 1
                 if row[1] != 'F' and flash == 1:
                     flash = 2
                 if row[1] == 'F' and flash == 2:
                     flash = 3
-                    self.end_set = self.total
+                    self.end_set = self.total - 1
                     
                 self.data.append(row)
                 self.total += 1
@@ -94,3 +94,27 @@ class Memset:
     
     def name(self):
         return self._name
+
+
+if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) < 2:
+        print "please specify a csv file"
+        exit(0)
+    
+    data = Memset(sys.argv[1])
+    
+    print "total", data.total, data.row()[1]
+    
+    print "start", data.start_set, data.row()[1]
+    print "end", data.end_set, data.row()[1]
+    
+    print "restrict"
+    data.restrict()
+    
+    print "start", data.at(), data.row()[1]
+    print "total", data.total, data.row()[1]
+    
+    exit(0)
+    

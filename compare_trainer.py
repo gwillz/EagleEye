@@ -4,20 +4,20 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.4
+# version 0.1.7
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
 # 
 
 import sys, cv2, numpy as np, time, os
-from eagleeye import BuffCap, Xmlset, Xmltrainer, Xmlframe, EasyArgs, EasyConfig, Key, marker_tool
+from eagleeye import BuffSplitCap, Xmlset, Xmltrainer, EasyArgs, EasyConfig, Key, marker_tool
 from eagleeye.display_text import *
 from math import sqrt
 import csv
 
 def usage():
-    print "usage: python2 compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -config <file> | -export <file>}"
+    print "usage: python2 compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -config <file> | -video_export <file> | -compare_export <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
@@ -47,54 +47,58 @@ def main(sysargs):
         return 1
     
     # open inouts files
-    vid = BuffCap(args[1], buff_max=cfg.buffer_size)
-    mapper_xml = Xmlframe(args[2])
+    vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size)
+    mapper_xml = Xmlset(args[2], offset=cfg.offset, offmode=Xmlset.__dict__[cfg.offset_mode])
     trainer_xml = Xmltrainer(args[3])
     reprojerror_list = {}     # list of reprojection error of all frames
     lastframe = False
     
     # reject mapper_xml if it doesn't contain the trainer_target
-    if cfg.trainer_target not in mapper_xml.data(0)['0']:
+    if cfg.trainer_target not in mapper_xml.data(0):
         print "Mapping file must contain training target:", cfg.trainer_target
+        print mapper_xml.data(0)
         return 1
     
-    # sync the xml with the video
+    # sync the video and xml
+    vid.restrict(mark_in, mark_out)
     cropped_total = mark_out - mark_in
     mapper_xml.setRatio(cropped_total)
-    print 'ratio at:', mapper_xml._ratio, "\n"
+    
+    # status
+    print "ratio at:", mapper_xml.ratio()
+    print "offset by:", cfg.offset, "in", cfg.offset_mode, "mode"
+    print ""
     
     # open export (if specified)
-    if args.export:
-        in_fps  = vid._cap.get(cv2.CAP_PROP_FPS)
-        in_size = (int(vid._cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                   int(vid._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    if args.video_export:
+        in_fps  = vid.get(cv2.CAP_PROP_FPS)
+        in_size = (int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                   int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
-        out_vid = cv2.VideoWriter(args.export,
+        out_vid = cv2.VideoWriter(args.video_export,
                                   cv2.VideoWriter_fourcc(*cfg.fourcc),
                                   in_fps, vid.shape[:2])
+        print "exporting to:", args.video_export
     else:
         cv2.namedWindow(window_name)
+        print "interactive mode"
     
+    
+    # main loop
     while vid.isOpened():
-        # restrict to flash marks
-        if vid.at() <= mark_in: 
-            vid.next()
-            continue
-        
         frame = vid.frame()
-        frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
+        reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
         
-        # elementtreet or navigate
-        if args.export:
+        # export or navigate
+        if args.video_export:
             sys.stdout.write("Reading Video Frame: {} / {}\r".format(vid.at(), mark_out))
             sys.stdout.flush()
             
             out_vid.write(frame)
             
-            if(vid.at() < mark_out -1):
-                if vid.next():
-                    frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
-                    mapper_xml.next()
+            if vid.next():
+                reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
+                mapper_xml.next()
             else:
                 calReprojList(reprojerror_list)
                 print "\nend of video"
@@ -107,43 +111,52 @@ def main(sysargs):
             # controls
             if key == Key.esc:
                 print "\nexiting."
-                return 1
+                break
             elif key == Key.right:
-                if(vid.at() < mark_out -1):
-                    if vid.next():
-                        mapper_xml.next()
+                if vid.next():
+                    mapper_xml.next()
                 else:
                     if lastframe is False:
                         print "\nEnd of video"
                         calReprojList(reprojerror_list)
                     lastframe = True
+                    
             elif key == Key.left:
-                if(vid.at() - 1 != mark_in):
-                    if vid.back():
-                        mapper_xml.back()
+                if vid.back():
+                    mapper_xml.back()
+            
             elif key == Key.enter:
-                while (vid.at() < mark_out):
-                    if (vid.at() > mark_out -1):
-                        break
-
-                    frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
+                while True:
+                    reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
                     cv2.imshow(window_name, frame)
+                    
                     if vid.next():
                         mapper_xml.next()
                         frame = vid.frame()
+                    
+                    # break when over
+                    else: break
                 
                 calReprojList(reprojerror_list)
                 print "\nFast forwarded to end of video"
-                print "Output to file"
-                writeFile("C:\\Anaconda\\awork\\wizardtool\\data\\compare_frames.csv", reprojerror_list)
+                
+                if args.compare_export:
+                    print "Output to file"
+                    writeFile(args.compare_export, reprojerror_list)
                 break
-                #return 1
+            
             elif key == Key.space:
                 ''' TODO: display all training points, may be abandoned
                 problems:
                 frame is not refreshed after imshow
                 if showAll is False:
-                    frame = displayTrainPts(frame, mark_in, mark_out, trainer_xml, cfg)
+                    displayTrainPts(frame, mark_in, mark_out, trainer_xml, cfg)
+                    #
+                    #except:
+                    #    print "Error in displaying training points. Exiting..."
+                    #    return 1
+                    #
+                    
                     showAll = True
                 else:
                     frame, reprojerror_list = compareReproj(frame, vid.at(), mapper_xml, trainer_xml, reprojerror_list, cfg)
@@ -153,31 +166,22 @@ def main(sysargs):
     
     # clean up
     vid.release()
-    if args.export:
+    if args.video_export:
         out_vid.release()
     else:
         cv2.destroyAllWindows()
         
     return 0
 
-# Display 
+
+# display original trainer point
 def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_list, cfg):
-
-    min_reflectors = int(cfg.min_reflectors)
-    if min_reflectors < 4:
-        min_reflectors = 4
     
-    xmlframe_no = 0
-    if len(mapper_xml.data().keys()) > 0:
-        xmlframe_no = mapper_xml.data().keys()[0] # get first key, should rewrite mapper xml reader(?)
-    else:
-        print "Corresponding frame is missing in the mapping XML at vidio frame: {}".format(vidframe_no)
-        return cvframe
-
+    xmlframe_no = mapper_xml.at()
     sys.stdout.write("Reading Video Frame: {}".format(vidframe_no) + " | XML Frame number: {}\r".format(xmlframe_no))
     sys.stdout.flush()
     
-    trainer_object = mapper_xml.data()[xmlframe_no][cfg.trainer_target]
+    trainer_object = mapper_xml.data(xmlframe_no)[cfg.trainer_target]
     
     # Prepare Repojected Point
     pt1 = (int(float(trainer_object['box']['x'])), 
@@ -198,7 +202,7 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     cv2.circle(cvframe, centre, 1, cfg.mapper_colour, 2)
     
     # Display Object Info
-    frameObj_Txt = "Frame: {} | Trained Object: {}".format(vidframe_no, str(cfg.trainer_target))
+    frameObj_Txt = "Frame: {} | Trained Object: {}".format(vidframe_no, cfg.trainer_target)
     displayText(cvframe, frameObj_Txt, top=True)
     
     reprojCentroid_txt = "Reprojected Centroid - x: {}, y: {}".format(centre[0],centre[1])
@@ -209,49 +213,53 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     
     dataText = " - Good data!!"
     dataText_colour = (0, 255, 0) # green
-    if visible < min_reflectors:           # for when there isn't a matching trainer
+    if visible < cfg.min_reflectors:           # for when there isn't a matching trainer
         dataText = " - Bad data!!"
         dataText_colour = (0, 0, 255) # red
         if cfg.ignore_baddata:
             dataText += " Ignored."
     
     # Get trainer point if it exists at current frame
-    vicon_txt = "VICON - x:{} y:{} z:{}".format("?", "?", "?")
-    trainer_txt = "Trained Point: x:{} y: {}".format("?", "?")
-    reprojErr_txt = "Reprojection Error: {}".format("No Data")
-    trainer_frame = trainer_xml.data(str(vidframe_no))
+    vicon_txt = "VICON - x: ?, y: ?, z: ?"
+    trainer_txt = "Trained Point: x: ?, y: ?"
+    reprojErr_txt = "Reprojection Error: No Data"
     
-    if trainer_frame is not None:
+    if vidframe_no in trainer_xml.data():
+        trainer_frame = trainer_xml.data()[vidframe_no]
+    
+        vicon_txt = "VICON - x: {:.4f}, y: {:.4f}, z: {:.4f}".format(
+                            float(trainer_frame["vicon"]["x"]),
+                            float(trainer_frame["vicon"]["y"]),
+                            float(trainer_frame["vicon"]["z"]))
+        trainer_txt = "Trained Point: x: {}, y: {}".format(
+                            int(float(trainer_frame["plane"]["x"])),
+                            int(float(trainer_frame["plane"]["y"])))
+        
+        # visualise trainer point
         trainer_pt = (int(float(trainer_frame["plane"]["x"])),
                         int(float(trainer_frame["plane"]["y"])))
-        trainer_txt = "Trained Point: x:{} y: {}".format(int(float(trainer_frame["plane"]["x"])),
-                                                            int(float(trainer_frame["plane"]["y"])))
-        # visualise trainer point
         cv2.circle(cvframe, trainer_pt, 1, cfg.trainer_colour, 2)
 
         # Calculate Reprojection Error at this frame
         # Still display bad data reprojection error but not used in calculation of mean
         reprojErr = calReprojError(centre, trainer_pt)
         reprojErr_txt = "Reprojection Error: {} pixels".format(str(reprojErr))
-        if(cfg.ignore_baddata == True):
-            if(visible >= min_reflectors):
-                reprojerror_list.update({vidframe_no: {"rms": reprojErr,
+        
+        if cfg.ignore_baddata:
+            if visible >= cfg.min_reflectors:
+                reprojerror_list.update({vidframe_no: {
+                                            "rms": reprojErr,
                                             "x1": trainer_pt[0],
                                             "y1": trainer_pt[1],
                                             "x2": pt1[0],
                                             "y2": pt1[1]}})
-        
-        vicon_txt = "VICON - x:{} y:{} z:{}".format(float(trainer_frame["vicon"]["x"]),
-                                                        float(trainer_frame["vicon"]["y"]),
-                                                        float(trainer_frame["vicon"]["z"]))
-    
     
     displayText(cvframe, dataText, endl=True, colour=dataText_colour)
     displayText(cvframe, trainer_txt)
     displayText(cvframe, vicon_txt)
     displayText(cvframe, reprojErr_txt)
     
-    return cvframe, reprojerror_list
+    return reprojerror_list
 
 
 def writeFile(filepath, reprojList):
@@ -265,6 +273,7 @@ def writeFile(filepath, reprojList):
                         reprojList[data]["y2"],
                         reprojList[data]["rms"]])
 
+
 # calculate the difference between 2 points (manually picked & reprojected)
 def calReprojError(img_pt, reproj_pt):
     if img_pt and reproj_pt is not None:
@@ -272,11 +281,12 @@ def calReprojError(img_pt, reproj_pt):
             return cv2.norm(img_pt, reproj_pt, cv2.NORM_L2) # Euclidean distance
     return -1.0
 
+
 def calReprojList(reprojerror_list):
     # print reprojection error at end of vid
     print "\n"
     total_error = 0.0
-    if (len(reprojerror_list) > 0):
+    if len(reprojerror_list) > 0:
         for frm in reprojerror_list:
             total_error += float(reprojerror_list[frm]["rms"])
             
@@ -294,21 +304,18 @@ def calReprojList(reprojerror_list):
     else:
         print "Reprojection Error: No Data"
 
+
 # display all training points used
 def displayTrainPts(frame, mark_in, mark_out, trainerxml, cfg):
     for i in range(mark_in +1, mark_out):
-        train_pt = trainerxml.data(str(i))
-        if train_pt is not None:
-            try:
-                trainer_pt = (int(float(train_pt["plane"]["x"])),
-                              int(float(train_pt["plane"]["y"])))
-                # visualise trainer point
-                cv2.circle(frame, trainer_pt, 1, cfg.trainer_colour, 2)
-            except:
-                print "Error in displaying training points. Exiting..."
-                return 1
+        if i in trainerxml.data():
             
-    return frame
+            train_pt = trainerxml.data()[i]
+            trainer_pt = (int(float(train_pt["plane"]["x"])),
+                            int(float(train_pt["plane"]["y"])))
+            # visualise trainer point
+            cv2.circle(frame, trainer_pt, 1, cfg.trainer_colour, 2)
+            
 
 if __name__ == '__main__':
     exit(main(sys.argv))

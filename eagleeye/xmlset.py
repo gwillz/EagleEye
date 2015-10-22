@@ -3,16 +3,22 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.2
+# version 0.2.6
 # 
 # Reads an XML Dataset file into memory
 # Provides synchronisation techniques - via setRatio()
 # 
 
 import xml.etree.ElementTree as ET
+from math import ceil, floor
 
 class Xmlset:
-    def __init__(self, path=None):
+    off_by_frame = 0
+    off_by_ratio = 1
+    
+    def __init__(self, path=None, offset=0, offmode=off_by_frame):
+        self.offset = offset
+        self.offmode = offmode
         if path is not None:
             self.open(path)
     
@@ -21,29 +27,37 @@ class Xmlset:
         tree = ET.parse(path)
         self.root = tree.getroot()
         
-        self.frames = []
-        self._at = 0
+        if len(self.root) == 0:
+            raise IOError('XML file is empty.')
+        
+        if self.root.tag != "dataset":
+            raise IOError("Wrong input file, needs a dataset xml file.")
+        
+        self._frames = {}
+        self._at = 0.0
         self._ratio = 1.0
         
-        for frm in self.root:
-            #num = el.find('frame').atrrib['number']
+        for frm in self.root.findall('frameInformation'):
+            num = int(frm.find('frame').attrib['number'])
+            
             objects = {}
             for obj in frm.findall('object'):
                 name = obj.attrib['name']
                 objects[name] = {}
                 objects[name]["box"] = obj.find('boxinfo').attrib
                 objects[name]["centre"] = obj.find('centroid').attrib
+                objects[name]["visibility"] = obj.find("visibility").attrib
             
-            self.frames.append(objects)
+            self._frames[num] = objects
         
-        self.total = len(self.frames)
+        self.total = len(self._frames)
     
     # Gets current frame, or a specific frame if 'at' option is > 0
-    def data(self, at=-1):
+    def data(self, at=-1, mode=0):
         if at == -1:
-            return self.frames[self.at()]
+            return self._frames[self.at(mode)] # TODO: are we just assuming all frames are filled in?
         else:
-            return self.frames[at]
+            return self._frames[at]
     
     def next(self):
         i = self._at + self._ratio
@@ -59,8 +73,24 @@ class Xmlset:
             return True
         return False
     
-    def at(self):
-        return int(round(self._at, 0))
+    def at(self, mode=0):
+        if mode == 0:
+            return int(round(self._at, 0)) + self.offset
+        if mode == 1:
+            return int(ceil(self._at)) + self.offset
+        else:
+            return int(floor(self._at)) + self.offset
+    
+    def offset(self, mode=None):
+        if mode is not None:
+            self.offmode = mode
+        if self.offmode == self.off_by_frame:
+            return self.offset
+        if self.offmode == self.off_by_ratio:
+            return self.offset * self._ratio
+    
+    def ratio(self):
+        return self._ratio
     
     # calculate appropriate ratio from the matching video frames
     def setRatio(self, video_frames):
