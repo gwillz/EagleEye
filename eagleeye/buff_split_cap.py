@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version: 0.2.2
+# version: 0.2.3
 # 
 # Implements features from both BuffCapture and SplitCapture
 # Can buffer and split, rotate, crop frames on-the-fly
@@ -11,18 +11,16 @@
 #
 
 import cv2, numpy as np
+from theta_sides import Theta
 
 class BuffSplitCap:
-    left = 0
-    right = 1
-    both = 2
     r0 = 0
     r90 = 1
     r180 = 2
     r270 = 3
     
     # open a path, set the default transformations
-    def __init__(self, path, side=both, rotate=r0, crop=(0, 0, 0, 0), buff_max=30):
+    def __init__(self, path, side=Theta.Both, rotate=r0, crop=(0, 0, 0, 0), buff_max=30):
         self._cap = cv2.VideoCapture(path)
         
         # buffer variables
@@ -60,9 +58,9 @@ class BuffSplitCap:
     # internal routine - runs transformations on a single frame
     def _transform(self, frame, side, rotate, crop):
         # crop and split
-        if side == self.left:
+        if side == Theta.Left:
             frame = frame[0-crop[0]:self._h-crop[2], 0-crop[3]:self._w/2-crop[1]]
-        elif side == self.right:
+        elif side == Theta.Right:
             frame = frame[0-crop[0]:self._h-crop[2], self._w/2-crop[3]:self._w-crop[1]]
         else: # both
             frame = frame[0-crop[0]:self._h-crop[2], 0-crop[3]:self._w-crop[1]]
@@ -162,7 +160,7 @@ if __name__ == "__main__":
         exit(1)
     
     # open reader, window, etc
-    side = BuffSplitCap.left if sys.argv[2] == 'left' else BuffSplitCap.right
+    side = Theta.resolve(sys.argv[2])
     cap = BuffSplitCap(sys.argv[1], side=side, rotate=BuffSplitCap.r270)
     
     window_name = "SplitCap test"

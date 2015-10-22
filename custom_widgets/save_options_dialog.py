@@ -20,6 +20,7 @@ class SaveOptionsDialog(QDialog):
         self.ui.everything_button.clicked.connect(self.preset_everything)
         self.ui.novideos_button.clicked.connect(self.preset_novideos)
         self.ui.typical_button.clicked.connect(self.preset_typical)
+        self.ui.training_button.clicked.connect(self.preset_training)
         self.ui.minimal_button.clicked.connect(self.preset_minimal)
         
         novideo_slot = lambda: self.ui.novideos_button.setChecked(False)
@@ -85,29 +86,35 @@ class SaveOptionsDialog(QDialog):
     
     @pyqtSlot()
     def preset_typical(self):
-        self.toggle_these(["calibration", "trainer_set", "dataset_mov", 
-                           "vicondata", "dataset_map", "dataset_ann", "evaluation"], True)
         self.toggle_these(["chessboards", "trainer_csv", "trainer_mov", 
                            "trainer_map", "comparison"], False)
+        self.toggle_these(["calibration", "trainer_set", "dataset_mov", 
+                           "vicondata", "dataset_map", "dataset_ann", "evaluation"], True)
         
     @pyqtSlot()
     def preset_minimal(self):
-        self.toggle_these(["dataset_mov", "vicondata", "dataset_map", "dataset_ann"], True)
         self.toggle_these(["chessboards", "calibration", "trainer_csv", "trainer_mov", 
                            "trainer_map", "trainer_set", "comparison", "evaluation"], False)
+        self.toggle_these(["dataset_mov", "vicondata", "dataset_map", "dataset_ann"], True)
+    
+    @pyqtSlot()
+    def preset_training(self):
+        self.toggle_these(["chessboards", "calibration", "vicondata", "dataset_mov", 
+                           "dataset_map", "dataset_ann", "comparison", "evaluation"], False)
+        self.toggle_these(["trainer_set", "trainer_csv", "trainer_mov", "trainer_map"], True)
+    
     
     @pyqtSlot()
     def toggle_these(self, checkboxes, val):
         # dataset_check is special (doesn't exist in edit_fields)
-        if "dataset_ann" in checkboxes \
-                or "dataset_map" in checkboxes:
-            self.ui.dataset_check.setChecked(True)
+        self.ui.dataset_check.setChecked(\
+                                    "dataset_ann" in checkboxes \
+                                    or "dataset_map" in checkboxes)
         
         # toggle if available and enabled
         for i in checkboxes:
             if i in self.edit_fields \
-                    and i in self.ui.__dict__ \
-                    and self.ui.__dict__[i].isEnabled():
+                    and i in self.ui.__dict__:
                 self.ui.__dict__[i].setChecked(val)
     
     # return a dict of toggled fields with the respective input values

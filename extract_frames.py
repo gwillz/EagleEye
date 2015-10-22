@@ -4,13 +4,13 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.6
+# version 0.1.7
 # 
 # Processes a video and extracts singular frames for calibration.
 # 
 
 import sys, cv2, os
-from eagleeye import EasyArgs, BuffSplitCap, Key, EasyConfig
+from eagleeye import EasyArgs, BuffSplitCap, Key, EasyConfig, Theta
 from eagleeye.display_text import *
 
 def usage():
@@ -26,7 +26,7 @@ def main(sysargs):
 
     # video settings, etc
     window_name = "Chessboard Extractor"
-    side = BuffSplitCap.__dict__[args.split or 'right']
+    side = Theta.resolve(args.split)
     rotate = BuffSplitCap.r0
     crop = (0,0,0,0)
     font = cv2.FONT_HERSHEY_SIMPLEX

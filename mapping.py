@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.2.13
+# version 0.3.14
 # 
 # Runs mapping routines on multiple CSV files and combipnes them into a single XML format.
 #
@@ -12,14 +12,14 @@
 
 import sys, os
 from elementtree.SimpleXMLWriter import XMLWriter
-from eagleeye import Memset, EasyArgs, EasyConfig, Mapper
+from eagleeye import Memset, EasyArgs, EasyConfig, Mapper, Theta
 
 def usage():
     print "python2 mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {-map_trainer_mode | -config <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
-    cfg = EasyConfig(args.cfg, group="mapper")
+    cfg = EasyConfig(args.config, group="mapper")
 
     if ["calib", "trainer", "output"] not in args:
         print "Must specify: -calib, -trainer, -output files"
@@ -59,11 +59,14 @@ def main(sysargs):
     
     # open calib files
     try:
-        mapper = Mapper(args.calib, args.trainer, cfg)
+        buttonside = Mapper(args.calib, args.trainer, cfg, Theta.Buttonside)
+        backside = Mapper(args.calib, args.trainer, cfg, Theta.Backside)
     except Exception as e:
         print e.message
         return 1
-
+    
+    bts, bks = 0, 0
+    
     # open destination XML
     with open(args.output, "w") as xmlfile:
         w = XMLWriter(xmlfile)
@@ -92,7 +95,7 @@ def main(sysargs):
                     y = float(c.row()[3])
                     z = float(c.row()[4])
                     
-                    # TODO: Render Orientation Here
+                    # TODO: is this necessary? We never use the object's rotation
                     rx = float(c.row()[5])
                     ry = float(c.row()[6])
                     rz = float(c.row()[7])
@@ -101,10 +104,17 @@ def main(sysargs):
                     return 1
                 
                 # run projection/mapping on VICON data
-                points = mapper.reprojpts((x, y, z))
-
+                if backside.isVisible((x,y,z)):
+                    points = backside.reprojpts((x, y, z))
+                    side = 'backside'
+                    bks += 1
+                else:
+                    points = buttonside.reprojpts((x, y, z))
+                    side = 'buttonside'
+                    bts += 1
+                
                 # TODO: Change DTD and double check with Manjung
-                w.start("object", id=str(i), name=c.name())
+                w.start("object", id=str(i), name=c.name(), lens=side)
                 w.element("boxinfo", height="99", width="99", x=str(points[0]-50), y=str(points[1]-50))
                 w.element("centroid", x=str(points[0]), y=str(points[1]), rx=str(rx), ry=str(ry), rz=str(rz))
                 w.element("visibility", visible=str(visible_reflectors), visibleMax=str(max_reflectors))
@@ -128,6 +138,9 @@ def main(sysargs):
                 csvs[i].next()
         
         w.close(doc)
+        
+        print "buttonside", bts
+        print "backside", bks
         
     return 0
 

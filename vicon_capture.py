@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.11.26
+# version 0.11.27
 #
 # Retrieves Vicon data via PyVicon
 # Includes syncronized timestamp data via a R232 COM port.
@@ -57,10 +57,13 @@ def main(sysargs):
     csvfiles = []
     csvwriters = {}
     
+    # flush through some vicon frames first
+    for i in range(0,10):
+        client.frame()
+    
     # determine training or capture mode
     if args.training:
         # test target existance
-        client.frame()
         if not cfg.trainer_target in client.subjects():
             print "Cannot find:", cfg.trainer_target
             return 1
@@ -70,7 +73,6 @@ def main(sysargs):
         csvwriters[cfg.trainer_target] = csv.writer(f, delimiter=cfg.output_delimiter, quoting=csv.QUOTE_MINIMAL)
         subjects = [cfg.trainer_target]
     else:
-        client.frame()
         subjects = client.subjects()
         
         # open CSV files
