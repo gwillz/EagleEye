@@ -269,9 +269,9 @@ def main(sysargs):
         # training point data
         for lens in trainer_points:
             if lens == BuffSplitCap.right:
-                out_xml.start("buttonside", num=str(len(trainer_points[lens])))
+                out_xml.start("buttonside", points=str(len(trainer_points[lens])))
             elif lens == BuffSplitCap.left:
-                out_xml.start("backside", num=str(len(trainer_points[lens])))
+                out_xml.start("backside", points=str(len(trainer_points[lens])))
             else: # non dualmode
                 out_xml.start("frames", num=str(len(trainer_points[lens])))
             
