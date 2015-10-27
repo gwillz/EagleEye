@@ -22,7 +22,7 @@ try:
     from mapping import main as mapping_main
     from compare import main as compare_main
     from compare_trainer import main as compare_trainer_main
-    #from evaluate import main as evaluate_main
+    from evaluate import main as evaluate_main
 # catch errors, report in main()
 except Exception as e:
     error = e

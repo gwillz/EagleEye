@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.0.1
+# version 0.0.2
 #
 # Compares mapped centroid to annotated centroid produced by annotation tool
 # And calculate reprojction error frame by frame
@@ -15,6 +15,8 @@ import csv
 import numpy as np
 from eagleeye import Xmlset, EasyArgs, EasyConfig
 from elementtree.SimpleXMLWriter import XMLWriter
+import matplotlib
+matplotlib.use('Qt4Agg')
 from matplotlib import pyplot as plt
 
 def usage():
