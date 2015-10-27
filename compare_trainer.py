@@ -57,7 +57,8 @@ def main(sysargs):
     # reject mapper_xml if it doesn't contain the trainer_target
     if cfg.trainer_target not in mapper_xml.data(0):
         print "Mapping file must contain training target:", cfg.trainer_target
-        print mapper_xml.data(0)
+        print "Target names in mapping file:", mapper_xml.data(0)
+        print "Please specifiy correct target name in config"
         return 1
     
     # also reject if it's lens data doesn't match the trainer_xml

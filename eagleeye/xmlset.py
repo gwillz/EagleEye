@@ -16,17 +16,24 @@ from theta_sides import Theta
 class Xmlset:
     off_by_mov = 0
     off_by_csv = 1
+    modes = ["trainer", "mapper", "annotated"]
+    mode = "trainer"
     
     @staticmethod
     def offset_mode(var):
         if 'csv' in var: return Xmlset.off_by_csv
         else: return Xmlset.off_by_mov
     
-    def __init__(self, path=None, offset=0, offmode=off_by_csv):
+    def __init__(self, path=None, offset=0, offmode=off_by_csv, readmode="trainer"):
         self.offset = offset
         self.offmode = offmode
         if path is not None:
             self.open(path)
+            
+        if readmode not in self.modes:
+            print "Read mode:", readmode, "is not supported, changing to default to read", self.mode
+        else:
+            self.mode = readmode
     
     def open(self, path):
         self.path = path
@@ -45,7 +52,6 @@ class Xmlset:
         
         for frm in self.root.findall('frameInformation'):
             num = int(frm.find('frame').attrib['number'])
-            
             objects = {}
             for obj in frm.findall('object'):
                 name = obj.attrib['name']
@@ -56,7 +62,7 @@ class Xmlset:
                 visible = obj.find("visibility")
                 if visible is not None:
                     objects[name]["visibility"] = visible.attrib
-                
+                    
                 if 'lens' in obj.attrib:
                     objects[name]["lens"] = Theta.resolve(obj.attrib['lens'])
                 else:
@@ -68,6 +74,12 @@ class Xmlset:
     
     # Gets current frame, or a specific frame if 'at' option is > 0
     def data(self, at=-1, mode=0):
+        at = int(at)    # convert to integer
+        
+        # if failed to find, return None
+        if at not in self._frames.keys():
+            return None
+        
         if at == -1:
             return self._frames[self.at(mode)] # TODO: are we just assuming all frames are filled in?
         else:

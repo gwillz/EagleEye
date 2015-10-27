@@ -1068,6 +1068,7 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def run_evaluation(self):
+        
         # browse for save path
         if self.evaluation_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Evaluation Output", "./data",
