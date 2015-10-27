@@ -237,6 +237,7 @@ Outputs Intrinsic parameters to xmldata folder as a XML file
 
 def intWriter(path, buttonside=None, backside=None):
     try:
+        status = ""
         print 'Generating Intrinsic Parameters to:', path, '...'
         with open(path, 'w') as int_xml:
             w = XMLWriter(int_xml)
@@ -244,48 +245,64 @@ def intWriter(path, buttonside=None, backside=None):
             
             # Camera Intrinsic (Root)
             root = w.start('dual_intrinsic')
-            
-            num_sides = range(0, 1) if buttonside is None or backside is None else range(0, 2)
+            num_sides = range(0, 2)
+            #num_sides = range(0, 1) if buttonside is None or backside is None else range(0, 2)
             for i in num_sides:
                 w.start("Buttonside" if i == 0 else "Backside")
+
+                if i == 0 and buttonside[0].size > 0 and buttonside[1].size > 0:
+                    status += 'Buttonside'
+                    camMat = buttonside[0]
+                    distCoe = buttonside[1]
+                    calibError = buttonside[2]
+                elif i == 1 and backside[0].size > 0 and backside[1].size > 0:
+                    if status == "":    status += 'Backside'
+                    else:   status += ' & Backside'
+                    camMat = backside[0]
+                    distCoe = backside[1]
+                    calibError = backside[2]
+                else:
+                    w.end()
+                    continue
+                
                 
                 # Camera Matrix
                 w.element('CamMat',
-                         fx=str(camMat[i][0][0]), fy=str(camMat[i][1][1]),
-                         cx=str(camMat[i][0][2]), cy=str(camMat[i][1][2]))
+                         fx=str(camMat[0][0]), fy=str(camMat[1][1]),
+                         cx=str(camMat[0][2]), cy=str(camMat[1][2]))
                 
                 # Distortion Coefficients
                 if (len(distCoe[0]) == 8): # 8 coefficients Rational Model, k4 k5 k6 enabled
                     w.element('DistCoe', 
-                                k1=str(distCoe[i][0][0]), k2=str(distCoe[i][0][1]),
-                                p1=str(distCoe[i][0][2]), p2=str(distCoe[i][0][3]),
-                                k3=str(distCoe[i][0][4]), k4=str(distCoe[i][0][5]),
-                                k5=str(distCoe[i][0][6]), k6=str(distCoe[i][0][7]))
+                                k1=str(distCoe[0][0]), k2=str(distCoe[0][1]),
+                                p1=str(distCoe[0][2]), p2=str(distCoe[0][3]),
+                                k3=str(distCoe[0][4]), k4=str(distCoe[0][5]),
+                                k5=str(distCoe[0][6]), k6=str(distCoe[0][7]))
                 elif (len(distCoe[0]) == 12): # 12 coefficients Prism Model, c1, c2, c3, c4 enabled, new in OpenCV 3.0.0
                     w.element('DistCoe', 
-                                k1=str(distCoe[i][0][0]), k2=str(distCoe[i][0][1]),
-                                p1=str(distCoe[i][0][2]), p2=str(distCoe[i][0][3]),
-                                k3=str(distCoe[i][0][4]), k4=str(distCoe[i][0][5]),
-                                k5=str(distCoe[i][0][6]), k6=str(distCoe[i][0][7]),
-                                c1=str(distCoe[i][0][8]), c2=str(distCoe[i][0][9]),
-                                c3=str(distCoe[i][0][10]),c4=str(distCoe[i][0][11]))
+                                k1=str(distCoe[0][0]), k2=str(distCoe[0][1]),
+                                p1=str(distCoe[0][2]), p2=str(distCoe[0][3]),
+                                k3=str(distCoe[0][4]), k4=str(distCoe[0][5]),
+                                k5=str(distCoe[0][6]), k6=str(distCoe[0][7]),
+                                c1=str(distCoe[0][8]), c2=str(distCoe[0][9]),
+                                c3=str(distCoe[0][10]),c4=str(distCoe[0][11]))
                 else:
                     w.element('DistCoe', 
-                                k1=str(distCoe[i][0][0]), k2=str(distCoe[i][0][1]),
-                                p1=str(distCoe[i][0][2]), p2=str(distCoe[i][0][3]),
-                                k3=str(distCoe[i][0][4]))
+                                k1=str(distCoe[0][0]), k2=str(distCoe[0][1]),
+                                p1=str(distCoe[0][2]), p2=str(distCoe[0][3]),
+                                k3=str(distCoe[0][4]))
                 
                 # Error values
                 if len(calibError) > 0:
                     w.element('Error', 
-                                rms=str(calibError[i]['rms']), 
-                                total=str(calibError[i]['tot_err']), 
-                                arth=str(calibError[i]['arth_err']))
+                                rms=str(calibError['rms']), 
+                                total=str(calibError['tot_err']), 
+                                arth=str(calibError['arth_err']))
                 
                 w.end() #buttonside/backside
                 
             w.close(root)
-        print 'Intrinsic calibration has been generated successfully.'
+        print status, 'Intrinsic calibration has been generated successfully.'
         
     except Exception as e:
         # keep it bubbling up, to catch in main()
@@ -335,8 +352,13 @@ def main(sysargs):
         p_size = ast.literal_eval("({})".format(args.chess_size))
     else:
         p_size = cfg.default_chess
+
+    # camera intrinsics
+    buttonside_cam, buttonside_dist, buttonside_err = np.asarray([]), np.asarray([]), {}
+    backside_cam, backside_dist, backside_err = np.asarray([]), np.asarray([]), {}
     
     try:
+
         # find chessboard images from prefixes
         if args.buttonside:
             buttonside_images = glob.glob(args.buttonside + "*")

@@ -269,9 +269,9 @@ def main(sysargs):
         # training point data
         for lens in trainer_points:
             if lens == Theta.Right:
-                out_xml.start("buttonside", num=str(len(trainer_points[lens])))
+                out_xml.start("buttonside", points=str(len(trainer_points[lens])))
             elif lens == Theta.Left:
-                out_xml.start("backside", num=str(len(trainer_points[lens])))
+                out_xml.start("backside", points=str(len(trainer_points[lens])))
             else: # non dualmode
                 out_xml.start("frames", num=str(len(trainer_points[lens])))
             

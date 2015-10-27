@@ -22,6 +22,7 @@ try:
     from mapping import main as mapping_main
     from compare import main as compare_main
     from compare_trainer import main as compare_trainer_main
+    from evaluate import main as evaluate_main
 # catch errors, report in main()
 except Exception as e:
     error = e
@@ -1067,10 +1068,6 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def run_evaluation(self):
-        #TODO evaluation isn't complete, returns early
-        QMessageBox.information(self, "Stub function", "This is incomplete at the moment. Soz.")
-        return 
-        
         # browse for save path
         if self.evaluation_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Evaluation Output", "./data",
