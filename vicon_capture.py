@@ -3,7 +3,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.11.27
+# version 0.11.26
 #
 # Retrieves Vicon data via PyVicon
 # Includes syncronized timestamp data via a R232 COM port.
@@ -28,6 +28,10 @@ def main(sysargs):
     num_frames = int(time * cfg.framerate) + (cfg.flash_delay * 2)
     flash_at = [cfg.flash_delay, num_frames - cfg.flash_delay]
     sleeper = Sleeper(1.0 / cfg.framerate)
+    
+    if "help" in args:
+        print "python2 vicon_capture.py {--output <folder> | --time <in minutes> | --config <file> | --training <file>}"
+        return 1
     
     # data directory sanity check
     if not os.path.exists(output_folder):
@@ -57,8 +61,8 @@ def main(sysargs):
     csvfiles = []
     csvwriters = {}
     
-    # flush through some vicon frames first
-    for i in range(0,10):
+    # grab a couple of frames first to clear out old subjects
+    for i in range(0,20):
         client.frame()
     
     # determine training or capture mode
@@ -72,9 +76,9 @@ def main(sysargs):
         csvfiles.append(f)
         csvwriters[cfg.trainer_target] = csv.writer(f, delimiter=cfg.output_delimiter, quoting=csv.QUOTE_MINIMAL)
         subjects = [cfg.trainer_target]
+        
     else:
         subjects = client.subjects()
-        
         # open CSV files
         for sub in subjects:
             path = "{0}_{1}.csv".format(outpath, sub)
@@ -118,7 +122,7 @@ def main(sysargs):
             rot = client.rotation(s)
             trans = client.translation(s)
             status = client.markerStatus(s)
-            csvwriters[s].writerow([sleeper.getStamp(), flash] + list(rot) + list(trans) + list(status))
+            csvwriters[s].writerow([sleeper.getStamp(), flash] + list(trans) + list(rot) + list(status))
         
         # sleep until next timestamp
         sys.stdout.write("{}/{}\r".format(c, num_frames))
