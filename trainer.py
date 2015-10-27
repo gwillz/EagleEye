@@ -273,7 +273,7 @@ def main(sysargs):
             elif lens == Theta.Left:
                 out_xml.start("backside", points=str(len(trainer_points[lens])))
             else: # non dualmode
-                out_xml.start("frames", num=str(len(trainer_points[lens])))
+                out_xml.start("frames", points=str(len(trainer_points[lens])))
             
             for i in trainer_points[lens]:
                 pos, row, markers = trainer_points[lens][i]

@@ -22,7 +22,7 @@ try:
     from mapping import main as mapping_main
     from compare import main as compare_main
     from compare_trainer import main as compare_trainer_main
-    from evaluate import main as evaluate_main
+    #from evaluate import main as evaluate_main
 # catch errors, report in main()
 except Exception as e:
     error = e
@@ -1088,12 +1088,21 @@ class Wizard(QMainWindow):
                                         QMessageBox.Yes, QMessageBox.No)
             if res == QMessageBox.No: return
         
+        # inputs
+        args = ["wizard", 
+                str(self.dataset_map_edit.text()),
+                str(self.dataset_ann_edit.text()),
+                str(self.evaluation_edit.text()),
+                "-config", self.config_path]
+        
+        # insert marks TODO why do we have marks for this?
+        if self.dataset_marks[1] > 0:
+            mark_in, mark_out = self.dataset_marks
+            args += [str(mark_in), str(mark_out)]
+        
+        # run
         self.statusbar.showMessage("Running Evaluation.")
-        stat, worker = self.run_tool(evaluate_main, ["wizard", 
-                                str(self.dataset_map_edit.text()),
-                                str(self.dataset_ann_edit.text()),
-                                str(self.evaluation_edit.text()),
-                                "-config", self.config_path])
+        stat, worker = self.run_tool(evaluate_main, args)
         if stat: worker.start()
     
     def run_marker(self, path, marks):

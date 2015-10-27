@@ -42,9 +42,9 @@ class Xmltrainer:
             raise Exception("Wrong input file for {} mode".format(Theta.name(self.side)))
         
         # TODO ignore this one for now
-        #if "num" not in frames.attrib:
-        #    raise Exception("Outdated trainer file, missing num attrib.")
-            
+        #if "points" not in frames.attrib:
+        #    raise Exception("Outdated trainer file, missing 'points' attrib.")
+        
         # storage vars
         self.frames = {}
         self._img = []
