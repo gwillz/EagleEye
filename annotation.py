@@ -1,14 +1,11 @@
-from PIL import Image, ImageTk
 import cv2
 import numpy as np
 import eagleeye as ee
 from numpy import *
-import pickle
 import time
 import sys
 import os
 from glob import glob
-import itertools as it
 import PyQt4
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QMessageBox
@@ -16,8 +13,6 @@ from PyQt4.Qt import *
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 import StringIO
-import tkFileDialog
-from tkFileDialog import *
 
 #marks_in : begin frame of the flash, marks_out : finish frame of the flash
 args = ee.EasyArgs(sys.argv)
@@ -26,7 +21,8 @@ mark_out = 0
 if args.mark_in and args.mark_out:
     mark_in = args.mark_in
     mark_out = args.mark_out
-    
+
+
 # annotation = 0 : annotation is not finished yet, 1 : finished
 annotation = 0
 location = ""       # store location directory.

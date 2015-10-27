@@ -2,7 +2,7 @@
 
 from PyQt4 import uic
 from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, qApp
-from PyQt4.QtCore import QProcess, QObject, QThread, pyqtSlot, pyqtSignal, QT_VERSION_STR
+from PyQt4.QtCore import QProcess, QObject, QThread, QStringList, pyqtSlot, pyqtSignal, QT_VERSION_STR
 from PyQt4.Qt import PYQT_VERSION_STR
 import sys, os, cv2, numpy as np, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
 from elementtree.SimpleXMLWriter import XMLWriter
@@ -997,17 +997,17 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def run_annotation(self):
-        if annotation_process.state() == QProcess.NotRunning:
-            print "annotate"
-            args = ["",
+        if self.annotation_process.state() == QProcess.NotRunning:
+            print "annotation"
+            args = ["annotation.py",
                     "-video", str(self.dataset_mov_edit.text()),
                     "-output", str(self.dataset_ann_edit.text()),
-                    "-mark_in", self.dataset_marks[0],
-                    "-mark_out", self.dataset_marks[1]]
+                    "-mark_in", str(self.dataset_marks[0]),
+                    "-mark_out", str(self.dataset_marks[1])]
             
             self.disable_tools()
-            annotation_process.start(sys.executable, args)
-            annotation_process.finished.connect(self.enable_tools)
+            self.annotation_process.start(sys.executable, args)
+            self.annotation_process.finished.connect(self.enable_tools)
     
     @pyqtSlot()
     def run_comparison(self):
