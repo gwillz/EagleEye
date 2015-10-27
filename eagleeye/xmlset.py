@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.8
+# version 0.2.9
 # 
 # Reads an XML Dataset file into memory
 # Provides synchronisation techniques - via setRatio()
@@ -53,7 +53,7 @@ class Xmlset:
                 objects[name]["box"] = obj.find('boxinfo').attrib
                 objects[name]["centre"] = obj.find('centroid').attrib
                 
-                visible = obj.find("visibility").attrib
+                visible = obj.find("visibility")
                 if visible is not None:
                     objects[name]["visibility"] = visible.attrib
                 

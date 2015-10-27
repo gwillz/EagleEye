@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.9
+# version 0.1.10
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
@@ -61,11 +61,11 @@ def main(sysargs):
         return 1
     
     # also reject if it's lens data doesn't match the trainer_xml
-    _test_lens = mapper_xml.data(0)[cfg.trainer_target]
-    if _test_lens == Theta.NonDual \
-            or (side != Theta.NonDual and _test_lens != Theta.NonDual):
+    _test_lens = mapper_xml.data(0)[cfg.trainer_target]['lens']
+    if (_test_lens == Theta.NonDual and side != Theta.NonDual) \
+            or (side != Theta.NonDual and _test_lens == Theta.NonDual):
         print "Mapping file doesn't match training file"
-        print "map:", Theta.name(_test_lens['lens']), "trainer:", Theta.name(side)
+        print "map:", Theta.name(_test_lens), "trainer:", Theta.name(side)
         return 1
     
     # sync the video and xml

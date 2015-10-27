@@ -140,26 +140,27 @@ class Mapper:
         
         # TODO: customised solvePnP flags from config
         # levenberg-marquardt iterative method
-        #retval, rv, tv = cv2.solvePnP(
-                            #self.obj_pts, self.img_pts, 
-                            #self.cam, self.distort,
-                            #None, None, cv2.SOLVEPNP_ITERATIVE)
+        retval, rv, tv = cv2.solvePnP(
+                            self.obj_pts, self.img_pts, 
+                            self.cam, self.distort,
+                            None, None, cv2.SOLVEPNP_ITERATIVE)
         #'''
         #NOT RUNNING
         #http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
-        iterations = 100
-        reproj_error = 20.0
-        min_inliers = max(4, int(len(self.obj_pts) * 0.9))
-        print self.cam
-        retval, rv, tv, inliers = cv2.solvePnPRansac(
-                                      self.obj_pts, self.img_pts, 
-                                      self.cam, self.distort)#, 
-                                   #None, None, False,
-                                   #iterations, reproj_error, min_inliers)
-        #'''
+        #iterations = 100
+        #reproj_error = 20.0
+        #min_inliers = max(4, int(len(self.obj_pts) * 0.9))
+        #print self.cam
+        #retval, rv, tv, inliers = cv2.solvePnPRansac(
+                                      #self.obj_pts, self.img_pts, 
+                                      #self.cam, self.distort)#, 
+                                   ##None, None, False,
+                                   ##iterations, reproj_error, min_inliers)
+        ##'''
         
-        print rv, tv, inliers
-        # check, print, return
+        #print rv, tv, inliers
+        
+        ## check, print, return
         if rv is None or rv is None or not retval:
             raise Exception("Error occurred when calculating rotation and translation vectors.")
         
