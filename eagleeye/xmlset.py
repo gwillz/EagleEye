@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.6
+# version 0.2.8
 # 
 # Reads an XML Dataset file into memory
 # Provides synchronisation techniques - via setRatio()
@@ -11,16 +11,29 @@
 
 import xml.etree.ElementTree as ET
 from math import ceil, floor
+from theta_sides import Theta
 
 class Xmlset:
-    off_by_frame = 0
-    off_by_ratio = 1
+    off_by_mov = 0
+    off_by_csv = 1
+    modes = ["trainer", "mapper", "annotated"]
+    mode = "trainer"
     
-    def __init__(self, path=None, offset=0, offmode=off_by_frame):
+    @staticmethod
+    def offset_mode(var):
+        if 'csv' in var: return Xmlset.off_by_csv
+        else: return Xmlset.off_by_mov
+    
+    def __init__(self, path=None, offset=0, offmode=off_by_csv, readmode="trainer"):
         self.offset = offset
         self.offmode = offmode
         if path is not None:
             self.open(path)
+            
+        if readmode not in self.modes:
+            print "Read mode:", readmode, "is not supported, changing to default to read", self.mode
+        else:
+            self.mode = readmode
     
     def open(self, path):
         self.path = path
@@ -39,7 +52,6 @@ class Xmlset:
         
         for frm in self.root.findall('frameInformation'):
             num = int(frm.find('frame').attrib['number'])
-            
             objects = {}
             for obj in frm.findall('object'):
                 name = obj.attrib['name']
@@ -47,6 +59,11 @@ class Xmlset:
                 objects[name]["box"] = obj.find('boxinfo').attrib
                 objects[name]["centre"] = obj.find('centroid').attrib
                 objects[name]["visibility"] = obj.find("visibility").attrib
+                
+                if 'lens' in obj.attrib:
+                    objects[name]["lens"] = Theta.resolve(obj.attrib['lens'])
+                else:
+                    objects[name]["lens"] = Theta.NonDual
             
             self._frames[num] = objects
         
@@ -54,6 +71,12 @@ class Xmlset:
     
     # Gets current frame, or a specific frame if 'at' option is > 0
     def data(self, at=-1, mode=0):
+        at = int(at)    # convert to integer
+        
+        # if failed to find, return None
+        if at not in self._frames.keys():
+            return None
+        
         if at == -1:
             return self._frames[self.at(mode)] # TODO: are we just assuming all frames are filled in?
         else:
@@ -80,14 +103,6 @@ class Xmlset:
             return int(ceil(self._at)) + self.offset
         else:
             return int(floor(self._at)) + self.offset
-    
-    def offset(self, mode=None):
-        if mode is not None:
-            self.offmode = mode
-        if self.offmode == self.off_by_frame:
-            return self.offset
-        if self.offmode == self.off_by_ratio:
-            return self.offset * self._ratio
     
     def ratio(self):
         return self._ratio
