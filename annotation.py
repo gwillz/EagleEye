@@ -1,18 +1,12 @@
-import cv2
-import numpy as np
+import numpy as np, cv2, time, sys, os
 import eagleeye as ee
 from numpy import *
-import time
-import sys
-import os
 from glob import glob
 import PyQt4
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QMessageBox
 from PyQt4.Qt import *
-import xml.etree.ElementTree as ET
-import xml.dom.minidom
-import StringIO
+import xml.dom.minidom, xml.etree.ElementTree as ET, StringIO
 
 #marks_in : begin frame of the flash, marks_out : finish frame of the flash
 args = ee.EasyArgs(sys.argv)
@@ -21,8 +15,7 @@ mark_out = 0
 if args.mark_in and args.mark_out:
     mark_in = args.mark_in
     mark_out = args.mark_out
-
-
+    
 # annotation = 0 : annotation is not finished yet, 1 : finished
 annotation = 0
 location = ""       # store location directory.
@@ -312,12 +305,13 @@ class ICTProject(QtGui.QMainWindow):
                 loopnumobject = objectnumberofframe[0]
                 previousindex = 0
                 term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
+                whichside = ""
                 
                 if (mark_in == 0 and mark_out == 0):
                     frameinfo = ET.SubElement(dataset, "frameInformation")
                     ET.SubElement(frameinfo, "frame", number="%d"%1)  
                     for loopx in range(1, loopnumobject+1):                           
-                        object1 = ET.SubElement(frameinfo, "object", name="Robot %d"%loopx,id="0%d"%loopx)
+                        object1 = ET.SubElement(frameinfo, "object", name="EE%d"%loopx,id="0%d"%loopx)
                         ET.SubElement(object1, "boxinfo", x="%d"%xmlx[0][loopx],y="%d"%xmly[0][loopx],height="%d"%xmlh[0][loopx],width="%d"%xmlw[0][loopx])
                         ET.SubElement(object1, "centroid",x="%d"%cenx[0][loopx],y="%d"%ceny[0][loopx])
                 
@@ -369,19 +363,23 @@ class ICTProject(QtGui.QMainWindow):
                                         zpos = "height: %d" % h
                                         width = "width: %d" % w                  
                                         font = cv2.FONT_HERSHEY_SIMPLEX
-                                        robotname = "EE %d" % loopx
+                                        robotname = "EE%d" % loopx
                                         cv2.putText(frame2,robotname,(int(x+0.5*w),int(y+0.5*h)+30), font, 1,(255,255,255),2)
                                         cv2.putText(frame2,xpos,(int(x+0.5*w),int(y+0.5*h)+70), font, 1,(255,255,255),2)
                                         cv2.putText(frame2,ypos,(int(x+0.5*w),int(y+0.5*h)+110), font, 1,(255,255,255),2)
                                         cv2.putText(frame2,zpos,(int(x+0.5*w),int(y+0.5*h)+150), font, 1,(255,255,255),2)
                                         cv2.putText(frame2,width,(int(x+0.5*w),int(y+0.5*h)+190), font, 1,(255,255,255),2)    
                                         cv2.putText(frame2,"frame number: %d"%countautoframe,(int(0),int(60)), font, 1,(255,255,255),2)
+                                        if (centerx > (0.5 * framewidth)):
+                                            whichside = "Buttonside"                                            
+                                        if (centerx < (0.5 * framewidth)):
+                                            whichside = "Backside"
                                         if (mark_in > 0 and mark_out > mark_in and mark_in < countautoframe < mark_out):
-                                            object1 = ET.SubElement(frameinfo, "object", name="Robot %d"%loopx,id="0%d"%loopx)
+                                            object1 = ET.SubElement(frameinfo, "object", lens=whichside,name="EE%d"%loopx,id="0%d"%loopx)
                                             ET.SubElement(object1, "boxinfo", x="%d"%x,y="%d"%y,height="%d"%h,width="%d"%w)
                                             ET.SubElement(object1, "centroid",x="%d"%centerx,y="%d"%centery)
                                         if (mark_in == 0 and mark_out == 0):
-                                            object1 = ET.SubElement(frameinfo, "object", name="Robot %d"%loopx,id="0%d"%loopx)
+                                            object1 = ET.SubElement(frameinfo, "object", lens=whichside,name="EE%d"%loopx,id="0%d"%loopx)
                                             ET.SubElement(object1, "boxinfo", x="%d"%x,y="%d"%y,height="%d"%h,width="%d"%w)
                                             ET.SubElement(object1, "centroid",x="%d"%centerx,y="%d"%centery)
                                             
@@ -429,21 +427,25 @@ class ICTProject(QtGui.QMainWindow):
                                     zpos = "height: %d" % h
                                     width = "width: %d" % w                  
                                     font = cv2.FONT_HERSHEY_SIMPLEX
-                                    robotname = "EE %d" % loopx
+                                    robotname = "EE%d" % loopx
                                     cv2.putText(frame2,robotname,(int(x+0.5*w),int(y+0.5*h)+30), font, 1,(255,255,255),2)
                                     cv2.putText(frame2,xpos,(int(x+0.5*w),int(y+0.5*h)+70), font, 1,(255,255,255),2)
                                     cv2.putText(frame2,ypos,(int(x+0.5*w),int(y+0.5*h)+110), font, 1,(255,255,255),2)
                                     cv2.putText(frame2,zpos,(int(x+0.5*w),int(y+0.5*h)+150), font, 1,(255,255,255),2)
                                     cv2.putText(frame2,width,(int(x+0.5*w),int(y+0.5*h)+190), font, 1,(255,255,255),2)                                
                                     cv2.putText(frame2,"frame number: %d"%countautoframe,(int(0),int(60)), font, 1,(255,255,255),2)           
+                                    if (centerx > (0.5 * framewidth)):
+                                            whichside = "Buttonside"                                            
+                                    if (centerx < (0.5 * framewidth)):
+                                        whichside = "Backside"
                                     if (mark_in > 0 and mark_out > mark_in and mark_in < countautoframe < mark_out):
-                                        object1 = ET.SubElement(frameinfo, "object", name="Robot %d"%loopx,id="0%d"%loopx)
+                                        object1 = ET.SubElement(frameinfo, "object", lens=whichside,name="EE%d"%loopx,id="0%d"%loopx)
                                         ET.SubElement(object1, "boxinfo", x="%d"%x,y="%d"%y,height="%d"%h,width="%d"%w)
                                         ET.SubElement(object1, "centroid",x="%d"%centerx,y="%d"%centery)
                                     if (mark_in == 0 and mark_out == 0):
-                                            object1 = ET.SubElement(frameinfo, "object", name="Robot %d"%loopx,id="0%d"%loopx)
-                                            ET.SubElement(object1, "boxinfo", x="%d"%x,y="%d"%y,height="%d"%h,width="%d"%w)
-                                            ET.SubElement(object1, "centroid",x="%d"%centerx,y="%d"%centery)
+                                        object1 = ET.SubElement(frameinfo, "object", lens=whichside,name="EE%d"%loopx,id="0%d"%loopx)
+                                        ET.SubElement(object1, "boxinfo", x="%d"%x,y="%d"%y,height="%d"%h,width="%d"%w)
+                                        ET.SubElement(object1, "centroid",x="%d"%centerx,y="%d"%centery)
                                            
                         output2.write(frame2)
                                            
