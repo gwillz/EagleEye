@@ -601,10 +601,10 @@ class Wizard(QMainWindow):
     def kill_worker(self):
         if 'worker' in self.__dict__ and self.worker.isRunning():
             self.worker.terminate()
-            self.actionKill_Worker.setEnabled(False)
     
     def destroy_worker(self, obj):
         del self.worker
+        self.actionKill_Worker.setEnabled(False)
     
     def choose_lens(self, title, text):
         dialog = QMessageBox(self)
@@ -973,6 +973,19 @@ class Wizard(QMainWindow):
                 str(self.trainer_xml_edit.text()),
                 "-config", self.config_path]
         
+        
+        button_b, back_b, both_b, click_b = self.choose_lens("Compare Trainer", 
+                                                    "Which lens would you like to compare?")
+        if button_b == click_b:
+            args += ['-side', 'buttonside']
+        elif back_b == click_b:
+            args += ['-side', 'backside']
+        elif both_b == click_b:
+            args += ['-side', 'nondual']
+        else:
+            print "Cancelled"
+            return
+        
         # insert marks
         if self.trainer_marks[1] > 0:
             mark_in, mark_out = self.trainer_marks
@@ -984,9 +997,17 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def run_annotation(self):
-        print "annotation tool stub"
-        # something with QProcess
-        pass
+        if annotation_process.state() == QProcess.NotRunning:
+            print "annotate"
+            args = ["",
+                    "-video", str(self.dataset_mov_edit.text()),
+                    "-output", str(self.dataset_ann_edit.text()),
+                    "-mark_in", self.dataset_marks[0],
+                    "-mark_out", self.dataset_marks[1]]
+            
+            self.disable_tools()
+            annotation_process.start(sys.executable, args)
+            annotation_process.finished.connect(self.enable_tools)
     
     @pyqtSlot()
     def run_comparison(self):

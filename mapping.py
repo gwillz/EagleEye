@@ -113,6 +113,9 @@ def main(sysargs):
                     side = 'buttonside'
                     bts += 1
                 
+                #elif buttonside.isVisible((x,y,z)):
+                #else: reject?
+                
                 # TODO: Change DTD and double check with Manjung
                 w.start("object", id=str(i), name=c.name(), lens=side)
                 w.element("boxinfo", height="99", width="99", x=str(points[0]-50), y=str(points[1]-50))

@@ -30,13 +30,31 @@ class Mapper:
         self.cam, self.distort = self.parseCamIntr(intrinsic)
         self.img_pts, self.obj_pts = self.parseTrainer(trainer)
         
+        print "Camera Matrix\n", self.cam
+        
         print "\nside:", Theta.name(mode)
         print "img_pts {}".format(len(self.img_pts))
         print "obj_pts {}".format(len(self.obj_pts))
         
         #calculate pose
         self.rv, self.tv = self.calPose()
+        
+        #canon pose
+        #self.tv = np.array((-14092.8, -5203.8, -9875.6)).reshape(3,1)
+        #self.rv = np.array((-1.8478, -0.92707, -2.61688)).reshape(3,1)
+        
+        # fake pose
+        #self.tv = np.array((4250, 1550, 400), np.float32).reshape(3,1)
+        #self.rv = np.array((1, 0, 0), np.float32).reshape(3,1)
+        
         self.rv_unit = unit(self.rv)
+        
+        self.R = cv2.Rodrigues(self.rv)[0]
+        #Rt = -np.matrix(self.R).T
+        #self.tv = Rt * np.matrix(self.tv)
+        #self.rv = cv2.Rodrigues(Rt)[0]
+        
+        #self.tv = self.tv.reshape(3,1)
     
     # opens the Intrinsic calib xml file
     def parseCamIntr(self, xmlpath):
@@ -122,18 +140,25 @@ class Mapper:
         
         # TODO: customised solvePnP flags from config
         # levenberg-marquardt iterative method
-        retval, rv, tv = cv2.solvePnP(
-                            self.obj_pts, self.img_pts, 
-                            self.cam, self.distort,
-                            None, None, cv2.SOLVEPNP_ITERATIVE)
-        '''
-        NOT RUNNING
-        http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
-        rv, tv, inliners = cv2.solvePnPRansac(
-                            self.obj_pts, self.img_pts, 
-                            self.cam, self.distort)
-        '''
+        #retval, rv, tv = cv2.solvePnP(
+                            #self.obj_pts, self.img_pts, 
+                            #self.cam, self.distort,
+                            #None, None, cv2.SOLVEPNP_ITERATIVE)
+        #'''
+        #NOT RUNNING
+        #http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
+        iterations = 100
+        reproj_error = 20.0
+        min_inliers = max(4, int(len(self.obj_pts) * 0.9))
+        print self.cam
+        retval, rv, tv, inliers = cv2.solvePnPRansac(
+                                      self.obj_pts, self.img_pts, 
+                                      self.cam, self.distort)#, 
+                                   #None, None, False,
+                                   #iterations, reproj_error, min_inliers)
+        #'''
         
+        print rv, tv, inliers
         # check, print, return
         if rv is None or rv is None or not retval:
             raise Exception("Error occurred when calculating rotation and translation vectors.")
@@ -143,21 +168,42 @@ class Mapper:
         
         return rv, tv
     
-    def isVisible(self, pt):
-        obj = np.array(pt).reshape(3, 1)
+    def isVisible1(self, pt):
+        pt = np.array(pt).reshape(3, 1)
+        #obj = (obj + self.tv) * self.rv
         
         # determine line and direction to object
-        cam_to_obj = obj - self.tv
+        cam_to_obj = pt - self.tv
         obj_dir = unit(cam_to_obj)
         
         # test within FOV
         cosTheta = np.vdot(self.rv_unit, obj_dir)
-        
         #print np.rad2deg(np.arccos(cosTheta)), "<", np.rad2deg(np.arccos(self.halfcos_fov))
         
         # are 'cos' comparisons backwards?
         #return np.arccos(cosTheta) < self.half_fov
         return cosTheta > self.halfcos_fov
+    
+    def isVisible(self, pt):
+        pt = np.array(pt).reshape(3, 1)
+        
+        RxPt = self.R.dot(pt)
+        tv = np.array(self.tv).reshape(3,1)
+        pt_cam = np.add(RxPt, tv).reshape(1,3)[0]
+        
+        #print "R x pt", RxPt
+        #print "tv", tv
+        #print "pt_cam", pt_cam
+        
+        # spherical model
+        r = np.linalg.norm(pt_cam)
+        theta = np.arctan2(pt_cam[1], pt_cam[0])
+        phi = np.arccos(-pt_cam[2]/r)
+        inv_phi = phi
+        
+        #print np.degrees(inv_phi), "<", np.degrees(self.half_fov)
+        return inv_phi < self.half_fov
+        
     
     def reprojpts(self, obj_pts):
         if len(obj_pts) == 0:

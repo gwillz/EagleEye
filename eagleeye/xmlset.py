@@ -52,7 +52,10 @@ class Xmlset:
                 objects[name] = {}
                 objects[name]["box"] = obj.find('boxinfo').attrib
                 objects[name]["centre"] = obj.find('centroid').attrib
-                objects[name]["visibility"] = obj.find("visibility").attrib
+                
+                visible = obj.find("visibility").attrib
+                if visible is not None:
+                    objects[name]["visibility"] = visible.attrib
                 
                 if 'lens' in obj.attrib:
                     objects[name]["lens"] = Theta.resolve(obj.attrib['lens'])
