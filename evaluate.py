@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.0.2
+# version 0.0.3
 #
 # Compares mapped centroid to annotated centroid produced by annotation tool
 # And calculate reprojction error frame by frame
@@ -20,13 +20,17 @@ matplotlib.use('Qt4Agg')
 from matplotlib import pyplot as plt
 
 def usage():
-    print "usage: python2 evaluate.py <mapper xml> <annotated xml> <output file> { <mark_in> <mark_out> }"
+    print "usage: evaluate.py <mapper xml> <annotated xml> <output file> { <mark_in> <mark_out> }"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.cfg, group="evaluate")
     window_name = "EagleEye Evaluation Tool"
-
+    
+    if "help" in args:
+        usage()
+        return 0
+    
     # check output path
     path = ""
     if args[3] == "":

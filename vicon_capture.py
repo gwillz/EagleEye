@@ -17,6 +17,9 @@ from serial import Serial
 import csv, sys, os
 from python_vicon import PyVicon
 
+def usage():
+    print "vicon_capture.py {--output <folder> | --time <in minutes> | --config <file> | --training <file>}"
+
 def main(sysargs):
     # set arguments
     args = EasyArgs(sysargs)
@@ -30,8 +33,8 @@ def main(sysargs):
     sleeper = Sleeper(1.0 / cfg.framerate)
     
     if "help" in args:
-        print "python2 vicon_capture.py {--output <folder> | --time <in minutes> | --config <file> | --training <file>}"
-        return 1
+        usage()
+        return 0
     
     # data directory sanity check
     if not os.path.exists(output_folder):

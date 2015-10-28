@@ -1,8 +1,8 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Kin Kuen, Liu
-ver = '1.4.23'
-# Last Updated: 2015-09-14
+ver = '1.4.24'
+# Last Updated: 2015-10-28
 # 
 # Camera Calibration and Image Undistortion using OpenCV standard pinhole camera functions.
 # Rational model flag is enabled to compensate radial and tangential effect present in fish-eye lens
@@ -331,10 +331,10 @@ def main(sysargs):
     cfg = EasyConfig(args.config, group="calib")
     
     # argument sanity checks
-    if args.usage:
+    if 'help' in args:
         usage()
         return 0
-    elif args.version:
+    elif 'version' in args:
         version()
         return 0
     elif 'output' not in args:

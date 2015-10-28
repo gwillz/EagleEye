@@ -98,16 +98,16 @@ for m in mappers:
               55+random.random()*200)
     
     
-    #Rt = np.matrix(m.R).T
+    Rt = np.matrix(m.R).T
     #print "Rt", Rt
     #print np.linalg.inv(m.tv)
-    #tv = -Rt.dot(np.matrix(m.tv))
+    tv = -Rt.dot(np.matrix(m.tv))
     
     #print "rv_tv", tv
-    #rv = cv2.Rodrigues(Rt)[0]
+    rv = cv2.Rodrigues(Rt)[0]
     
-    tv = m.tv
-    rv = m.rv
+    #tv = m.tv
+    #rv = m.rv
     
     #rv = Rt[1].reshape(3,1)
     #tv = np.add(Rt.dot(np.array([0.,0.,0.]).reshape(3,1)), m.tv)
@@ -187,7 +187,7 @@ for m in mappers:
     #tv = fake_tv
     #rv = m.rv
     # draw direction of lens
-    draw_arrow(baseframe, fake_tv, fake_rv, colour)
+    draw_arrow(baseframe, tv, rv, (255,255,255))
     # and it's FOV
     #draw_arrow(baseframe, tv, rot_z(m.half_fov).dot(rv), colour, length=375)
     #draw_arrow(baseframe, tv, rot_z(-m.half_fov).dot(rv), colour, length=375)

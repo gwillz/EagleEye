@@ -300,10 +300,10 @@ def main(sysargs):
     cfg = EasyConfig(args.config, group="calib")
     
     # argument sanity checks
-    if args.usage:
+    if 'help' in args:
         usage()
         return 0
-    elif args.version:
+    elif 'version' in args:
         version()
         return 0
     elif len(args) < 10:

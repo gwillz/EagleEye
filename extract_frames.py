@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.1.7
+# version 0.1.8
 # 
 # Processes a video and extracts singular frames for calibration.
 # 
@@ -14,16 +14,21 @@ from eagleeye import EasyArgs, BuffSplitCap, Key, EasyConfig, Theta
 from eagleeye.display_text import *
 
 def usage():
-    print "usage: python2 extract_frames.py <video file> <output image folder> {-split <left|right> | -prefix <output name> | --config <file>}"
+    print "usage: extract_frames.py <video file> <output image folder> {-split <left|right> | -prefix <output name> | --config <file>}"
 
 def main(sysargs):
-    # test args
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.config, group="chessboard_extract")
+    
+    if "help" in args:
+        usage()
+        return 0
+    
+    # test args
     if len(args) <= 2:
         usage()
         return 1
-
+    
     # video settings, etc
     window_name = "Chessboard Extractor"
     side = Theta.resolve(args.split)

@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.36
+# version 0.5.37
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -34,7 +34,7 @@ from eagleeye.display_text import *
 from elementtree.SimpleXMLWriter import XMLWriter
 
 def usage():
-    print "usage: python2 trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out> | --clicks <num_clicks> | --config <file>}"
+    print "usage: trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out> | --clicks <num_clicks> | --config <file>}"
 
 # clicker status
 class Status:
@@ -52,6 +52,10 @@ def main(sysargs):
     cfg = EasyConfig(args.config, group="trainer")
     max_clicks = args.clicks or cfg.default_clicks
     window_name = "EagleEye Trainer"
+    
+    if "help" in args:
+        usage()
+        return 0
     
     # grab marks from args
     if len(args) > 5:

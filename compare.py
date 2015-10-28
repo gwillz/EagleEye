@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.13
+# version 0.2.14
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
@@ -14,13 +14,17 @@ import sys, cv2, numpy as np, time, os
 from eagleeye import BuffSplitCap, Xmlset, EasyArgs, EasyConfig, Key, marker_tool
 
 def usage():
-    print "usage: python2 compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}"
+    print "usage: compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.cfg, group="compare")
     font = cv2.FONT_HERSHEY_SIMPLEX
     window_name = "EagleEye Comparator"
+    
+    if "help" in args:
+        usage()
+        return 0
     
     # grab marks from args
     if len(args) > 5:

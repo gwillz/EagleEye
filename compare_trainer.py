@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.10
+# version 0.1.11
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
@@ -16,12 +16,16 @@ from eagleeye.display_text import *
 from math import sqrt
 
 def usage():
-    print "usage: python2 compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -side <buttonside|backside|single> | -config <file> | -video_export <file> | -compare_export <file>}"
+    print "usage: compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <mark_out> | -side <buttonside|backside|single> | -config <file> | -video_export <file> | -compare_export <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.cfg, group="compare_trainer")
     window_name = "EagleEye Comparator"
+    
+    if "help" in args:
+        usage()
+        return 0
     
     # grab marks from args
     if len(args) > 5:

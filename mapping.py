@@ -13,7 +13,7 @@ from elementtree.SimpleXMLWriter import XMLWriter
 from eagleeye import Memset, EasyArgs, EasyConfig, Mapper, Theta
 
 def usage():
-    print "mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {-map_trainer_mode | -force_side <buttonside|backside> | -config <file>}"
+    print "usage: mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {-map_trainer_mode | -force_side <buttonside|backside> | -config <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
