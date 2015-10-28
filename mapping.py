@@ -3,11 +3,9 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.3.14
+# version 0.3.15
 # 
 # Runs mapping routines on multiple CSV files and combipnes them into a single XML format.
-#
-# usage: python2 mapping.py -c <calib xml> -t <trainer xml> -o <output dataset> {<multiple csv files>}
 #
 
 import sys, os
@@ -15,12 +13,16 @@ from elementtree.SimpleXMLWriter import XMLWriter
 from eagleeye import Memset, EasyArgs, EasyConfig, Mapper, Theta
 
 def usage():
-    print "python2 mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {-map_trainer_mode | -config <file>}"
+    print "mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {-map_trainer_mode | -force_side <buttonside|backside> | -config <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.config, group="mapper")
-
+    
+    if "help" in args:
+        usage()
+        return 0
+    
     if ["calib", "trainer", "output"] not in args:
         print "Must specify: -calib, -trainer, -output files"
         usage()
@@ -35,6 +37,19 @@ def main(sysargs):
         print "Too many CSV for trainer-mapping mode"
         usage()
         return 1
+    
+    if "force_side" in args:
+        side = Theta.resolve(args.force_side)
+        if side == Theta.NonDual:
+            print "Invalid force_side argument:", args.force_side
+            usage()
+            return 1
+        
+        # set side overrides
+        force_button = (side == Theta.Buttonside)
+        force_back   = not force_button
+    else:
+        force_button = force_back = False
     
     # working vars
     csvs = {}
@@ -65,7 +80,7 @@ def main(sysargs):
         print e.message
         return 1
     
-    bts, bks = 0, 0
+    count = {'bts':0, 'bks':0, 'rej':0}
     
     # open destination XML
     with open(args.output, "w") as xmlfile:
@@ -104,17 +119,20 @@ def main(sysargs):
                     return 1
                 
                 # run projection/mapping on VICON data
-                if backside.isVisible((x,y,z)):
+                if force_back or (backside.isVisible((x,y,z)) and not force_button):
                     points = backside.reprojpts((x, y, z))
                     side = 'backside'
-                    bks += 1
-                else:
+                    count['bks'] += 1
+                
+                elif force_button or buttonside.isVisible((x,y,z)):
                     points = buttonside.reprojpts((x, y, z))
                     side = 'buttonside'
-                    bts += 1
+                    count['bts'] += 1
                 
-                #elif buttonside.isVisible((x,y,z)):
-                #else: reject?
+                # TODO don't write non visible dots? 
+                else:
+                    count['rej'] += 1
+                    continue
                 
                 # TODO: Change DTD and double check with Manjung
                 w.start("object", id=str(i), name=c.name(), lens=side)
@@ -142,8 +160,9 @@ def main(sysargs):
         
         w.close(doc)
         
-        print "buttonside", bts
-        print "backside", bks
+        print "\nbuttonside", count['bts']
+        print "backside", count['bks']
+        print "rejected", count['rej']
         
     return 0
 
