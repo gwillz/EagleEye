@@ -19,7 +19,6 @@ def usage():
 def main(sysargs):
     args = EasyArgs(sysargs)
     cfg = EasyConfig(args.cfg, group="compare")
-    font = cv2.FONT_HERSHEY_SIMPLEX
     window_name = "EagleEye Comparator"
     
     if "help" in args:

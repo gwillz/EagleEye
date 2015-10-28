@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.0.3
+# version 0.0.4
 #
 # Compares mapped centroid to annotated centroid produced by annotation tool
 # And calculate reprojction error frame by frame
@@ -109,7 +109,7 @@ def main(sysargs):
 
                     # initialise compared object 
                     compare_frames[f][obj] = {}
-                    compare_frames[f][obj]["lens"] = mapper_data[obj]["lens"]       # lens is numbered as specified in Theta class
+                    compare_frames[f][obj]["lens"] = mapper_data[obj]["lens"]
                     compare_frames[f][obj]["map_x"] = mapper_x
                     compare_frames[f][obj]["map_y"] = mapper_y
                     compare_frames[f][obj]["ann_x"] = annotated_x
@@ -174,7 +174,7 @@ def writeXML(frames, path, args):
     for f in frames.keys():
         out_xml.start("frame", num=str(f))
         for key in frames[f]:
-            out_xml.start("object", lens=str(frames[f][key]["lens"]), name=key, err=str(frames[f][key]["err"])) # TODO: if lens in string form is preferred
+            out_xml.start("object", lens=str(frames[f][key]["lens"]), name=key, err=str(frames[f][key]["err"]))
             out_xml.element("annotatedCentroid", x=str(frames[f][key]["ann_x"]), y=str(frames[f][key]["ann_y"]))
             out_xml.element("mappedCentroid", x=str(frames[f][key]["map_x"]), y=str(frames[f][key]["map_y"]))
             out_xml.end() # object
@@ -194,7 +194,7 @@ def writeCSV(frames, path):
                             frames[f][key]["map_y"],        # mapped centroid y
                             frames[f][key]["ann_x"],        # annotated centroid x
                             frames[f][key]["ann_y"],        # annotated centroid y
-                            frames[f][key]["lens"],         # lens (based on Theta class) TODO: if lens in string form is preferred
+                            frames[f][key]["lens"],         # lens - {buttonside, backside, both}
                             frames[f][key]["err"]])         # reprojection error
 
 
