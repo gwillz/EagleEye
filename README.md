@@ -53,8 +53,8 @@ Download and install the pre-requisities:
 - [OpenCV](http://sourceforge.net/projects/opencvlibrary/files/opencv-win/3.0.0/opencv-3.0.0.exe/download)
 
 TODO copy instructions for opencv-ffmpeg and cv2.pyd
-
-
+    Go to the extracted opencv folder -> build -> python -> 2.7 -> x86 -> copy cv2.pyd and paste that into the python27 -> Lib -> site-packages folder.
+    Go to the extracted opencv folder -> sources -> 3rdparty -> ffmpeg -> copy opencv_ffmpeg.dll and paste that into the python27 folder.
 #### 1.4.1 Re-compiling PyVicon
 You really shouldn't need to do this unless you're not using a different 
 Vicon Tracker than the one at the UniSA Mawson Lakes campus.
