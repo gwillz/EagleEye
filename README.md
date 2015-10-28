@@ -36,6 +36,8 @@ So unless you want to be recompiling it (you don't), stick to 32-bit.
 - Python 2.7 (Anaconda)
 - PyQt 4.11 (Qt 4.8.7)
 - OpenCV 3.0
+- Numpy 1.9.3
+- PIL 2.8.1 
 - *For Capture*
   - Vicon Tracker System (v1.2 32-bit)
   - Serial RS232 Serial connection
@@ -204,16 +206,55 @@ Dataset - of identical format to the Mapping Tool.
 
 __Preparation__
 
-TODO
+1. You need to prepare an initial video file to annotate.
+2. To use automatic annotation, you need to use the semi-automatic tool first to input a xml file.
+3. Using the marker tool, you need to get the mark_in and mark_out frame numbers, then pass the values into the command line argument.
+Otherwise, it will record entire data into the xml, from beginning of the video to end of the video.
+The mark_in and mark_out values indicate where to add. It adds the frame between mark_in + 1 frame, and mark_out frame into the XML.
 
 __Procedure__
 
-TODO
+1. Run the annotation tool. (python annotation.py) No need to type mark_in and mark_out at this moment.
+2. Click "Open semi-automatic tool" button from the main GUI.
+3. Click "Split frames from video" button and select the initial video file from the preparation 1.
+4. Select the folder to store frames, it will take 1-2 minutes to output frames from the video.
+5. Click "Import image frames" button and select the folder from step 4 above.
+6. Semi-automatically annotate the object by drawing rectangles. The index of object will be stacked, starting from 1.
+Click "draw" button to draw rectangle, and Click "draw" button to drag existing rectangle.
+Click "undo" button to undo drawing, and Click "redo" button to redo drawing.
+7. Click "Next" button until the object moves, and if you think the object is out from the previous rectangle, repeat step6.
+(Usually you should repeat step6 per 15 frames, but if object doesnt move, you dont need to do.)
+(Or if the movement of object is huge, for example if object was "buttonside" at previous frame and moved to "backside" in current frame, repeat step6.)
+8. Click "Update XML File" button to save the semi-automatic results into a XML file, specify location to save.
+9. Run the annotation tool again with the full command line argument. ($ python annotation.py -mark_in <markinframe number> -mark_out <markoutframe number>)
+10. Click "Automatic annotation" button from the main GUI.
+11. It will say "Please select file". Just Click "Ok" button 
+12. It will pop-up a file dialog named as "Please select your video file". Select your initial video file from the preparation 1 and click open button.
+13. It will pop-up a file dialog named as "Please select your XML file if possible". Select your input xml file from the step 8 and click open button.
+14. It will pop-up a file dialog named as "Please select output filename to save the file". Specify your output video file name, check location and click save button.
+15. Click "OK" button to start automatic annotation, the annotation time depends on the size of video, but usually it takes 1-2 minutes.
+16. Once the annotation has been completed, it will pop-up a message, just click "OK" button.
+17. It will pop-up a file dialog named as "Please write output xml filename to save the dataset". Specify your output xml file name, check location and click save button.
+The output xml file from above will be used in the comparision tool.
+18. Check the output video file to see how annotation works.
+19. If you are not happy with the performance of output video file, you can re-use the semi-automatic tool from step 2. 
+20. You can either update the "input" xml file from step 8, or "output" xml file from step 17. (However, updating output xml file from step17 doesnt improve automatic annotation.)
+21. In case of updating "input" xml file, from step8, will improve the performance of automatic annotation. Go back to step 2 and do step5.
+Click "Import XML File" button and open the xml file from step 8. Review-the output annotated video, and go to the frame which was not happy for you.
+Manually specify the objects again, and once you finish that, click "Update XML File" button, it will overwrite the imported XML file.
+Do step 9 again, and use the updated "input" XML File.
+22. In case of updating "output" xml file, from step8, the xml file will be used in another button called "Annotation from XML".
+This case does not improve the performance of automatic annotation, because the button does not contain automatic annotation.
+It just converts the XML file to the video.
+This case is for only when step 21 does not work properly.
+Click "Import XML File" button and open the xml file from step 17. Review-the output annotated video, and go to the frame which was not happy for you.
+Manually specify the objects again, and once you finish that, click "Update XML File" button, it will overwrite the imported XML file.
+Do step 9 again, and use the updated "output" XML File.
 
 __Command line Usage__
 
 ```sh
-$ python annotation.py
+$ python annotation.py -mark_in <markinframe number> -mark_out <markoutframe number>
 ```
 
 
