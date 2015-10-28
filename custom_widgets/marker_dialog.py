@@ -14,6 +14,7 @@ class MarkerDialog(QDialog):
         self.path = path
         self.markin_edit.setValue(marks[0])
         self.markout_edit.setValue(marks[1])
+        self.markin_edit.setFocus()
         
         self.run_button.clicked.connect(self.run_marker)
     
