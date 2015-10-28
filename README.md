@@ -405,16 +405,24 @@ TODO description
 ```
 
 ### 5.4 Dataset XML
-TODO description
+Frame number indicates the frame numbers from the video.
+Object name indicates name of object and it depends on its id. 
+The id is defined by the index of object, the index of object starts from 01 and it is defined from the semi-automatic annotation tool.
+In the Boxinfo attribute, it contains x,y coordinates and width height of the bounding box.
+In the centroid attribute, it contains x,y 2D coordinates which is a centroid point from the bounding box.
 
 ``` xml
 <?xml version='1.0'?>
 <dataset>
     <frameInformation>
         <frame number="1" />
-        <object id="1" name="EE1">
-            <boxinfo height="99" width="99" x="572.190673828" y="425.731567383" />
-            <centroid x="622.191" y="475.732" />
+        <object name="EE1" lens="Backside" id="01">
+            <boxinfo y="488" x="499" width="63" height="74"/>
+            <centroid y="525" x="530"/>
+        </object>
+        <object name="EE2" lens="Buttonside" id="02">
+            <boxinfo y="406" x="1465" width="83" height="104"/>
+            <centroid y="458" x="1506"/>
         </object>
     </frameInformation>
 </dataset>
