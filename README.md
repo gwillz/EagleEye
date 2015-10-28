@@ -408,6 +408,8 @@ TODO description
 Frame number indicates the frame numbers from the video.
 Object name indicates name of object and it depends on its id. 
 The id is defined by the index of object, the index of object starts from 01 and it is defined from the semi-automatic annotation tool.
+The lens is defined by the side of the object. If an object has x coordinate which has bigger than half of width of frame, then its buttonside.
+If an object has x coordinate which has smaller than half of width of frame, then its backside.
 In the Boxinfo attribute, it contains x,y coordinates and width height of the bounding box.
 In the centroid attribute, it contains x,y 2D coordinates which is a centroid point from the bounding box.
 
