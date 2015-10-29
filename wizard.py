@@ -186,8 +186,9 @@ class Wizard(QMainWindow):
             with open(os.path.join(path, "info.txt"), "w") as info:
                 info.write("Name: {}{}".format(self.dataset_name, os.linesep))
                 info.write("Date: {}{}".format(self.save_date, os.linesep))
-                if self.description_edit.blockCount() > 1:
-                    info.write("Description: {}{}".format(self.description_edit.toPlainText(), os.linesep))
+                desc = self.description_edit.toPlainText()
+                if desc != "":
+                    info.write("Description: {}{}".format(desc, os.linesep))
                 if self.trainer_mov_edit.text() != "":
                     info.write("Trainer:{}".format(os.linesep))
                     info.write("   Video: {}{}".format(os.path.basename(str(self.trainer_mov_edit.text())), os.linesep))
@@ -260,8 +261,9 @@ class Wizard(QMainWindow):
             # zips things while at the same time 
             # recording them into the header xml
             
-            if self.description_edit.blockCount() > 1:
-                w.element("description", str(self.description_edit.toPlainText()))
+            desc = self.description_edit.toPlainText()
+            if desc != "":
+                w.element("description", str(desc))
             
             # calibration xml
             file_path = edit_fields.get("calibration")
