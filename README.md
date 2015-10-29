@@ -3,7 +3,27 @@ Eagle Eye Project
 
 1 Overview
 ----------
-TODO, introduce problem, describe solution, outputs, application, deliverables
+Verifying the accuracy of tracking software is a common problem. Current methods
+are not quantifiable and inconsistent. Here we present a novel solution to 
+quantify annotations with a Vicon Tracking System. This system will provide
+'ground truth' data that is accurate and comparable.
+
+The project opted to use a Ricoh Theta m15 - a omnidirectional camera with two lenses.
+This proves difficult with the images presenting very large 'fisheye' distortions.
+Here we attempt a few methods of calibration to resolve these distortions.
+
+Gathering ground truth data from Vicon is strikingly complex. First interfaces
+must be made to the system to gather raw data. Then the pose of the camera - in 
+relation to the Vicon data - must be determined. Then the data can be mapped to
+a 2D image plane to compare with the annotations created by the tracking software.
+
+The project aims to provde a proof-of-concept Annotation tool, with which to compare
+against the captured ground truth data. This a multi-object, omnidirectional tool,
+providing quite a challege.
+
+To accompany the process, tools and research; the project collect ~40 example
+datasets to be validate the concept and to be used by the wider research community.
+
 
 ### 1.1 Team
 __ITMS__
@@ -106,14 +126,17 @@ __Compiling__
 - execute the setup.py `$ python setup.py build`
 - check for errors in the output (good luck)
 - open the new `build` folder, look for a `lib.win32` or `lib.win-amd64`
-- copy the pyvicon.pyd back into the root `python_vicon` folder
+- copy the `pyvicon.pyd` back into the root `python_vicon` folder
 
 
 2 Pipeline Overview
 -------------------
 ![Data Flow](assets/dataflow.png)
 
-TODO description
+This describes the overall process (top-to-bottom). Objects are recorded by two
+methods; camera and Vicon. The camera data is processed by the annotation tool 
+while the mapping methods collect calibrations and convert the Vicon data into
+2D data. The two datasets are then compared in a final tool and evaulated.
 
 
 3 Core Tools
