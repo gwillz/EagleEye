@@ -2,7 +2,7 @@
 
 from PyQt4 import uic
 from PyQt4.QtGui import QLineEdit, QMouseEvent, QGraphicsDropShadowEffect, QColor, QIcon, QToolButton, QStyle
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal
+from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QSize
 
 class HighlightEdit(QLineEdit):
     clicked = pyqtSignal(name='clicked')
@@ -19,14 +19,16 @@ class HighlightEdit(QLineEdit):
         self.clear_button = QToolButton(self)
         self.clear_button.setIcon(QIcon.fromTheme("edit-clear", QIcon("icons/delete_icon.png")))
         self.clear_button.setCursor(Qt.ArrowCursor)
-        self.clear_button.setStyleSheet("QToolButton { border: none; padding: 0px; }")
+        self.clear_button.setStyleSheet("QToolButton { border: none; padding: 1.5px; }")
+        icon_size = int(self.sizeHint().height() * 0.65)
+        self.clear_button.setIconSize(QSize(icon_size, icon_size))
         self.clear_button.clicked.connect(self.clear)
         #self.clear_button.hide()
         
         # some padding stuff
         frameWidth = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
         self.setStyleSheet("QLineEdit {{ padding-right: {}px; }} ".format(
-                                        self.clear_button.sizeHint().width() + frameWidth + 1))
+                                        self.clear_button.sizeHint().width() + frameWidth))
     
     #create a signal on doubleclick events
     def mouseDoubleClickEvent(self, ev):
