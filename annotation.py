@@ -97,7 +97,7 @@ class ICTProject(QtGui.QMainWindow):
         
         dataset = ET.Element("dataset")        
         QMessageBox.about(self, "Automatic annotation", "Please select your file.")    
-        file2 = str(QtGui.QFileDialog.getOpenFileName(self, "Please select your video or image file.", ".")) 
+        file2 = str(QtGui.QFileDialog.getOpenFileName(self, "Please select your video file.", ".")) 
         countautoframe = 0        
         
         # Convert the image to Gray if file is exist
@@ -328,6 +328,9 @@ class ICTProject(QtGui.QMainWindow):
                             frameinfo = ET.SubElement(dataset, "frameInformation")
                             currentframe = int(countautoframe) - int(mark_in)
                             ET.SubElement(frameinfo, "frame", number="%d"%currentframe)
+                        if (mark_in == 0 and mark_out == 0):                            
+                            frameinfo = ET.SubElement(dataset, "frameInformation")
+                            ET.SubElement(frameinfo, "frame", number="%d"%countautoframe) 
                         x,y,w,h = 0,0,0,0
                         # if nothing changed in xml file of that frame
                         
@@ -699,7 +702,7 @@ class ICTProject(QtGui.QMainWindow):
 
     def button6(self):      
         sender = self.sender()
-        QMessageBox.about(self, "About", "File name: ICTproject1_final.py \n Author: ManJung Kim \n This software is made by uniSA student, This is my own work as defined by the University's Academic Misconduct policy. \n This is an annotation tool which is required from the ICT Project. \n This is second version which is made by ManJung Kim during the second semester. \n This project is about Quantifiable Visual Tracking, \n this annotation tool will be used after the calibration process from other team mates. \n If you have any questions, email to kimmy016@mymail.unisa.edu.au." )
+        QMessageBox.about(self, "About", "File name: annotation.py \n Author: ManJung Kim \n This software is made by uniSA student, This is my own work as defined by the University's Academic Misconduct policy. \n This is an annotation tool which is required from the ICT Project. \n This is second version which is made by ManJung Kim during the second semester. \n This project is about Quantifiable Visual Tracking, \n this annotation tool will be used after the calibration process from other team mates. \n If you have any questions, email to kimmy016@mymail.unisa.edu.au." )
 
     def button7(self):      
         sender = self.sender()
@@ -1193,6 +1196,7 @@ class MyPopup(QtGui.QMainWindow):
                                 frameindex = 0
                                 objectperframe = 1                                
                                 intindex = 0
+                                boxindex = 0
                                 while True:
                                         strings = bufferedR.readline()
                                         if (strings == ''):
@@ -1211,12 +1215,16 @@ class MyPopup(QtGui.QMainWindow):
                                                 aframe = aframe.replace("/", "")
                                                 frameindex = int(aframe)
                                                 intindex = frameindex-1
-                                                # 255 is the maximum line of the xml file (assumed that 50 datasets are given)
-                                                #for x in range(0, 255):
-                                                        #strings2 = bufferedR.readline()
+                                                if (boxindex != intindex):
+                                                    rectangles.append([])       
+                                                    uraction.append([False,False])
+                                                    updateant.append(False)
+                                                    self.stack = QtGui.QUndoStack(self)
+                                                    self.urstacks.append(self.stack)  
                                                         
                                         if "boxinfo" in strings:
-                                                
+                                                if (boxindex != intindex):
+                                                    boxindex = intindex
                                                 # y
                                                 str2 = strings.split(" ")[-1]
                                                 stry = str2.split("=")[-1]
@@ -1261,6 +1269,8 @@ class MyPopup(QtGui.QMainWindow):
                                                 inty = int(stry)
                                                 intw = int(strw)
                                                 inth = int(strh)
+
+                                                
                                                 
                                                 #print str(intindex) + "  "+str(inty)+ "  "+str(intx)+ "  "+str(intw)+ "  "+str(inth)                                                            
                                                 rects = []
