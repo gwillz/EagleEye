@@ -4,7 +4,7 @@ from PyQt4 import uic
 from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, qApp
 from PyQt4.QtCore import QProcess, QObject, QThread, QStringList, pyqtSlot, pyqtSignal, QT_VERSION_STR
 from PyQt4.Qt import PYQT_VERSION_STR
-import sys, os, cv2, numpy as np, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
+import sys, os, cv2, re, numpy as np, glob, datetime, xml.etree.ElementTree as ET, tempfile, zipfile, shutil
 from elementtree.SimpleXMLWriter import XMLWriter
 from custom_widgets import *
 
@@ -206,8 +206,8 @@ class Wizard(QMainWindow):
         if self.calibration_edit.text() != "":
             edit_fields['calibration'] = str(self.calibration_edit.text())
         if len(self.buttonside_images) + len(self.backside_images) > 0 \
-                and self.chessboards_edit.text() != "":
-            edit_fields['chessboards'] = str(self.chessboards_edit.text())
+                and self.chessboard_edit.text() != "":
+            edit_fields['chessboards'] = str(self.chessboard_edit.text())
         if self.trainer_xml_edit.text() != "":
             edit_fields['trainer_set'] = str(self.trainer_xml_edit.text())
         if self.trainer_csv_edit.text() != "":
