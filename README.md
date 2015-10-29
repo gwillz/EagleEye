@@ -580,19 +580,19 @@ Each tool reads a config file `eagleyeeye.cfg` to allow various configurations t
 These are parameters that users may change to suit their needs in functions such as colour representation, quality control, output format etc.
 
 ### 6.1 Capture
-| Setting           | Description                                           | Default       |
-|-------------------|-------------------------------------------------------|---------------|
-| ip_address        | TODO      | 192.168.10.1   |
-| port              | TODO               | 801            |
-| date_format       | TODO    | Y-%m-%d\_%H-%M |
-| flash_delay       | TODO               | 180            |
-| framerate         | TODO            | 44.955         |
-| default_time      | TODO               | 180            |
-| default_output    | TODO          | data/raw       |
-| output_delimiter  | TODO                | ,              |
-| serial_device     | TODO              | COM4           |
-| run_serial        | TODO              | True           |
-| trainer_target    | TODO            | EEWand         |
+| Setting           | Description                                               | Default       |
+|-------------------|-----------------------------------------------------------|---------------|
+| ip_address        | The address of the Vicon Tracker software (typically local)      | 192.168.10.1   |
+| port              | The port of the tracker software                          | 801            |
+| date_format       | Formatting with which to timestamp output files           | Y-%m-%d\_%H-%M |
+| flash_delay       | How long (in frames) to wait before beginnning the set    | 180            |
+| framerate         | How often the tracker is to be polled (per second)        | 44.955         |
+| default_time      | How long to run the capture (in seconds)                  | 180            |
+| default_output    | Where the data is stored                                  | data/raw       |
+| output_delimiter  | The CSV delimiter                                         | ,              |
+| serial_device     | The serial adapter port name                              | COM4           |
+| run_serial        | Whether to activate the flash                             | True           |
+| trainer_target    | Which target to look for when training                    | EEWand         |
 
 ### 6.2 Trainer
 | Setting           | Description                                           | Default       |
@@ -637,8 +637,8 @@ These are parameters that users may change to suit their needs in functions such
 | fourcc            | Codec package name (must support .avi .mp4 etc.)      | DIVX          | 
 | min_reflectors    | Minimum of visible reflectors (requires at least 4 to be accurate)    | 4              | 
 | ignore_baddata    | Prevent user from click and saving bad training points as specified in min_reflectors & check_negatives | True           | 
-| offset            | TODO                                                  | 2              |
-| offset_mode       | TODO                                                  | mov            |
+| offset            | How many frames to advance                            | 2              |
+| offset_mode       | Which frame step to use (mov or csv)                  | mov            |
 
 ### 6.7 Evaluation Tool
 | Setting           | Description                                           | Default       |
