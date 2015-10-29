@@ -588,7 +588,7 @@ These are parameters that users may change to suit their needs in functions such
 |-------------------|-------------------------------------------------------|---------------|
 | default_squares   | Size of a square in chessboard pattern (millimeters)  | 1.0           | 
 | default_chess     | Number of intersecting corners of inner squares (rows, columns), see 3.2 Calibration for illustration | (9,6)          | 
-| calib_flags       | OpenCV [solvePnP flags] (http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#calibratecamera) (Unfinished work) | |
+| calib_flags       | OpenCV [calib3d flags] (http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#calibratecamera) (Unfinished work) | |
 
 ### 6.5 Compare
 | Setting           | Description                                           | Default       |
