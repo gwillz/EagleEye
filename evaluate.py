@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.0.4
+# version 0.1.1
 #
 # Compares mapped centroid to annotated centroid produced by annotation tool
 # And calculate reprojction error frame by frame
@@ -20,11 +20,11 @@ matplotlib.use('Qt4Agg')
 from matplotlib import pyplot as plt
 
 def usage():
-    print "usage: evaluate.py <mapper xml> <annotated xml> <output file> { <mark_in> <mark_out> }"
+    print "usage: evaluate.py <mapper xml> <annotated xml> <output file> <mark_in> <mark_out> {-config <file>}"
 
 def main(sysargs):
     args = EasyArgs(sysargs)
-    cfg = EasyConfig(args.cfg, group="evaluate")
+    cfg = EasyConfig(args.config, group="evaluate")
     window_name = "EagleEye Evaluation Tool"
     
     if "help" in args:
@@ -32,23 +32,28 @@ def main(sysargs):
         return 0
     
     # check output path
-    path = ""
-    if args[3] == "":
+    if len(args) < 4:
+        usage()
         return 1
-    else:
-        path = args[3]
+    
+    path = args[3]
     
     # grab marks from args
-    if len(args) > 4:
+    if len(args) > 5:
         mark_in = args[4]
         mark_out = args[5]
         
-    # test integer-ness
-    try: int(mark_in) and int(mark_out)
-    except: 
+        # test integer-ness
+        try: int(mark_in) and int(mark_out)
+        except:
+            print "Invalid marks"
+            usage()
+            return 1
+    else:
+        print "marks are required!"
         usage()
         return 1
-
+    
     # open input files
     mapper_xml = Xmlset(args[1], readmode="mapper")
     annotated_xml = Xmlset(args[2], readmode="annotated")
@@ -64,14 +69,11 @@ def main(sysargs):
     frameStart = mark_in +1
     frameEnd = mark_out -1
 
-    # list of compared frames
+    # list of compared frames for export
     compare_frames = {}
 
-    # vars for plotting
-    maxObjs = 0
-    nameObjs = []
-    
-
+    # vars for plots
+    obj_plotdata = {}   # id should be based on object, then frame number and its projection error
 
     print "Number of frames to compare {} | From Frame no. {} - {}".format((frameEnd) - (frameStart) + 1, frameStart, frameEnd)
 
@@ -92,6 +94,9 @@ def main(sysargs):
         compare_frames[f] = {}
 
         for obj in mapper_data.keys():
+            if obj not in obj_plotdata.keys():
+                obj_plotdata[obj] = {}  # initialise obj in dictionary
+            
             if obj in annotated_data.keys():
                 # check sides
                 if mapper_data[obj]["lens"] == mapper_data[obj]["lens"]:
@@ -105,41 +110,42 @@ def main(sysargs):
                     annotated_centroid = (annotated_x, annotated_y)
                     
                     reproj_err = calReprojError(mapper_centroid, annotated_centroid)
-                    #frame_data = {}
-
-                    # initialise compared object 
-                    compare_frames[f][obj] = {}
+                    
+                    # for export
+                    compare_frames[f][obj] = {}     # initialise compared object 
                     compare_frames[f][obj]["lens"] = mapper_data[obj]["lens"]
                     compare_frames[f][obj]["map_x"] = mapper_x
                     compare_frames[f][obj]["map_y"] = mapper_y
                     compare_frames[f][obj]["ann_x"] = annotated_x
                     compare_frames[f][obj]["ann_y"] = annotated_y
                     compare_frames[f][obj]["err"] = float(reproj_err)
-
-            # add to vars for plotting
-            if obj not in nameObjs:
-                nameObjs.append(obj)
+                    
+                    obj_plotdata[obj].update({f: reproj_err})
+                    
 
     print "\n\nFound {} frames with matched objects".format(len(compare_frames))
     print "Mean Error (Full Set): {} \n".format(calMean(compare_frames))
     
-    # plot!
-    if cfg.plot == True:
-        print "Plotting frame by frame comparison..."
-        nameObjs = sorted(nameObjs) # sort list of objects alphabetically
-        plot("Comparison of Annotated Centroid and Mapped Centroid (Ground Truth)", subplot_titles = nameObjs, x_data=compare_frames.keys(), y_data=compare_frames.keys()) 
-        plt.show()
-    
     if path != "":
-        if cfg.outputformat == "csv":
-            path = path.replace(".xml",".csv")
-            print "\nOutputing comparison in csv to {}".format(path)
-            writeCSV(compare_frames, path)
-        else:
+        if path.find(".xml") is not -1:
             print "\nOutputing comparion in xml to {}".format(path)
             writeXML(compare_frames, path, args)
+        elif cfg.outputformat == "csv":
+            path = path.replace(".xml",".csv")
+            print "Outputing comparison in csv to {}".format(path)
+            writeCSV(compare_frames, path)
+        else:
+            print "\nUnkown file format, please specify file extension as .xml or .csv"
+
     else:
         print "\nNo output path has been specified"
+
+
+    # plot!
+    if cfg.plot:
+        print "\nPlotting frame by frame comparison..."
+        plot("Difference between Annotated Centroid and Mapped Centroid (Ground Truth) \n {}".format(os.path.basename(path)), dict_data=obj_plotdata) 
+    
 
 # calculate the difference between 2 points
 def calReprojError(img_pt, reproj_pt):
@@ -198,24 +204,47 @@ def writeCSV(frames, path):
                             frames[f][key]["err"]])         # reprojection error
 
 
-def plot(title, subplot_titles=[], xlabel="Frames", ylabel="Reprojection Error \n (Pixels)", x_data=[], y_data=[], sizex=18, sizey=9):
-    fig = plt.figure(figsize=(sizex, sizey))
-    
-    fig.suptitle(title, fontsize=18)
-    
-    plot_index = 1
-    for obj_name in subplot_titles:
-        p = fig.add_subplot(len(subplot_titles),1,plot_index)
-        
-        p.stem(x_data, y_data, markerfmt=" ")
-        p.set_title(obj_name)
-        p.set_xlabel(xlabel)
-        p.set_ylabel(ylabel)
-        p.set_ylim(0, max(y_data)+5)
-        p.set_xlim(min(x_data)-5 if min(x_data) > 5 else 0,max(x_data)+5)
-        plot_index += 1
+def plot(title, xlabel="Frames", ylabel="Euclidean Distance \n (Pixels)", dict_data={}, width=18, height=9):
+    if len(dict_data) > 0:
+        fig = plt.figure(figsize=(width, height))
+        fig.suptitle(title, fontsize=18)             # set overall title
 
-    
+        # Base plot to contian subplots and common x,y labels for subplots
+        ax = fig.add_subplot(1, 1, 1)
+        ax.set_xticks([0])
+        ax.set_yticks([0])
+        ax.set_xlabel(xlabel, fontsize=16)
+        ax.set_ylabel(ylabel, fontsize=16)
+
+        # Strip base plot axes, base plot won't be visible when exported
+        ax.spines['top'].set_color('none')
+        ax.spines['bottom'].set_color('none')
+        ax.spines['left'].set_color('none')
+        ax.spines['right'].set_color('none')
+        ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+        
+        # plots in this method cannot be contained by a base plot initialised above
+        #fig, axs = plt.subplots(len(subplot_titles), 1, figsize=(width, height), sharex=True) # sizes in inches
+
+        plot_index = 1
+        for obj, data in sorted(dict_data.items()):
+            frames = data.keys()
+            framesErr = data.values()
+            # TODO: seems to be plotting fine, must re-confirm if it's plotting the correct data !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            obj_plot = fig.add_subplot(len(dict_data), 1, plot_index)
+            obj_plot.plot(frames, framesErr)
+            obj_plot.grid()
+            obj_plot.set_title(obj)
+            obj_plot.set_ylim(0, max(framesErr)+5)
+            obj_plot.set_xlim(min(frames)-5 if min(frames) > 5 else 0,max(frames)+5)
+            obj_plot.set_xticks(np.arange(start=min(frames), stop=max(frames), step=10))
+            plot_index += 1
+
+        fig.tight_layout(rect=[0, 0.03, 1, 0.925])  # packs the plots neatly
+        plt.show()
+        plt.close(fig)  # clean memory
+    else:
+        print "No objects to plot"
 
 if __name__ == '__main__':
     exit(main(sys.argv))
