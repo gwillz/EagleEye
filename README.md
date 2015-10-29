@@ -185,6 +185,7 @@ There are still only 2 flashes recorded into the CSV.
 
 
 ### 3.2 Calibration
+TODO add Eagleeye tool icon for extra cool points
 A Camera Calibration Tool based on the OpenCV Library. This script detects 
 chessboard pattern from a set of images and determines the intrinsic and distortion
 parameters of the camera lens. It can highlight the corners of the chessboards, 
@@ -206,6 +207,7 @@ $ python stdcalib.py -output <file path> <multiple jpg files> {-chess_size <patt
 
 
 ### 3.3 Trainer
+TODO add Eagleeye tool icon for extra cool points
 This tool creates a training set for the Mapping tool, using Vicon Wand positional
 data (from Vicon) and corresponding video capture. This is used to calculate the
 extrinsic parameters of the camera, and therefore its pose within the room.
@@ -226,6 +228,7 @@ $ python trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out
 
 
 ### 3.4 Mapping
+TODO add Eagleeye tool icon for extra cool points
 This software applies mapping routines to convert 3D raw data into 2D datasets 
 using models from the Training and Calibration tools.
 
@@ -246,6 +249,7 @@ $ python mapping.py -calib <calib xml> -trainer <trainer xml> -output <output da
 
 
 ### 3.5 Annotation
+TODO add Eagleeye tool icon for extra cool points
 Takes raw camera footage or images from the Ricoh theta and applies automated 
 object detection algorithms. Includes manual adjustment of the annotations.
 Outputs an annotated video or image, depending on the input as well as an XML
@@ -306,6 +310,7 @@ $ python annotation.py -mark_in <markinframe number> -mark_out <markoutframe num
 
 
 ### 3.6 Evaluation
+TODO add Eagleeye tool icon for extra cool points
 TODO description
 
 __Preparation__
@@ -371,7 +376,7 @@ $ python compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <
 
 
 ### 4.4 Dataset Comparison
-TODO description
+TODO
 
 __Procedure__
 
@@ -386,6 +391,11 @@ $ python compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_ou
 
 5 Data Formats
 --------------
+The following section outlines the structure of the output files produced by our tools.
+Output file format includes .csv, .xml.
+Data Dictionary describing the output data is also laid out.
+
+
 
 ### 5.1 Raw Dataset CSV
 This is object data represented in the Vicon World Coordinates. Each file
@@ -519,7 +529,8 @@ TODO description
 
 6 Configuration
 ---------------
-TODO description
+Utility Tool reads a config file `eagleyeeye.cfg` to allow various configurations to be customised in code executions.
+These are parameters that users may change to suit their needs in functions such as colour representation, quality control, output format etc.
 
 ### 6.1 Capture
 | Setting           | Description                                           | Default       |
