@@ -522,86 +522,81 @@ TODO description
 TODO description
 
 ### 6.1 Capture
-| Setting           | Default        |
-|-------------------|----------------|
-| ip_address        | 192.168.10.1   |
-| port              | 801            |
-| date_format       | Y-%m-%d\_%H-%M |
-| flash_delay       | 180            |
-| framerate         | 44.955         |
-| default_time      | 180            |
-| default_output    | data/raw       |
-| output_delimiter  | ,              |
-| serial_device     | COM4           |
-| run_serial        | True           |
-| trainer_target    | EEWand         |
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| ip_address        | TODO      | 192.168.10.1   |
+| port              | TODO               | 801            |
+| date_format       | TODO    | Y-%m-%d\_%H-%M |
+| flash_delay       | TODO               | 180            |
+| framerate         | TODO            | 44.955         |
+| default_time      | TODO               | 180            |
+| default_output    | TODO          | data/raw       |
+| output_delimiter  | TODO                | ,              |
+| serial_device     | TODO              | COM4           |
+| run_serial        | TODO              | True           |
+| trainer_target    | TODO            | EEWand         |
 
 ### 6.2 Trainer
-| Setting           | Default        |
-|-------------------|----------------|
-| buffer_size       | 50             | 
-| default_clicks    | 9999           | 
-| dot_colour        | (255,255,255)  |
-| min_reflectors    | 4              | 
-| check_negatives   | True           | 
-| ignore_baddata    | True           | 
-| dual_mode         | True           | 
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| buffer_size       | Video buffer size in frames                           | 50            | 
+| default_clicks    | Number of maximum clicks                              | 9999          |
+| dot_colour        | Colour of clicked points (B, G, R)                    | (255,255,255) |
+| min_reflectors    | Minimum of visible reflectors (requires at least 4 to be accurate)                                      | 4              | 
+| check_negatives   | Check for negative positional data (happens when VICON loses track of the object)                       | True           | 
+| ignore_baddata    | Prevent user from click and saving bad training points as specified in min_reflectors & check_negatives | True           | 
+| dual_mode         | Calibrate dual lenses in one video (see 3.3 Trainer for usage) | True           | 
 
 ### 6.3 Mapper
-| Setting           | Default        |
-|-------------------|----------------|
-| trainer_target    | EEWand         | 
-| camera_fov        | 190            | 
-| pnp_flags         |                | 
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| trainer_target    | Name of the trainer target being used (Always EEWand) | EEWand        | 
+| camera_fov        | Field of View angle of the camera (assuming dual lens)| 190           | 
+| pnp_flags         | OpenCV [solvePnP flags] (http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#solvepnp) (Unfinished work) | |
 
 ### 6.4 Calibration
-| Setting           | Default        |
-|-------------------|----------------|
-| default_squares   | 1.0            | 
-| default_chess     | (9,6)          | 
-| calib_flags       |                | 
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| default_squares   | Size of a square in chessboard pattern (millimeters)  | 1.0           | 
+| default_chess     | Number of intersecting corners of inner squares (rows, columns), see 3.2 Calibration for illustration | (9,6)          | 
+| calib_flags       | OpenCV [solvePnP flags] (http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#calibratecamera) (Unfinished work) | |
 
 ### 6.5 Compare
-| Setting           | Default        |
-|-------------------|----------------|
-| buffer_size       | 50             | 
-| xml1_colour       | (255,255,255)  |
-| xml2_colour       | (255,255,255)  |
-| fourcc            | DIVX           | 
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| buffer_size       | Video buffer size in frames                           | 50            | 
+| xml1_colour       | Colour representing mapped centroid (ground-truth) (B, G, R)    | (255,255,255) |
+| xml2_colour       | Colour representing annotated centroid (B, G, R)                | (255,255,255) |
+| fourcc            | Codec package name (must support .avi .mp4 etc.)      | DIVX          | 
 
 ### 6.6 Compare Trainer
-| Setting           | Default        |
-|-------------------|----------------|
-| buffer_size       | 50             | 
-| trainer_colour    | (0,255,0)      |
-| mapper_colour     | (255,255,255)  |
-| trainer_target    | EEwand         | 
-| fourcc            | DIVX           | 
-| min_reflectors    | 4              |
-| ignore_baddata    | True           |
-| offset            | 2              |
-| offset_mode       | mov            |
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| buffer_size       | Video buffer size in frames                           | 50            |
+| trainer_colour    | Colour representing user-clicked training points (B, G, R) | (0,255,0)|
+| mapper_colour     | Colour representing reprojected trainer centroid (B, G, R) | (255,255,255)      |
+| trainer_target    | Name of the trainer target being used (Always EEWand) | EEWand        | 
+| fourcc            | Codec package name (must support .avi .mp4 etc.)      | DIVX          | 
+| min_reflectors    | Minimum of visible reflectors (requires at least 4 to be accurate)    | 4              | 
+| ignore_baddata    | Prevent user from click and saving bad training points as specified in min_reflectors & check_negatives | True           | 
+| offset            | TODO                                                  | 2              |
+| offset_mode       | TODO                                                  | mov            |
 
 ### 6.7 Evaluation Tool
-| Setting           | Default        |
-|-------------------|----------------|
-| outputformat      | xml            |
-| plot              | True           |
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| outputformat      | File extension of output compariosn (xml or csv only) | xml           |
+| plot              | Whether to plot frame-by-frame centroid comparison graphs at end of script | True          |
 
 ### 6.8 Chessboard Extractor
-| Setting           | Default        |
-|-------------------|----------------|
-| buffer_size       | 50             | 
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| buffer_size       | Video buffer size in frames                           | 50            |
 
 ### 6.9 Fonts
-| Setting           | Default        |
-|-------------------|----------------|
-| font_scale        | 0.4            |
-| font_thic         | 0.4            |
-| font_scale        | (255,255,255)  |
-| font_family       | FONT_HERSHEY_SIMPLEX  |
-
-### 6.8 Chessboard Extractor
-| Setting           | Default        |
-|-------------------|----------------|
-| buffer_size       | 50             | 
+| Setting           | Description                                           | Default       |
+|-------------------|-------------------------------------------------------|---------------|
+| font_scale        | OpenCV font scale                                     | 0.4           |
+| font_thick        | OpenCV font thickness                                 | 1             |
+| font_colour       | OpenCV font colour (B, G, R)                          | (255,255,255) |
+| font_family       | OpenCV [font type] (http://docs.opencv.org/3.0-beta/modules/imgproc/doc/drawing_functions.html#initfont) | FONT_HERSHEY_SIMPLEX  |
