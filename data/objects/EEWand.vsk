@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<KinematicModel MODEL="EEWand" VERSION="2.5">
+
+  <Parameters>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308583_x" PRIOR="-0.791439056396484" SD="0" VALUE="-0.791439056396484"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308583_y" PRIOR="0.371185302734375" SD="0" VALUE="0.371185302734375"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308583_z" PRIOR="-0.84425163269043" SD="0" VALUE="-0.84425163269043"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308584_x" PRIOR="38.4237632751465" SD="0" VALUE="38.4237632751465"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308584_y" PRIOR="-69.4171600341797" SD="0" VALUE="-69.4171600341797"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308584_z" PRIOR="1.45453834533691" SD="0" VALUE="1.45453834533691"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308585_x" PRIOR="-107.934219360352" SD="0" VALUE="-107.934219360352"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308585_y" PRIOR="-57.8046073913574" SD="0" VALUE="-57.8046073913574"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308585_z" PRIOR="-6.68328666687012" SD="0" VALUE="-6.68328666687012"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308586_x" PRIOR="-208.218170166016" SD="0" VALUE="-208.218170166016"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308586_y" PRIOR="-117.217910766602" SD="0" VALUE="-117.217910766602"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2308586_z" PRIOR="-11.6130962371826" SD="0" VALUE="-11.6130962371826"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2311056_x" PRIOR="-77.5653533935547" SD="0" VALUE="-77.5653533935547"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2311056_y" PRIOR="140.31184387207" SD="0" VALUE="140.31184387207"/>
+    <Parameter HIDDEN="1" NAME="Wand_Unlabeled2311056_z" PRIOR="-1.5948314666748" SD="0" VALUE="-1.5948314666748"/>
+  </Parameters>
+
+  <Skeleton>
+    <Segment BOUNDS="-50 -50 -50 50 50 50" CONTEXT="General" INERTIA="0 0 0" MASS="0" MASS-CENTRE="0 0 0" NAME="EEWand" RGB="255 164 0">
+      <JointFree BOUNDS="0 0 0 0 0 0 0 0 0 0 0 0" COVARIANCE="2.46490001678467 0 0 0 0 0  0 2.46490001678467 0 0 0 0  0 0 246.490005493164 0 0 0  0 0 0 1000000 0 0  0 0 0 0 1000000 0  0 0 0 0 0 1000000  " MEAN="0 0 0 0 0 0" NAME="World_Wand" POST-ORIENTATION="0 0 0" POST-POSITION="0 0 0" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" SIGNS="+ + + + + + " T="* * * * * * ">
+        <JointTemplate COVARIANCE="2.46490001678467 0 0 0 0 0  0 2.46490001678467 0 0 0 0  0 0 246.490005493164 0 0 0  0 0 0 1000000 0 0  0 0 0 0 1000000 0  0 0 0 0 0 1000000  " MEAN="0 0 0 0 0 0" POST-ORIENTATION="0 0 0" POST-POSITION="0 0 0" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" TPOSE-COVARIANCE="0 0 0 0 0 0  0 0 0 0 0 0  0 0 0 0 0 0  0 0 0 0 0 0  0 0 0 0 0 0  0 0 0 0 0 0  " TPOSE-MEAN="0 0 0 0 0 0"/>
+      </JointFree>
+    </Segment>
+  </Skeleton>
+
+  <MarkerSet>
+    <Markers>
+      <Marker COVARIANCE="1 0 0 0 1 0 0 0 1 " NAME="Unlabeled2308583" POSITION="-0.791439 0.371185 -0.844252" RADIUS="12.5" RGB="255 164 0" SEGMENT="EEWand" STATUS="required">
+        <MarkerTemplate COVARIANCE="1 0 0 0 1 0 0 0 1 " PLACEMENT-COVARIANCE="1 0 0 0 1 0 0 0 1 " POSITION="'Wand_Unlabeled2308583_x' 'Wand_Unlabeled2308583_y' 'Wand_Unlabeled2308583_z'"/>
+      </Marker>
+      <Marker COVARIANCE="1 0 0 0 1 0 0 0 1 " NAME="Unlabeled2308584" POSITION="38.4238 -69.4172 1.45454" RADIUS="12.5" RGB="255 164 0" SEGMENT="EEWand" STATUS="optional">
+        <MarkerTemplate COVARIANCE="1 0 0 0 1 0 0 0 1 " PLACEMENT-COVARIANCE="1 0 0 0 1 0 0 0 1 " POSITION="'Wand_Unlabeled2308584_x' 'Wand_Unlabeled2308584_y' 'Wand_Unlabeled2308584_z'"/>
+      </Marker>
+      <Marker COVARIANCE="1 0 0 0 1 0 0 0 1 " NAME="Unlabeled2308585" POSITION="-107.934 -57.8046 -6.68329" RADIUS="12.5" RGB="255 164 0" SEGMENT="EEWand" STATUS="optional">
+        <MarkerTemplate COVARIANCE="1 0 0 0 1 0 0 0 1 " PLACEMENT-COVARIANCE="1 0 0 0 1 0 0 0 1 " POSITION="'Wand_Unlabeled2308585_x' 'Wand_Unlabeled2308585_y' 'Wand_Unlabeled2308585_z'"/>
+      </Marker>
+      <Marker COVARIANCE="1 0 0 0 1 0 0 0 1 " NAME="Unlabeled2308586" POSITION="-208.218 -117.218 -11.6131" RADIUS="12.5" RGB="255 164 0" SEGMENT="EEWand" STATUS="optional">
+        <MarkerTemplate COVARIANCE="1 0 0 0 1 0 0 0 1 " PLACEMENT-COVARIANCE="1 0 0 0 1 0 0 0 1 " POSITION="'Wand_Unlabeled2308586_x' 'Wand_Unlabeled2308586_y' 'Wand_Unlabeled2308586_z'"/>
+      </Marker>
+      <Marker COVARIANCE="1 0 0 0 1 0 0 0 1 " NAME="Unlabeled2311056" POSITION="-77.5654 140.312 -1.59483" RADIUS="12.5" RGB="255 164 0" SEGMENT="EEWand" STATUS="optional">
+        <MarkerTemplate COVARIANCE="1 0 0 0 1 0 0 0 1 " PLACEMENT-COVARIANCE="1 0 0 0 1 0 0 0 1 " POSITION="'Wand_Unlabeled2311056_x' 'Wand_Unlabeled2311056_y' 'Wand_Unlabeled2311056_z'"/>
+      </Marker>
+    </Markers>
+    <Sticks>
+      <Stick MARKER1="Unlabeled2308583" MARKER2="Unlabeled2308584" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308583" MARKER2="Unlabeled2308585" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308583" MARKER2="Unlabeled2308586" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308583" MARKER2="Unlabeled2311056" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308584" MARKER2="Unlabeled2308585" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308584" MARKER2="Unlabeled2308586" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308584" MARKER2="Unlabeled2311056" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308585" MARKER2="Unlabeled2308586" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308585" MARKER2="Unlabeled2311056" RGB="255 164 0"/>
+      <Stick MARKER1="Unlabeled2308586" MARKER2="Unlabeled2311056" RGB="255 164 0"/>
+    </Sticks>
+  </MarkerSet>
+
+  <Alignment/>
+
+</KinematicModel>
