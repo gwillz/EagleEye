@@ -120,6 +120,10 @@ TODO description
 ------------
 
 ### 3.1 Vicon Capture
+
+TODO add Eagleeye tool icon for extra cool points
+
+
 This tool records object positional data into [CSV files](#5-1-raw-dataset-csv) 
 from the Vicon system. It includes quality verification and time synchronisation data.
 
@@ -185,7 +189,10 @@ There are still only 2 flashes recorded into the CSV.
 
 
 ### 3.2 Calibration
+
 TODO add Eagleeye tool icon for extra cool points
+
+
 A Camera Calibration Tool based on the OpenCV Library. This script detects 
 chessboard pattern from a set of images and determines the intrinsic and distortion
 parameters of the camera lens. It can highlight the corners of the chessboards, 
@@ -207,7 +214,10 @@ $ python stdcalib.py -output <file path> <multiple jpg files> {-chess_size <patt
 
 
 ### 3.3 Trainer
+
 TODO add Eagleeye tool icon for extra cool points
+
+
 This tool creates a training set for the Mapping tool, using Vicon Wand positional
 data (from Vicon) and corresponding video capture. This is used to calculate the
 extrinsic parameters of the camera, and therefore its pose within the room.
@@ -228,7 +238,9 @@ $ python trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out
 
 
 ### 3.4 Mapping
+
 TODO add Eagleeye tool icon for extra cool points
+
 This software applies mapping routines to convert 3D raw data into 2D datasets 
 using models from the Training and Calibration tools.
 
@@ -249,7 +261,10 @@ $ python mapping.py -calib <calib xml> -trainer <trainer xml> -output <output da
 
 
 ### 3.5 Annotation
+
 TODO add Eagleeye tool icon for extra cool points
+
+
 Takes raw camera footage or images from the Ricoh theta and applies automated 
 object detection algorithms. Includes manual adjustment of the annotations.
 Outputs an annotated video or image, depending on the input as well as an XML
@@ -310,7 +325,10 @@ $ python annotation.py -mark_in <markinframe number> -mark_out <markoutframe num
 
 
 ### 3.6 Evaluation
+
 TODO add Eagleeye tool icon for extra cool points
+
+
 TODO description
 
 __Preparation__
