@@ -17,7 +17,7 @@ class HighlightEdit(QLineEdit):
         self._highlight_effect.setEnabled(False)
         
         self.clear_button = QToolButton(self)
-        self.clear_button.setIcon(QIcon.fromTheme("edit-clear", QIcon("delete_icon.png")))
+        self.clear_button.setIcon(QIcon.fromTheme("edit-clear", QIcon("icons/delete_icon.png")))
         self.clear_button.setCursor(Qt.ArrowCursor)
         self.clear_button.setStyleSheet("QToolButton { border: none; padding: 0px; }")
         self.clear_button.clicked.connect(self.clear)
