@@ -530,11 +530,60 @@ extrinsics for both lenses.
 ```
 
 ### 5.5 Evaluation XML
-TODO
+- Frame number indicates the frame numbers from the video.
+- Mapper indicates the file name of the mapped XML
+- Annotation indicates the file name of annotated XML
+- The mean value of differences in this set in pixels
+- Frames contains all the compared frames
+- Frames compared shows the number of compared frames
+- Frames total is the totl number of frames in the video
+- Frame contains all compared objects compared within the frame
+- Object name is the ID being used to distinguish objects
+- Object lens dictates the side (buttonside or backside) that this object is visible in
+- Object err is the euclidean distance difference between annoatated centroid and mapped centroid
+
+``` xml
+<?xml version='1.0'?>
+<AnnotationEvaluation>
+	<video mark_in="34" mark_out="360" />
+	<mapper>set14_mapped.xml</mapper>
+	<annotation>set14_mapped.xml</annotation>
+	<comparison mean_err="0.0" />
+	<frames compared="325" total="325">
+		<frame num="35">
+			<object err="0.0" lens="Buttonside" name="EE5">
+				<annotatedCentroid x="884" y="533" />
+				<mappedCentroid x="884" y="533" />
+			</object>
+			<object err="0.0" lens="Backside" name="EE4">
+				<annotatedCentroid x="1190" y="632" />
+				<mappedCentroid x="1190" y="632" />
+			</object>
+		</frame>
+		.
+		..
+		...
+	</frames>
+</AnnotationEvaluation>
+```
+
+
+### 5.6 Evaluation CSV
+This is an optional output format [Evaluation Tool](#3-6-Evaluation) produces.
+
+| Column | Data                         | Type      | Examples  |
+|--------|------------------------------|-----------|-----------|
+| 0      | Frame Number                 | int       | 35        |
+| 1      | Mapped Centroid (x)          | int       | 453       |
+| 2      | Mapped Centroid (y)          | int       | 842       |
+| 3      | Annotated Centroid (x)       | int       | 450       |
+| 4      | Annotated Centroid (x)       | int       | 840       |
+| 5      | Lens                         | string    | Buttonside   |
+| 6      | Euclidean Distance           | float     | 0.2323    |
 
 
 
-### 5.6 Header XML
+### 5.7 Header XML
 This is metadata XML file. It contains file paths and information about a 
 dataset when saved via the [Wizard Tool](#4-1-wizard). It allows a zipped
 datasets to saved and loaded at will.
