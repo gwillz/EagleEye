@@ -534,26 +534,24 @@ TODO description
 | output_delimiter  | ,              |
 | serial_device     | COM4           |
 | run_serial        | True           |
-| trainer_target    | Wand           |
+| trainer_target    | EEWand         |
 
 ### 6.2 Trainer
 | Setting           | Default        |
 |-------------------|----------------|
-| font_scale        | 0.4            | 
-| font_thick        | 1              | 
-| font_colour       | (255,255,255)  |
 | buffer_size       | 50             | 
 | default_clicks    | 9999           | 
-| quality_mode      | 1              | 
-| quality_threshold | 0.6            | 
+| dot_colour        | (255,255,255)  |
 | min_reflectors    | 4              | 
-| check_negatives   | on             | 
+| check_negatives   | True           | 
+| ignore_baddata    | True           | 
+| dual_mode         | True           | 
 
 ### 6.3 Mapper
 | Setting           | Default        |
 |-------------------|----------------|
-| min_reflectors    | 4              | 
-| check_negatives   | on             | 
+| trainer_target    | EEWand         | 
+| camera_fov        | 190            | 
 | pnp_flags         |                | 
 
 ### 6.4 Calibration
@@ -574,22 +572,36 @@ TODO description
 ### 6.6 Compare Trainer
 | Setting           | Default        |
 |-------------------|----------------|
-| font_scale        | 0.4            | 
-| font_thick        | 1              | 
-| font_colour       | (255,255,255)  |
 | buffer_size       | 50             | 
 | trainer_colour    | (0,255,0)      |
 | mapper_colour     | (255,255,255)  |
-| object_target     | Ewad1          | 
+| trainer_target    | EEwand         | 
 | fourcc            | DIVX           | 
+| min_reflectors    | 4              |
+| ignore_baddata    | True           |
+| offset            | 2              |
+| offset_mode       | mov            |
 
-### 6.7 Chessboard Extractor
+### 6.7 Evaluation Tool
+| Setting           | Default        |
+|-------------------|----------------|
+| outputformat      | xml            |
+| plot              | True           |
+
+### 6.8 Chessboard Extractor
 | Setting           | Default        |
 |-------------------|----------------|
 | buffer_size       | 50             | 
-| split_side        | right          | 
-| rotate            | r270           | 
-| crop              | (0, 0, 120, 0) |
-| font_size         | 0.4            | 
-| font_thick        | 1              | 
-| font_colour       | (255,255,255)  |
+
+### 6.9 Fonts
+| Setting           | Default        |
+|-------------------|----------------|
+| font_scale        | 0.4            |
+| font_thic         | 0.4            |
+| font_scale        | (255,255,255)  |
+| font_family       | FONT_HERSHEY_SIMPLEX  |
+
+### 6.8 Chessboard Extractor
+| Setting           | Default        |
+|-------------------|----------------|
+| buffer_size       | 50             | 
