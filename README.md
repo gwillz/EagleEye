@@ -347,14 +347,32 @@ $ python annotation.py -mark_in <markinframe number> -mark_out <markoutframe num
 
 ![Compare](icons/comparison_trim.png)
 
+This tool provides frame-by-frame comparison between the mapped centroid (ground-truth)
+and the annotated centroid. Each comparison is determined by the object name and the side
+of lens it is in. The difference is calculated in [Euclidean Distance] (http://docs.opencv.org/3.0-beta/modules/core/doc/operations_on_arrays.html?highlight=cv2.norm#norm)
+with NORM.L2. At the end the script, the frame-by-frame comparison can be toggled to plot
+for each object in the dataset (produced by matplotlib).
 
-TODO
+__Preparation__
 
+1. Annotated XML file
+2. Mapped XML file
+3. Ensure Annotated XML file has correct target labels specified
+
+__Procedure__
+
+1. Add the mapped xml in dataset_mapped.xml field in wizard tool
+2. Add the annotated xml in dataset_annotated.xml field in wizard tool 
+3. Optional output format can be specified as either xml or csv in `eagleyeeye.cfg` [Evaluation Config](#6-7-evaluation)
+4. Decide whether you want to visualise and plot a frame-by-frame comparison graph for each of the robots in the dataset at the end of script, also see [Evaluation Config](#6-7-evaluation)
+5. Select a path to export the file to (Either by pressing evaluation.xml field or step 6)
+6. Ensure the path has correct output format as specified in step 3
+7. Run Evaluation
 
 __Command line Usage__
 
 ```sh
-$ python eval.py <annotated dataset> <mapped dataset>
+$ python eval.py <annotated dataset> <mapped dataset> <output file> {-config <file>}
 ```
 
 
