@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.5
+# version 0.1.6
 #
 #
 # Options:
@@ -50,7 +50,7 @@ if len(args) < 3:
 # default args
 height = args.height or 3000        # milimetres
 width = args.width or 8000          # milimetres
-max_height = args.max_height = 400  # pixels
+max_height = args.max_height or 400  # pixels
 cfg = EasyConfig(args.config, group="mapper")
 
 # working vars

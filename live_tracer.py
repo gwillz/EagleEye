@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.5
+# version 0.1.6
 #
 # A cheeky little script for tracing the robot movements from a topdown viewpoint.
 # 
@@ -53,7 +53,7 @@ def main(sysargs):
     height = args.height or 3000        # milimetres
     width = args.width or 9000          # milimetres
     framerate = args.framerate or 30    # fps
-    max_height = args.max_height = 400  # pixels
+    max_height = args.max_height or 400  # pixels
     ip_address = args.ip_address or "192.168.10.1"
     port = 801
     target = args[1]
