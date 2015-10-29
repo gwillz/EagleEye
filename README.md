@@ -33,11 +33,11 @@ Please ensure all software dependencies are the same architecture
 So unless you want to be recompiling it (you don't), stick to 32-bit.
 
 - Windows 7+
-- Python 2.7 (Anaconda)
-- PyQt 4.11 (Qt 4.8.7)
+- Python 2.7 (Anaconda or scipy)
+- PyQt 4.10 (Qt 4.8.7)
 - OpenCV 3.0
 - Numpy 1.9.3
-- PIL 2.8.1 
+- Matplotlib 1.4.3
 - *For Capture*
   - Vicon Tracker System (v1.2 32-bit)
   - Serial RS232 Serial connection
@@ -49,17 +49,64 @@ So unless you want to be recompiling it (you don't), stick to 32-bit.
 
 Download and install the pre-requisities:
 - [Anaconda](https://repo.continuum.io/miniconda/Miniconda-latest-Windows-x86.exe)
-- [PyQt](http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt4-4.11.4-gpl-Py2.7-Qt4.8.7-x32.exe/download)
 - [OpenCV](http://sourceforge.net/projects/opencvlibrary/files/opencv-win/3.0.0/opencv-3.0.0.exe/download)
 
-TODO copy instructions for opencv-ffmpeg and cv2.pyd
-    Go to the extracted opencv folder -> build -> python -> 2.7 -> x86 -> copy cv2.pyd and paste that into the python27 -> Lib -> site-packages folder.
-    Go to the extracted opencv folder -> sources -> 3rdparty -> ffmpeg -> copy opencv_ffmpeg.dll and paste that into the python27 folder.
+__opencv-ffmpeg and cv2.pyd__
+
+- Go to the extracted opencv folder -> build -> python -> 2.7 -> x86
+  - copy cv2.pyd into into the python27 -> Lib -> site-packages folder.
+- Go to the extracted opencv folder -> sources -> 3rdparty -> ffmpeg 
+  - copy opencv_ffmpeg.dll into the python27 folder.
+
+__Note about Miniconda__
+
+The linked installer is a smaller version of Anaconda called Miniconda. This
+doesn't include some dependencies of the EagleEye project. To install them, open
+a terminal and run `$ conda install <package>`.
+
+Require packages are:
+- numpy (tested with 1.9.2)
+- matplotlib (tested with 1.4.3)
+- pyqt (tested with 4.10)
+
+
 #### 1.4.1 Re-compiling PyVicon
 You really shouldn't need to do this unless you're not using a different 
-Vicon Tracker than the one at the UniSA Mawson Lakes campus.
+Vicon Tracker than the one at the UniSA Mawson Lakes campus. Mawson lakes runs
+Tracker (Rigid bodies) v1.2 32bit. 
 
-TODO
+__Visual Studio versions__
+
+To recompile, the system needs to have Visual Studio installed. The python 
+setuptools only read the `VS90COMNTOOLS` environment variable, some tweaking is 
+required if that is not your VS version.
+
+- No SET required (for VS2008)
+- `SET VS90COMNTOOLS=%VS100COMNTOOLS%` (for VS2010)
+- `SET VS90COMNTOOLS=%VS110COMNTOOLS%` (for VS2012)
+- `SET VS90COMNTOOLS=%VS120COMNTOOLS%` (for VS2013)
+
+__Vicon DataStream SDK__
+
+Download the Vicon DataStream SDK from [here](http://www.vicon.com/products/software/datastream-sdk).
+If this doesn't match your Vicon installation, find the right one with Google or
+hope that your installation includes the SDK.
+Copy all of the SDK files into the `python_vicon` folder.
+
+__Compiling__
+
+- ensure setuptools is installed with `$ conda install setuptools`
+- open a terminal in the `python_vicon` directory
+- run these: (supposedly they help?)
+
+     ```sh
+        SET MSSDK=1
+        SET DISTUTILS_USE_SDK=1
+    ```
+- execute the setup.py `$ python setup.py build`
+- check for errors in the output (good luck)
+- open the new `build` folder, look for a `lib.win32` or `lib.win-amd64`
+- copy the pyvicon.pyd back into the root `python_vicon` folder
 
 
 2 Pipeline Overview
