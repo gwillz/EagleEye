@@ -408,7 +408,7 @@ $ python compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_ou
 --------------
 The following section outlines the structure of the output files produced by our tools.
 Output file format includes .csv, .xml.
-Data Dictionary describing the output data is also laid out.
+Data dictionaries describing the output data is also laid out.
 
 
 
@@ -444,46 +444,61 @@ not to be mistaken with Euler Angles - pitch, yaw, roll.
 
 
 ### 5.2 Calibration XML
-TODO description
+This contains the camera intrinsic values and distortion coefficients. It contains
+intrinsics for both lenses. It also contains some error metrics, although these
+aren't explicitly used in any tool.
 
 ``` xml
 <?xml version='1.0'?>
-<StdIntrinsic>
-    <CamMat cx="487.032967037" cy="444.164482209" fx="287.98587712" fy="295.556664123" />
-    <DistCoe c1="0.0" c2="0.0" c3="0.0" c4="0.0" k1="-0.0206585491055" k2="0.00849952958576" k3="0.00380032047972" k4="0.0861709048126" k5="-0.00205536510651" k6="0.00844339783038" p1="0.00238980715215" p2="-0.00029672399339" />
-    <Error arth="0.426145384461" rms="3.32043177324" total="11.5059253805" />
-</StdIntrinsic>
+<dual_intrinsic>
+    <Buttonside>
+        <CamMat cx="488.175326627" cy="478.94638883" fx="254.127305966" fy="255.484172972" />
+        <DistCoe c1="0.0" c2="0.0" c3="0.0" c4="0.0" k1="-0.0171416537233" k2="0.00124838013824" k3="3.84782779449e-05" k4="0.116735621147" k5="-0.00502050693142" k6="0.000317011928086" p1="-0.000477421902718" p2="-0.000143055577271" />
+        <Error arth="0.290929432817" rms="2.36849146329" total="10.4734595814" />
+    </Buttonside>
+    <Backside>
+        <CamMat cx="459.480698678" cy="489.757300849" fx="241.644695381" fy="241.812653001" />
+        <DistCoe c1="0.0" c2="0.0" c3="0.0" c4="0.0" k1="0.00987461484022" k2="0.000247414863475" k3="8.26584785527e-06" k4="0.144976371435" k5="-0.00296523619781" k6="9.90414253597e-05" p1="0.00017787766362" p2="5.07307005624e-05" />
+        <Error arth="0.322888672819" rms="2.53764413382" total="7.10355080202" />
+    </Backside>
+</dual_intrinsic>
 ```
 
 ### 5.3 Trainer XML
-TODO description
+This represents the extrinsic values in their most raw form. To calcuate a useable
+extrinsic, these training values are combined with the intrinsic values. Each frame
+is a manually matched points between 2D and 3D positions. This XML contains 
+extrinsics for both lenses.
 
 ``` xml
 <?xml version='1.0'?>
 <TrainingSet>
     <video file="wand_right.avi" />
     <csv file="2015-08-27_13-24_Wand.csv" />
-    <frames>
+    <Buttonside points="1">
         <frame num="46">
             <plane x="252" y="567" />
             <vicon x="6604.76905818057" y="1225.0367491552" z="71.7138299051588" />
         </frame>
+    </Buttonside>
+    <Backside points="1">
         <frame num="101">
             <plane x="453" y="673" />
             <vicon x="6259.08569084885" y="1905.83353105066" z="69.601629741746" />
         </frame>
-    </frames>
+    </Backside>
 </TrainingSet>
 ```
 
 ### 5.4 Dataset XML
-Frame number indicates the frame numbers from the video.
-Object name indicates name of object and it depends on its id. 
-The id is defined by the index of object, the index of object starts from 01 and it is defined from the semi-automatic annotation tool.
-The lens is defined by the side of the object. If an object has x coordinate which has bigger than half of width of frame, then its buttonside.
-If an object has x coordinate which has smaller than half of width of frame, then its backside.
-In the Boxinfo attribute, it contains x,y coordinates and width height of the bounding box.
-In the centroid attribute, it contains x,y 2D coordinates which is a centroid point from the bounding box.
+- Frame number indicates the frame numbers from the video.
+- Object name indicates name of object and it depends on its id. 
+- The id is defined by the index of object, the index of object starts from 01 and it is defined from the semi-automatic annotation tool.
+- The lens is defined by the side of the object. If an object has x coordinate which has bigger than half of width of frame, then its buttonside.
+- If an object has x coordinate which has smaller than half of width of frame, then its backside.
+- In the Boxinfo attribute, it contains x,y coordinates and width height of the bounding box.
+- In the centroid attribute, it contains x,y 2D coordinates which is a centroid point from the bounding box.
+- Datasets produced by the Mapping tool can include a `<Visiblilty>` tag in each object, which contains whether Vicon has successfully tracked this object. This is useful for the evaluation tool.
 
 ``` xml
 <?xml version='1.0'?>
@@ -493,10 +508,12 @@ In the centroid attribute, it contains x,y 2D coordinates which is a centroid po
         <object name="EE1" lens="Backside" id="01">
             <boxinfo y="488" x="499" width="63" height="74"/>
             <centroid y="525" x="530"/>
+            <visibility visible="5" visibleMax="5"/>
         </object>
         <object name="EE2" lens="Buttonside" id="02">
             <boxinfo y="406" x="1465" width="83" height="104"/>
             <centroid y="458" x="1506"/>
+            <visibility visible="5" visibleMax="5"/>
         </object>
     </frameInformation>
 </dataset>
@@ -505,12 +522,17 @@ In the centroid attribute, it contains x,y 2D coordinates which is a centroid po
 ### 5.5 Evaluation XML
 TODO
 
+
+
 ### 5.6 Header XML
-TODO description
+This is metadata XML file. It contains file paths and information about a 
+dataset when saved via the [Wizard Tool](#4-1-wizard). It allows a zipped
+datasets to saved and loaded at will.
 
 ``` xml
 <?xml version='1.0'?>
 <datasetHeader date="2015-08-27" name="August27">
+    <description>August 27 test set. Single lens, single target.</description>
     <calibration>
         <xml>calibration.xml</xml>
         <chessboards path="chessboards/" size="4">
@@ -544,7 +566,7 @@ TODO description
 
 6 Configuration
 ---------------
-Utility Tool reads a config file `eagleyeeye.cfg` to allow various configurations to be customised in code executions.
+Each tool reads a config file `eagleyeeye.cfg` to allow various configurations to be customised in code executions.
 These are parameters that users may change to suit their needs in functions such as colour representation, quality control, output format etc.
 
 ### 6.1 Capture
