@@ -157,7 +157,7 @@ in the *Vicon Tracker* software. Some experimental/working objects are
 stored in the [data/objects](data/objects) folder.
 
 Ensure your running time is sufficient, modify via the command line option or
-within the [config file](#6-1-Capture). 
+within the [config file](#6-1-capture). 
 
 Ensure the correct serial port is defined in the config file.
 A list of available serial ports can be found with this command:
@@ -205,7 +205,7 @@ __The circuit connects to the serial GND and CTS pins__
 #### 3.1.2 Synchronisation
 When running the software, the flash will trigger 3 times. This is a uncorrectable
 side-effect of the hardware, therefore the software will delay a number of frames
-(as specified in the [config file](#6-1-Capture)) before the first flash is triggered.
+(as specified in the [config file](#6-1-capture)) before the first flash is triggered.
 There are still only 2 flashes recorded into the CSV.
 
 
@@ -221,35 +221,43 @@ provide an estimated error and sample rectified images.
 
 __Preparation__
 
-TODO
+First collect a set of chessboard images, taken by the camera, in varying positions 
+around the lens. For the best calibration; be sure all the checkers are visible in 
+each image and that the whole lens is covered by at least one image.
 
 __Procedure__
 
-TODO
+- Use VLC or the (Extract Tool)[4-2-chessboard-extractor] to gather images from the camera video
+- Run the calibration tool with all of the images in the args. (`dualcalib.py images\*.jpg`)
 
 __Command line Usage__
 
 ```sh
-$ python stdcalib.py -output <file path> <multiple jpg files> {-chess_size <pattern: def. 9,6> | -square_size <in mm: def. 1.0> | -preview <preview file folder> | -config <file>}
+$ python dualcalib.py -output <file path> <multiple jpg files> {-chess_size <pattern: def. 9,6> | -square_size <in mm: def. 1.0> | -preview <preview file folder> | -config <file>}
 ```
+
+__Note__
+
+A variant script `stdcalib.py` is available for calibrating single lens cameras.
 
 
 ### 3.3 Trainer
 
 ![Trainer](icons/training_trim.png)
 
-
 This tool creates a training set for the Mapping tool, using Vicon Wand positional
 data (from Vicon) and corresponding video capture. This is used to calculate the
 extrinsic parameters of the camera, and therefore its pose within the room.
 
-__Preparation__
-
-TODO
-
 __Procedure__
 
-TODO
+- Ensure marks are first specified or use the marker tool to find  them
+- Use the 1 and 2 keys to switch between the lenses
+- Track through the video (left and right keys) until a suitable point is visible
+- Click on a point to mark it
+- Track back a single frame to review the mark
+- Repeat until _at least_ 4 points are trained. Recommended 20+ points.
+- Press enter to save the settings, ESC to discard
 
 __Command line Usage__
 
@@ -265,20 +273,11 @@ $ python trainer.py <video file> <csv file> <data out file> {<mark_in> <mark_out
 This software applies mapping routines to convert 3D raw data into 2D datasets 
 using models from the Training and Calibration tools.
 
-__Preparation__
-
-TODO
-
-__Procedure__
-
-TODO
-
 __Command line Usage__
 
 ```sh
 $ python mapping.py -calib <calib xml> -trainer <trainer xml> -output <output dataset> [<multiple csv files>] {--config <file>}
 ```
-
 
 
 ### 3.5 Annotation
@@ -349,15 +348,8 @@ $ python annotation.py -mark_in <markinframe number> -mark_out <markoutframe num
 ![Compare](icons/comparison_trim.png)
 
 
-TODO description
-
-__Preparation__
-
 TODO
 
-__Procedure__
-
-TODO
 
 __Command line Usage__
 
@@ -368,10 +360,13 @@ $ python eval.py <annotated dataset> <mapped dataset>
 
 4 Utility Tools
 ---------------
-TODO description
+These are additional tools, that although are not project critical but certainly 
+make the whole process easier.
 
 ### 4.1 Wizard
-TODO description
+This a central tool that implements the tools in an easy-to-follow layout. It 
+is intended to appear like the (dataflow diagram)[2-pipeline-overview] in order 
+to visualise the overall process.
 
 __Usage__
 
@@ -386,11 +381,7 @@ Be sure to re-generate the shortcut if you move the project folder.
 
 
 ### 4.2 Chessboard Extractor
-TODO description
-
-__Procedure__
-
-TODO
+Tracks through a video file and extracts selected images to a folder.
 
 __Command line Usage__
 
@@ -400,11 +391,9 @@ $ python extract_frames.py <video file> <output image folder> {-prefix <output n
 
 
 ### 4.3 Trainer Comparison
-TODO description
-
-__Procedure__
-
-TODO
+This tool is to verify the accuracy of a given extrinsic training. As the user
+tracks through the video, the tool will compare each training point against 
+the corresponding mapped point. This produces an error measurement.
 
 __Command line Usage__
 
@@ -414,11 +403,9 @@ $ python compare_trainer.py <video file> <mapper xml> <trainer xml> {<mark_in> <
 
 
 ### 4.4 Dataset Comparison
-TODO
-
-__Procedure__
-
-TODO
+This tool is somewhat similar to the trainer comparison tool. Where this tool
+pits two datasets against each other to visualise the difference. Please note that
+this tool does not perform (evaluation)[#3-6-evaluation].
 
 __Command line Usage__
 
