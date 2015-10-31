@@ -39,7 +39,10 @@ class Xmltrainer:
         
         # even more error checking
         if frames is None:
-            raise Exception("Wrong input file for {} mode".format(Theta.name(self.side)))
+            if self.side == Theta.NonDual:
+                raise Exception("Wrong input file, needs a dual training set")
+            else:
+                raise Exception("Wrong input file, needs a non-dual training set")
         
         # TODO ignore this one for now
         #if "points" not in frames.attrib:

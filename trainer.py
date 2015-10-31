@@ -283,10 +283,6 @@ def main(sysargs):
                 pos, row, markers = trainer_points[lens][i]
                 x, y = pos
                 
-                # add 960 for rightside
-                if lens == Theta.Right:
-                    x += 960
-                
                 out_xml.start("frame", num=str(i))
                 out_xml.element("plane", 
                                 x=str(x), 
