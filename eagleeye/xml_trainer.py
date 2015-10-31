@@ -64,7 +64,7 @@ class Xmltrainer:
             self.frames[frame_no]["vicon"] = vicon
             self.frames[frame_no]["visibility"] = frame.find("visibility").attrib
             
-            self._img.append((float(vicon['x']), float(vicon['y'])))
+            self._img.append((float(plane['x']), float(plane['y'])))
             self._obj.append((float(vicon['x']), float(vicon['y']), float(vicon['z'])))
         
         self.total = len(self.frames)

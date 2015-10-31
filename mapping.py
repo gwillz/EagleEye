@@ -132,8 +132,8 @@ def main(sysargs):
                 
                 # TODO don't write non visible dots? 
                 else:
+                    points = [0.,0.]
                     count['rej'] += 1
-                    continue
                 
                 # TODO: Change DTD and double check with Manjung
                 w.start("object", id=str(i), name=c.name(), lens=Theta.name(side))
