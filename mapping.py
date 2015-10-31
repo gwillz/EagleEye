@@ -119,20 +119,21 @@ def main(sysargs):
                     return 1
                 
                 # run projection/mapping on VICON data
-                if force_back or (backside.isVisible((x,y,z)) and not force_button):
+                if backside.isVisible((x,y,z)):
                     points = backside.reprojpts((x, y, z))
                     side = 'backside'
                     count['bks'] += 1
                 
-                elif force_button or buttonside.isVisible((x,y,z)):
+                elif buttonside.isVisible((x,y,z)):
                     points = buttonside.reprojpts((x, y, z))
+                    points[0] += 960 # add 960 to x for rightside points
                     side = 'buttonside'
                     count['bts'] += 1
                 
                 # TODO don't write non visible dots? 
                 else:
+                    points = [0.,0.]
                     count['rej'] += 1
-                    continue
                 
                 # TODO: Change DTD and double check with Manjung
                 w.start("object", id=str(i), name=c.name(), lens=Theta.name(side))

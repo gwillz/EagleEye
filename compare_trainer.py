@@ -4,10 +4,12 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.11
+# version 0.1.12
 #
 # Compares any corresponding image points to reprojected points
 # And calculate and display the reprojection error
+# 
+# TODO: only compares one side of the trainer at a time because I'm too lazy to write dual support in
 # 
 
 import sys, cv2, numpy as np, time, os, csv
@@ -52,7 +54,7 @@ def main(sysargs):
     side = Theta.resolve(args.side or 'buttonside')
     
     # open inouts files
-    vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size, side=side)
+    vid = BuffSplitCap(args[1], buff_max=cfg.buffer_size, side=Theta.Both)
     mapper_xml = Xmlset(args[2], offset=cfg.offset, offmode=Xmlset.offset_mode(cfg.offset_mode))
     trainer_xml = Xmltrainer(args[3], side=side)
     reprojerror_list = {}     # list of reprojection error of all frames
