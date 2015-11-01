@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.17
+# version 0.2.18
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
@@ -17,7 +17,7 @@ from eagleeye.display_text import *
 def usage():
     print "usage: compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}"
 
-def draw(frame, obj, cfg):
+def draw(frame, obj, colour):
     pt1 = (int(float(obj['box']['x'])), 
             int(float(obj['box']['y'])))
     pt2 = (pt1[0] + int(float(obj['box']['width'])), 
@@ -26,8 +26,8 @@ def draw(frame, obj, cfg):
     centre = (int(float(obj['centre']['x'])), 
             int(float(obj['centre']['y'])))
     
-    cv2.rectangle(frame, pt1, pt2, cfg.xml1_colour, 1)
-    cv2.circle(frame, centre, 1, cfg.xml1_colour, 2)
+    cv2.rectangle(frame, pt1, pt2, colour, 1)
+    cv2.circle(frame, centre, 1, colour, 2)
 
 def main(sysargs):
     args = EasyArgs(sysargs)
@@ -94,14 +94,14 @@ def main(sysargs):
         
         # draw objects from each dataset
         for name in xml1.data():
-            draw(frame, xml1.data()[name], cfg)
+            draw(frame, xml1.data()[name], cfg.xml1_colour)
         for name in xml2.data():
-            draw(frame, xml2.data()[name], cfg)    
+            draw(frame, xml2.data()[name], cfg.xml2_colour)
         
         # print status to screen
         displayText(frame, vid.status(), top=True)
-        displayText(frame, "{}: {}".format(os.path.basename(args[2]), xml1.status()))
-        displayText(frame, "{}: {}".format(os.path.basename(args[3]), xml2.status()))
+        displayText(frame, "{}: {}".format(os.path.basename(args[2]), xml1.status()), colour=cfg.xml1_colour)
+        displayText(frame, "{}: {}".format(os.path.basename(args[3]), xml2.status()), colour=cfg.xml2_colour)
         
         # export or navigate
         if 'export' in args:
