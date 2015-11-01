@@ -419,6 +419,9 @@ class Wizard(QMainWindow):
             QMessageBox.error(self, "Not a valid dataset", "This is not a zip file or is corrupt")
             return
         
+        # clear fields
+        self.clear_data()
+        
         with zipfile.ZipFile(str(path), 'r') as zipper:
             # test for header file
             if 'header.xml' not in zipper.namelist():
@@ -490,7 +493,7 @@ class Wizard(QMainWindow):
                         
                         # load video marks if found
                         if 'mark_in' in video.attrib:
-                            self.trainer_marks = (video.attrib['mark_in'], video.attrib['mark_out'])
+                            self.trainer_marks = (int(video.attrib['mark_in']), int(video.attrib['mark_out']))
             
             # find data elements
             if raw_data is not None:
@@ -501,7 +504,7 @@ class Wizard(QMainWindow):
                     # set stuff
                     self.dataset_mov_edit.setText(os.path.join(temp_dir, video.text))
                     if 'mark_in' in video.attrib:
-                            self.dataset_marks = (video.attrib['mark_in'], video.attrib['mark_out'])
+                            self.dataset_marks = (int(video.attrib['mark_in']), int(video.attrib['mark_out']))
                     
                     if vicon is not None:
                         self.vicondata_edit.setText(os.path.normpath(os.path.join(

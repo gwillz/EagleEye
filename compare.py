@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.16
+# version 0.2.17
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
@@ -82,7 +82,7 @@ def main(sysargs):
 
         out_vid = cv2.VideoWriter(args.export,
                                   cv2.VideoWriter_fourcc(*cfg.fourcc),
-                                  in_fps, vid.shape[:2])
+                                  in_fps, in_size)
     else:
         cv2.namedWindow(window_name)
     
@@ -112,6 +112,7 @@ def main(sysargs):
             
             if vid.next():
                 xml1.next()
+                xml2.next()
             else:
                 print "\nend of video"
                 break
