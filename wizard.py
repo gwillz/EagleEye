@@ -560,6 +560,7 @@ class Wizard(QMainWindow):
         self.setWindowTitle(self._original_title)
         self.dataset_name = "Untitled"
         
+        self.description_edit.clear()
         self.chessboard_edit.clear()
         self.calibration_edit.clear()
         self.trainer_csv_edit.clear()
