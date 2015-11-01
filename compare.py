@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.15
+# version 0.2.16
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
@@ -12,6 +12,7 @@
 
 import sys, cv2, numpy as np, time, os
 from eagleeye import BuffSplitCap, Xmlset, EasyArgs, EasyConfig, Key, marker_tool
+from eagleeye.display_text import *
 
 def usage():
     print "usage: compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}"
@@ -69,10 +70,12 @@ def main(sysargs):
     # trim the CSV
     cropped_total = mark_out - mark_in
     xml1.setRatio(cropped_total)
-    print 'ratio at:', xml1.ratio()
+    xml2.setRatio(cropped_total) # should be 1.0 (total frames should be the same as video)
+    print 'xml1 ratio:', xml1.ratio()
+    print 'xml2 ratio:', xml2.ratio()
     
     # open export (if specified)
-    if args.export:
+    if 'export' in args:
         in_fps  = vid.get(cv2.CAP_PROP_FPS)
         in_size = (int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)),
                    int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT)))
@@ -89,14 +92,19 @@ def main(sysargs):
         
         frame = vid.frame()
         
+        # draw objects from each dataset
         for name in xml1.data():
             draw(frame, xml1.data()[name], cfg)
-        
         for name in xml2.data():
             draw(frame, xml2.data()[name], cfg)    
-            
+        
+        # print status to screen
+        displayText(frame, vid.status(), top=True)
+        displayText(frame, "{}: {}".format(os.path.basename(args[2]), xml1.status()))
+        displayText(frame, "{}: {}".format(os.path.basename(args[3]), xml2.status()))
+        
         # export or navigate
-        if args.export:
+        if 'export' in args:
             sys.stdout.write("{}/{}\r".format(vid.at(), cropped_total))
             sys.stdout.flush()
             
@@ -105,7 +113,7 @@ def main(sysargs):
             if vid.next():
                 xml1.next()
             else:
-                print "end of video"
+                print "\nend of video"
                 break
         else:
             cv2.imshow(window_name, frame)
@@ -113,7 +121,7 @@ def main(sysargs):
             
             # controls
             if key == Key.esc:
-                print "exiting."
+                print "\nexiting."
                 break
             elif key == Key.right:
                 if vid.next():
@@ -126,11 +134,11 @@ def main(sysargs):
     
     # clean up
     vid.release()
-    if args.export:
+    if 'export' in args:
         out_vid.release()
     else:
         cv2.destroyAllWindows()
-        
+    
     return 0
     
 if __name__ == '__main__':

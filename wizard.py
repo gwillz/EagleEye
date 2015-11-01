@@ -152,7 +152,7 @@ class Wizard(QMainWindow):
     @pyqtSlot()
     def save_file_as(self):
         # open file dialog
-        path = QFileDialog.getSaveFileName(self, "Save Dataset As...", "./", "Zip file (*.zip)")
+        path = QFileDialog.getSaveFileName(self, "Save Dataset As...", self.save_path, "Zip file (*.zip)")
         if path != "":
             self.savezip(path)
     
@@ -518,7 +518,7 @@ class Wizard(QMainWindow):
                 self.dataset_map_edit.setText(os.path.join(temp_dir, mapping.text))
             
             if annotation is not None:
-                self.annotation_edit.setText(os.path.join(temp_dir, annotation.text))
+                self.dataset_ann_edit.setText(os.path.join(temp_dir, annotation.text))
             
             # now extract everything else
             zipper.extractall(temp_dir)

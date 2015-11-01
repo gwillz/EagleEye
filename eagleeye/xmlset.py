@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.10
+# version 0.2.11
 # 
 # Reads an XML Dataset file into memory
 # Provides synchronisation techniques - via setRatio()
@@ -29,7 +29,8 @@ class Xmlset:
         self.offmode = offmode
         if path is not None:
             self.open(path)
-            
+        
+        # TODO: this is unused, what is this for??
         if readmode not in self.modes:
             print "Read mode:", readmode, "is not supported, changing to default to read", self.mode
         else:
@@ -119,4 +120,7 @@ class Xmlset:
     
     def resetRatio(self):
         self._ratio = 1.0
+    
+    def status(self):
+        return "{}/{}".format(self.at(), self.total)
     
