@@ -152,7 +152,7 @@ class Wizard(QMainWindow):
     @pyqtSlot()
     def save_file_as(self):
         # open file dialog
-        path = QFileDialog.getSaveFileName(self, "Save Dataset As...", "./", "Zip file (*.zip)")
+        path = QFileDialog.getSaveFileName(self, "Save Dataset As...", self.save_path, "Zip file (*.zip)")
         if path != "":
             self.savezip(path)
     
@@ -419,6 +419,9 @@ class Wizard(QMainWindow):
             QMessageBox.error(self, "Not a valid dataset", "This is not a zip file or is corrupt")
             return
         
+        # clear fields
+        self.clear_data()
+        
         with zipfile.ZipFile(str(path), 'r') as zipper:
             # test for header file
             if 'header.xml' not in zipper.namelist():
@@ -490,7 +493,7 @@ class Wizard(QMainWindow):
                         
                         # load video marks if found
                         if 'mark_in' in video.attrib:
-                            self.trainer_marks = (video.attrib['mark_in'], video.attrib['mark_out'])
+                            self.trainer_marks = (int(video.attrib['mark_in']), int(video.attrib['mark_out']))
             
             # find data elements
             if raw_data is not None:
@@ -501,7 +504,7 @@ class Wizard(QMainWindow):
                     # set stuff
                     self.dataset_mov_edit.setText(os.path.join(temp_dir, video.text))
                     if 'mark_in' in video.attrib:
-                            self.dataset_marks = (video.attrib['mark_in'], video.attrib['mark_out'])
+                            self.dataset_marks = (int(video.attrib['mark_in']), int(video.attrib['mark_out']))
                     
                     if vicon is not None:
                         self.vicondata_edit.setText(os.path.normpath(os.path.join(
@@ -518,7 +521,7 @@ class Wizard(QMainWindow):
                 self.dataset_map_edit.setText(os.path.join(temp_dir, mapping.text))
             
             if annotation is not None:
-                self.annotation_edit.setText(os.path.join(temp_dir, annotation.text))
+                self.dataset_ann_edit.setText(os.path.join(temp_dir, annotation.text))
             
             # now extract everything else
             zipper.extractall(temp_dir)
@@ -557,6 +560,7 @@ class Wizard(QMainWindow):
         self.setWindowTitle(self._original_title)
         self.dataset_name = "Untitled"
         
+        self.description_edit.clear()
         self.chessboard_edit.clear()
         self.calibration_edit.clear()
         self.trainer_csv_edit.clear()

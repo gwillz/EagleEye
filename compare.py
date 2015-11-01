@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.14
+# version 0.2.18
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
@@ -12,9 +12,22 @@
 
 import sys, cv2, numpy as np, time, os
 from eagleeye import BuffSplitCap, Xmlset, EasyArgs, EasyConfig, Key, marker_tool
+from eagleeye.display_text import *
 
 def usage():
     print "usage: compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}"
+
+def draw(frame, obj, colour):
+    pt1 = (int(float(obj['box']['x'])), 
+            int(float(obj['box']['y'])))
+    pt2 = (pt1[0] + int(float(obj['box']['width'])), 
+            pt1[1] + int(float(obj['box']['height'])))
+    
+    centre = (int(float(obj['centre']['x'])), 
+            int(float(obj['centre']['y'])))
+    
+    cv2.rectangle(frame, pt1, pt2, colour, 1)
+    cv2.circle(frame, centre, 1, colour, 2)
 
 def main(sysargs):
     args = EasyArgs(sysargs)
@@ -57,17 +70,19 @@ def main(sysargs):
     # trim the CSV
     cropped_total = mark_out - mark_in
     xml1.setRatio(cropped_total)
-    print 'ratio at:', xml1._ratio
+    xml2.setRatio(cropped_total) # should be 1.0 (total frames should be the same as video)
+    print 'xml1 ratio:', xml1.ratio()
+    print 'xml2 ratio:', xml2.ratio()
     
     # open export (if specified)
-    if args.export:
+    if 'export' in args:
         in_fps  = vid.get(cv2.CAP_PROP_FPS)
         in_size = (int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)),
                    int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
         out_vid = cv2.VideoWriter(args.export,
                                   cv2.VideoWriter_fourcc(*cfg.fourcc),
-                                  in_fps, vid.shape[:2])
+                                  in_fps, in_size)
     else:
         cv2.namedWindow(window_name)
     
@@ -77,23 +92,19 @@ def main(sysargs):
         
         frame = vid.frame()
         
-        # get each object in the xml
+        # draw objects from each dataset
         for name in xml1.data():
-            obj = xml1.data()[name]
-            
-            pt1 = (int(float(obj['box']['x'])), 
-                    int(float(obj['box']['y'])))
-            pt2 = (pt1[0] + int(float(obj['box']['width'])), 
-                    pt1[1] + int(float(obj['box']['height'])))
-            
-            centre = (int(float(obj['centre']['x'])), 
-                    int(float(obj['centre']['y'])))
-            
-            cv2.rectangle(frame, pt1, pt2, cfg.xml1_colour, 1)
-            cv2.circle(frame, centre, 1, cfg.xml1_colour, 2)
+            draw(frame, xml1.data()[name], cfg.xml1_colour)
+        for name in xml2.data():
+            draw(frame, xml2.data()[name], cfg.xml2_colour)
+        
+        # print status to screen
+        displayText(frame, vid.status(), top=True)
+        displayText(frame, "{}: {}".format(os.path.basename(args[2]), xml1.status()), colour=cfg.xml1_colour)
+        displayText(frame, "{}: {}".format(os.path.basename(args[3]), xml2.status()), colour=cfg.xml2_colour)
         
         # export or navigate
-        if args.export:
+        if 'export' in args:
             sys.stdout.write("{}/{}\r".format(vid.at(), cropped_total))
             sys.stdout.flush()
             
@@ -101,8 +112,9 @@ def main(sysargs):
             
             if vid.next():
                 xml1.next()
+                xml2.next()
             else:
-                print "end of video"
+                print "\nend of video"
                 break
         else:
             cv2.imshow(window_name, frame)
@@ -110,7 +122,7 @@ def main(sysargs):
             
             # controls
             if key == Key.esc:
-                print "exiting."
+                print "\nexiting."
                 break
             elif key == Key.right:
                 if vid.next():
@@ -123,11 +135,11 @@ def main(sysargs):
     
     # clean up
     vid.release()
-    if args.export:
+    if 'export' in args:
         out_vid.release()
     else:
         cv2.destroyAllWindows()
-        
+    
     return 0
     
 if __name__ == '__main__':

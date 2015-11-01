@@ -224,17 +224,20 @@ def compareReproj(cvframe, vidframe_no, mapper_xml, trainer_xml, reprojerror_lis
     
     if vidframe_no in trainer_xml.data() and lens_side == trainer_xml.side:
         trainer_frame = trainer_xml.data()[vidframe_no]
-    
+        
+        # fix buttonside trainer points
+        rightside_offset = 960 if trainer_xml.side == Theta.Right else 0
+        
         vicon_txt = "VICON - x: {:.4f}, y: {:.4f}, z: {:.4f}".format(
                             float(trainer_frame["vicon"]["x"]),
                             float(trainer_frame["vicon"]["y"]),
                             float(trainer_frame["vicon"]["z"]))
         trainer_txt = "Trained Point: x: {}, y: {}".format(
-                            int(float(trainer_frame["plane"]["x"])),
+                            int(float(trainer_frame["plane"]["x"]) + rightside_offset),
                             int(float(trainer_frame["plane"]["y"])))
         
         # visualise trainer point
-        trainer_pt = (int(float(trainer_frame["plane"]["x"])),
+        trainer_pt = (int(float(trainer_frame["plane"]["x"]) + rightside_offset),
                         int(float(trainer_frame["plane"]["y"])))
         cv2.circle(cvframe, trainer_pt, 1, cfg.trainer_colour, 2)
 

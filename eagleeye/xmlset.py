@@ -3,7 +3,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.9
+# version 0.2.11
 # 
 # Reads an XML Dataset file into memory
 # Provides synchronisation techniques - via setRatio()
@@ -29,7 +29,8 @@ class Xmlset:
         self.offmode = offmode
         if path is not None:
             self.open(path)
-            
+        
+        # TODO: this is unused, what is this for??
         if readmode not in self.modes:
             print "Read mode:", readmode, "is not supported, changing to default to read", self.mode
         else:
@@ -47,11 +48,14 @@ class Xmlset:
             raise IOError("Wrong input file, needs a dataset xml file.")
         
         self._frames = {}
-        self._at = 0.0
+        self._at = None
         self._ratio = 1.0
         
         for frm in self.root.findall('frameInformation'):
             num = int(frm.find('frame').attrib['number'])
+            if self._at is None:
+                self._at = num
+            
             objects = {}
             for obj in frm.findall('object'):
                 name = obj.attrib['name']
@@ -74,16 +78,16 @@ class Xmlset:
     
     # Gets current frame, or a specific frame if 'at' option is > 0
     def data(self, at=-1, mode=0):
-        at = int(at)    # convert to integer
+        at = int(at)
+        
+        if at == -1:
+            at = self.at(mode)
         
         # if failed to find, return None
         if at not in self._frames.keys():
             return None
         
-        if at == -1:
-            return self._frames[self.at(mode)] # TODO: are we just assuming all frames are filled in?
-        else:
-            return self._frames[at]
+        return self._frames[at]
     
     def next(self):
         i = self._at + self._ratio
@@ -116,4 +120,7 @@ class Xmlset:
     
     def resetRatio(self):
         self._ratio = 1.0
+    
+    def status(self):
+        return "{}/{}".format(self.at(), self.total)
     
