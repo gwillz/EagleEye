@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders
-# version 0.2.14
+# version 0.2.15
 #
 # Reads video and two datasets xml files
 # then draws them over the video for comparison
@@ -15,6 +15,18 @@ from eagleeye import BuffSplitCap, Xmlset, EasyArgs, EasyConfig, Key, marker_too
 
 def usage():
     print "usage: compare.py <video file> <xml dataset> <xml dataset> {<mark_in> <mark_out> | -config <file> | -export <file>}"
+
+def draw(frame, obj, cfg):
+    pt1 = (int(float(obj['box']['x'])), 
+            int(float(obj['box']['y'])))
+    pt2 = (pt1[0] + int(float(obj['box']['width'])), 
+            pt1[1] + int(float(obj['box']['height'])))
+    
+    centre = (int(float(obj['centre']['x'])), 
+            int(float(obj['centre']['y'])))
+    
+    cv2.rectangle(frame, pt1, pt2, cfg.xml1_colour, 1)
+    cv2.circle(frame, centre, 1, cfg.xml1_colour, 2)
 
 def main(sysargs):
     args = EasyArgs(sysargs)
@@ -57,7 +69,7 @@ def main(sysargs):
     # trim the CSV
     cropped_total = mark_out - mark_in
     xml1.setRatio(cropped_total)
-    print 'ratio at:', xml1._ratio
+    print 'ratio at:', xml1.ratio()
     
     # open export (if specified)
     if args.export:
@@ -77,21 +89,12 @@ def main(sysargs):
         
         frame = vid.frame()
         
-        # get each object in the xml
         for name in xml1.data():
-            obj = xml1.data()[name]
-            
-            pt1 = (int(float(obj['box']['x'])), 
-                    int(float(obj['box']['y'])))
-            pt2 = (pt1[0] + int(float(obj['box']['width'])), 
-                    pt1[1] + int(float(obj['box']['height'])))
-            
-            centre = (int(float(obj['centre']['x'])), 
-                    int(float(obj['centre']['y'])))
-            
-            cv2.rectangle(frame, pt1, pt2, cfg.xml1_colour, 1)
-            cv2.circle(frame, centre, 1, cfg.xml1_colour, 2)
+            draw(frame, xml1.data()[name], cfg)
         
+        for name in xml2.data():
+            draw(frame, xml2.data()[name], cfg)    
+            
         # export or navigate
         if args.export:
             sys.stdout.write("{}/{}\r".format(vid.at(), cropped_total))
