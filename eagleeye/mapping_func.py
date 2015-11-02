@@ -39,14 +39,6 @@ class Mapper:
         #calculate pose
         self.rv, self.tv = self.calPose()
         
-        #canon pose
-        #self.tv = np.array((-14092.8, -5203.8, -9875.6)).reshape(3,1)
-        #self.rv = np.array((-1.8478, -0.92707, -2.61688)).reshape(3,1)
-        
-        # fake pose
-        #self.tv = np.array((4250, 1550, 400), np.float32).reshape(3,1)
-        #self.rv = np.array((1, 0, 0), np.float32).reshape(3,1)
-        
         self.rv_unit = unit(self.rv)
         
         self.R = cv2.Rodrigues(self.rv)[0]

@@ -89,7 +89,7 @@ def main(sysargs):
         # calculate world camera pos
         Rt = np.matrix(m.R).T
         tv = -Rt.dot(np.matrix(m.tv))
-        rv = unit(cv2.Rodrigues(-Rt)[0])
+        dir = unit(-Rt.dot(np.array([[0.], [0.], [1.]])))
         
         unvis = 0
         pts = m.obj_pts
@@ -106,10 +106,10 @@ def main(sysargs):
                 cv2.circle(baseframe, p, 6, colour, 1)
         
         # draw direction of lens
-        draw_arrow(baseframe, tv, rv, colour)
+        draw_arrow(baseframe, tv, dir[0], colour)
         # and it's FOV
-        #draw_arrow(baseframe, tv, rot_z(m.half_fov).dot(rv), colour, length=375)
-        #draw_arrow(baseframe, tv, rot_z(-m.half_fov).dot(rv), colour, length=375)
+        draw_arrow(baseframe, tv, dir.dot(m.half_fov), colour, length=375)
+        draw_arrow(baseframe, tv, dir.dot(-m.half_fov), colour, length=375)
         
         # and some text data stuff
         displayText(baseframe, "{}: {}, {}, {}".format(Theta.name(m.mode), *tv), colour=colour)
