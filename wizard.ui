@@ -390,7 +390,7 @@
     <item row="20" column="3" colspan="3">
      <widget class="HighlightEdit" name="evaluation_edit">
       <property name="placeholderText">
-       <string>evaluation.xml</string>
+       <string>evaluation.csv</string>
       </property>
      </widget>
     </item>

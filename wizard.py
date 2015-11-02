@@ -548,12 +548,12 @@ class Wizard(QMainWindow):
             dialog.setDefaultButton(QMessageBox.Save)
             res = dialog.exec_()
         
-        if res == QMessageBox.Discard:
-            pass
-        elif res == QMessageBox.Save:
-            self.save_file()
-        else: # Reject or whatever
-            return False
+            if res == QMessageBox.Discard:
+                pass
+            elif res == QMessageBox.Save:
+                self.save_file()
+            else: # Reject or whatever
+                return False
         
         self.saved = True
         self.save_path = None
