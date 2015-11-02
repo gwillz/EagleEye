@@ -228,7 +228,7 @@ each image and that the whole lens is covered by at least one image.
 
 A detected 9x6 pattern in OpenCV is illustrated below,
 
-![Detected Chessboard Pattern](assets/Buttonside_3_pattern.jpg)
+![Detected Chessboard Pattern](assets/9x6_pattern.jpg)
 
 __Procedure__
 
