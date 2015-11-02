@@ -540,19 +540,20 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def clear_data(self):
-        dialog = QMessageBox(self)
-        dialog.setWindowTitle("Wait a second!")
-        dialog.setText("You haven't saved this session,\nare you sure?")
-        dialog.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-        dialog.setDefaultButton(QMessageBox.Save)
-        res = dialog.exec_()
+        if not self.saved:
+            dialog = QMessageBox(self)
+            dialog.setWindowTitle("Wait a second!")
+            dialog.setText("You haven't saved this session,\nare you sure?")
+            dialog.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            dialog.setDefaultButton(QMessageBox.Save)
+            res = dialog.exec_()
         
-        if res == QMessageBox.Discard:
-            pass
-        elif res == QMessageBox.Save:
-            self.save_file()
-        else: # Reject or whatever
-            return False
+            if res == QMessageBox.Discard:
+                pass
+            elif res == QMessageBox.Save:
+                self.save_file()
+            else: # Reject or whatever
+                return False
         
         self.saved = True
         self.save_path = None
@@ -583,6 +584,10 @@ class Wizard(QMainWindow):
         self.check_compare_enable()
         self.check_trainer_compare_enable()
         self.check_trainer_mapping_enable()
+        
+        # clear marks
+        self.dataset_marks = [0,0]
+        self.trainer_marks = [0,0]
         
         return True
     
@@ -988,7 +993,8 @@ class Wizard(QMainWindow):
         elif back_b == click_b:
             args += ['-side', 'backside']
         elif both_b == click_b:
-            args += ['-side', 'nondual']
+            print "Not supported"
+            return
         else:
             print "Cancelled"
             return
@@ -1078,15 +1084,15 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.evaluation_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Evaluation Output", "./data",
-                                               "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
+                                               "CSV File (*.csv)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.evaluation_edit.text()
         
         # run tests
         if path == "": return
         path = os.path.normpath(str(path))
-        if not path.lower().endswith(".xml"):
-            path += ".xml"
+        if not path.lower().endswith(".csv"):
+            path += ".csv"
         self.evaluation_edit.setText(path)
         
         if os.path.isfile(path):

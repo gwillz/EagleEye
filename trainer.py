@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.5.37
+# version 0.5.38
 #
 # Process 1:
 #  Left/right arrow keys to navigate the video
@@ -152,7 +152,7 @@ def main(sysargs):
         max_visible = int(in_csv.row()[8])
         
         # status text to write
-        textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rx: {:.4f}".format(tx, ty, tz, rx, ry, rz)
+        textrow = "VICON - x: {:.4f} y: {:.4f} z: {:.4f} | rx: {:.4f} ry: {:.4f} rz: {:.4f}".format(tx, ty, tz, rx, ry, rz)
         textquality = "Visible: {} , Max Visible: {}".format(visible, max_visible)
         textstatus = "{} | {}/{} clicks".format(in_vid.status(), len(trainer_points[lens]), max_clicks)
         

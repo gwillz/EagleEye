@@ -3,8 +3,7 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.3.15
-# 
+# version 0.3.17
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
 from theta_sides import Theta
@@ -14,17 +13,27 @@ magnitude = lambda x: np.sqrt(np.vdot(x, x))
 unit = lambda x: x / magnitude(x)
 
 class Mapper:
-    
     def __init__(self, intrinsic, trainer, cfg, mode=Theta.NonDual):
         # variables
         self.rv = np.asarray([], dtype=np.float32)  # rotation
         self.tv = np.asarray([], dtype=np.float32)  # translation
         self.mode = mode
         
-        # load some configs, required by solvePnP eventually
-        self.cfg = cfg
-        self.halfcos_fov = np.cos(np.radians(cfg.camera_fov) / 2)
+        # load some configs
         self.half_fov = np.radians(cfg.camera_fov) / 2
+        pnp = cfg.pnp_flags
+        
+        # add SOLVEPNP_ prefix if not found
+        if not pnp.startswith("SOLVEPNP_"):
+            pnp = "SOLVEPNP_" + pnp
+        
+        # solvepnp flag
+        if pnp in cv2.__dict__:
+            self.pnp_flags = cv2.__dict__[pnp]
+        else:
+            print f, "is not found in cv2, reverting to Levenberg-Marquardt"
+            self.pnp_flags = cv2.SOLVEPNP_ITERATIVE
+        
         
         # open intrinsic, trainer files
         self.cam, self.distort = self.parseCamIntr(intrinsic)
@@ -38,23 +47,7 @@ class Mapper:
         
         #calculate pose
         self.rv, self.tv = self.calPose()
-        
-        #canon pose
-        #self.tv = np.array((-14092.8, -5203.8, -9875.6)).reshape(3,1)
-        #self.rv = np.array((-1.8478, -0.92707, -2.61688)).reshape(3,1)
-        
-        # fake pose
-        #self.tv = np.array((4250, 1550, 400), np.float32).reshape(3,1)
-        #self.rv = np.array((1, 0, 0), np.float32).reshape(3,1)
-        
-        self.rv_unit = unit(self.rv)
-        
         self.R = cv2.Rodrigues(self.rv)[0]
-        #Rt = -np.matrix(self.R).T
-        #self.tv = Rt * np.matrix(self.tv)
-        #self.rv = cv2.Rodrigues(Rt)[0]
-        
-        #self.tv = self.tv.reshape(3,1)
     
     # opens the Intrinsic calib xml file
     def parseCamIntr(self, xmlpath):
@@ -129,7 +122,6 @@ class Mapper:
         
         return img_pts, obj_pts
     
-    
     def calPose(self):
         if len(self.img_pts) < 4 or len(self.obj_pts) < 4:
             raise Exception("Must have at least 4 training points.")
@@ -137,13 +129,18 @@ class Mapper:
         if len(self.img_pts) != len(self.obj_pts):
             raise Exception("Training image points and object points must be equal in size. "
                             "image pts {}, obj pts {}".format(len(self.img_pts), len(self.obj_pts)))
+
+        print "Calculating Camera Pose using the following flags:"
+
+        # solvePnP flags
+        # MUST see flag desc: http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#solvepnp
         
-        # TODO: customised solvePnP flags from config
         # levenberg-marquardt iterative method
         retval, rv, tv = cv2.solvePnP(
                             self.obj_pts, self.img_pts, 
                             self.cam, self.distort,
-                            None, None, cv2.SOLVEPNP_ITERATIVE)
+                            None, None, self.pnp_flags)
+        
         #'''
         #NOT RUNNING
         #http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
@@ -169,32 +166,12 @@ class Mapper:
         
         return rv, tv
     
-    def isVisible1(self, pt):
-        pt = np.array(pt).reshape(3, 1)
-        #obj = (obj + self.tv) * self.rv
-        
-        # determine line and direction to object
-        cam_to_obj = pt - self.tv
-        obj_dir = unit(cam_to_obj)
-        
-        # test within FOV
-        cosTheta = np.vdot(self.rv_unit, obj_dir)
-        #print np.rad2deg(np.arccos(cosTheta)), "<", np.rad2deg(np.arccos(self.halfcos_fov))
-        
-        # are 'cos' comparisons backwards?
-        #return np.arccos(cosTheta) < self.half_fov
-        return cosTheta > self.halfcos_fov
-    
     def isVisible(self, pt):
         pt = np.array(pt).reshape(3, 1)
         
         RxPt = self.R.dot(pt)
         tv = np.array(self.tv).reshape(3,1)
         pt_cam = np.add(RxPt, tv).reshape(1,3)[0]
-        
-        #print "R x pt", RxPt
-        #print "tv", tv
-        #print "pt_cam", pt_cam
         
         # spherical model
         r = np.linalg.norm(pt_cam)
