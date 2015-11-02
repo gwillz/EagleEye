@@ -3,8 +3,7 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.3.16
-# 
+# version 0.3.17
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
 from theta_sides import Theta
@@ -22,7 +21,19 @@ class Mapper:
         
         # load some configs
         self.half_fov = np.radians(cfg.camera_fov) / 2
-        self.pnp_flags = cv2.__dict__[cfg.pnp_flags]
+        pnp = cfg.pnp_flags
+        
+        # add SOLVEPNP_ prefix if not found
+        if not pnp.startswith("SOLVEPNP_"):
+            pnp = "SOLVEPNP_" + pnp
+        
+        # solvepnp flag
+        if pnp in cv2.__dict__:
+            self.pnp_flags = cv2.__dict__[pnp]
+        else:
+            print f, "is not found in cv2, reverting to Levenberg-Marquardt"
+            self.pnp_flags = cv2.SOLVEPNP_ITERATIVE
+        
         
         # open intrinsic, trainer files
         self.cam, self.distort = self.parseCamIntr(intrinsic)
@@ -111,7 +122,6 @@ class Mapper:
         
         return img_pts, obj_pts
     
-    
     def calPose(self):
         if len(self.img_pts) < 4 or len(self.obj_pts) < 4:
             raise Exception("Must have at least 4 training points.")
@@ -119,12 +129,18 @@ class Mapper:
         if len(self.img_pts) != len(self.obj_pts):
             raise Exception("Training image points and object points must be equal in size. "
                             "image pts {}, obj pts {}".format(len(self.img_pts), len(self.obj_pts)))
+
+        print "Calculating Camera Pose using the following flags:"
+
+        # solvePnP flags
+        # MUST see flag desc: http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#solvepnp
         
         # levenberg-marquardt iterative method
         retval, rv, tv = cv2.solvePnP(
                             self.obj_pts, self.img_pts, 
                             self.cam, self.distort,
                             None, None, self.pnp_flags)
+        
         #'''
         #NOT RUNNING
         #http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
