@@ -680,9 +680,9 @@ These are parameters that users may change to suit their needs in functions such
 ### 6.3 Mapper
 | Setting           | Description                                           | Default       |
 |-------------------|-------------------------------------------------------|---------------|
-| trainer_target    | Name of the trainer target being used (Always EEWand) | EEWand        | 
-| camera_fov        | Field of View angle of the camera (assuming dual lens)| 190           | 
-| pnp_flags         | OpenCV [solvePnP flags] (http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#solvepnp) (Unfinished work) | |
+| trainer_target    | Name of the trainer target being used                 | EEWand        | 
+| camera_fov        | Field of View angle of the camera (dual lens mode only) | 180           | 
+| pnp_flags         | OpenCV [solvePnP flags] (http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#solvepnp) | |
 
 ### 6.4 Calibration
 | Setting           | Description                                           | Default       |
@@ -715,7 +715,7 @@ These are parameters that users may change to suit their needs in functions such
 ### 6.7 Evaluation Tool
 | Setting           | Description                                           | Default       |
 |-------------------|-------------------------------------------------------|---------------|
-| outputformat      | File extension of output compariosn (xml or csv only) | xml           |
+| outputformat      | File extension of output compariosn (xml or csv only) | csv           |
 | plot              | Whether to plot frame-by-frame centroid comparison graphs at end of script | True          |
 
 ### 6.8 Chessboard Extractor
