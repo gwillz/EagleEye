@@ -2,7 +2,7 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Gwilyn Saunders
-# version 0.1.8
+# version 0.1.9
 #
 #
 # Options:
@@ -89,7 +89,8 @@ def main(sysargs):
         # calculate world camera pos
         Rt = np.matrix(m.R).T
         tv = -Rt.dot(np.matrix(m.tv))
-        dir = unit(-Rt.dot(np.array([[0.], [0.], [1.]])))
+        dir = unit(cv2.Rodrigues(-Rt)[0])
+        #dir = unit(-Rt.dot(np.array([[0.], [0.], [1.]])))
         
         unvis = 0
         pts = m.obj_pts
@@ -105,11 +106,16 @@ def main(sysargs):
                 unvis += 1
                 cv2.circle(baseframe, p, 6, colour, 1)
         
+        x, y, z = tv
+        pt1 = (int(x*scale), img_h-int(y*scale))
+        cv2.circle(baseframe, pt1, 1, colour, 2)
+        cv2.circle(baseframe, pt1, 10, colour, 1)
+        
         # draw direction of lens
-        draw_arrow(baseframe, tv, dir[0], colour)
+        #draw_arrow(baseframe, tv, dir[0], colour)
         # and it's FOV
-        draw_arrow(baseframe, tv, dir.dot(m.half_fov), colour, length=375)
-        draw_arrow(baseframe, tv, dir.dot(-m.half_fov), colour, length=375)
+        #draw_arrow(baseframe, tv, dir.dot(m.half_fov), colour, length=375)
+        #draw_arrow(baseframe, tv, dir.dot(-m.half_fov), colour, length=375)
         
         # and some text data stuff
         displayText(baseframe, "{}: {}, {}, {}".format(Theta.name(m.mode), *tv), colour=colour)
