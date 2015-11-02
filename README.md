@@ -226,8 +226,7 @@ around the lens. For the best calibration; be sure all the checkers are visible 
 each image and that the whole lens is covered by at least one image.
 
 
-A detected pattern in OpenCV is illustrated below, specify pattern size as 
-described in "default_chess" in 6.4.
+A detected 9x6 pattern in OpenCV is illustrated below,
 
 ![Detected Chessboard Pattern](assets/Buttonside_3_pattern.jpg)
 
