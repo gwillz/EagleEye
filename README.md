@@ -4,9 +4,9 @@ Eagle Eye Project
 1 Overview
 ----------
 Verifying the accuracy of tracking software is a common problem. Current methods
-are not quantifiable and inconsistent. Here we present a novel solution to 
-quantify annotations with a Vicon Tracking System. This system will provide
-'ground truth' data that is accurate and comparable.
+are subjective. Here we present a novel solution to quantify annotations with a 
+Vicon Tracking System. This system will provide 'ground truth' data that is 
+accurate and comparable.
 
 The project opted to use a Ricoh Theta m15 - a omnidirectional camera with two lenses.
 This proves difficult with the images presenting very large 'fisheye' distortions.
@@ -21,8 +21,9 @@ The project aims to provde a proof-of-concept Annotation tool, with which to com
 against the captured ground truth data. This a multi-object, omnidirectional tool,
 providing quite a challege.
 
-To accompany the process, tools and research; the project collect ~40 example
-datasets to be validate the concept and to be used by the wider research community.
+To accompany the process, tools and research; the project collected ~40 example
+datasets of varying complexity to validate the concept and to be used by the wider 
+research community.
 
 
 ### 1.1 Team
@@ -152,9 +153,9 @@ from the Vicon system. It includes quality verification and time synchronisation
 __Preparation__
 
 The Vicon system captures objects that are defined as unique "constellations"
-of dots placed on physical objects within the lab. These objects are configured
-in the *Vicon Tracker* software. Some experimental/working objects are
-stored in the [data/objects](data/objects) folder.
+of infared reflectors (approx 9mm diameter) placed on physical objects within 
+the lab. These objects are configured in the *Vicon Tracker* software. Some 
+experimental/working objects are stored in the [data/objects](data/objects) folder.
 
 Ensure your running time is sufficient, modify via the command line option or
 within the [config file](#6-1-capture). 
@@ -168,7 +169,8 @@ $ python -m serial.tools.list_ports
 __Procedure__
 
 The camera must not be moved between the calibration and capture steps. Thankfully, 
-the Ricoh Theta m15 can be remotely triggered via a smart phone or tablet.
+the Ricoh Theta m15 can be remotely triggered via a smart phone or tablet running
+Android or iOS.
 
 The tool will capture all active objects in the *Vicon Tracker* software. Be sure to
 only enable the objects for a given scenario.
@@ -216,14 +218,14 @@ There are still only 2 flashes recorded into the CSV.
 
 A Camera Calibration Tool based on the OpenCV Library. This script detects 
 chessboard pattern from a set of images and determines the intrinsic and distortion
-parameters of the camera lens. It can highlight the corners of the chessboards, 
-provide an estimated error and sample rectified images.
+parameters of the camera lens. It can highlight the grid intersections of a
+chessboard-like pattern, providing an estimated error and sample rectified images.
 
 __Preparation__
 
 First collect a set of chessboard images, taken by the camera, in varying positions 
-around the lens. For the best calibration; be sure all the checkers are visible in 
-each image and that the whole lens is covered by at least one image.
+around the lens. For the best calibration; be sure the whole pattern is visible in 
+each image and that the images cover majority of the lens.
 
 
 A detected 9x6 pattern in OpenCV is illustrated below,
@@ -250,8 +252,8 @@ A variant script `stdcalib.py` is available for calibrating single lens cameras.
 
 ![Trainer](icons/training_trim.png)
 
-This tool creates a training set for the Mapping tool, using Vicon Wand positional
-data (from Vicon) and corresponding video capture. This is used to calculate the
+This tool creates a training set for the Mapping tool using the Vicon Wand 
+3D positional data and corresponding video capture. This is used to calculate the
 extrinsic parameters of the camera, and therefore its pose within the room.
 
 __Procedure__
@@ -289,7 +291,7 @@ $ python mapping.py -calib <calib xml> -trainer <trainer xml> -output <output da
 
 ![Annotation](icons/annotate_trim.png)
 
-Takes raw camera footage or images from the Ricoh theta and applies automated 
+Takes raw camera footage or images from the Ricoh Theta and applies automated 
 object detection algorithms. Includes manual adjustment of the annotations.
 Outputs an annotated video or image, depending on the input as well as an XML
 Dataset - of identical format to the Mapping Tool.
@@ -383,13 +385,13 @@ $ python eval.py <annotated dataset> <mapped dataset> <output file> {-config <fi
 
 4 Utility Tools
 ---------------
-These are additional tools, that although are not project critical but certainly 
+These are additional tools, that although are not project critical, but certainly 
 make the whole process easier.
 
 ### 4.1 Wizard
-This a central tool that implements the tools in an easy-to-follow layout. It 
-is intended to appear like the (dataflow diagram)[2-pipeline-overview] in order 
-to visualise the overall process.
+This is a Graphical User Interface that implements the core tools in an 
+easy-to-follow layout. It is intended to appear like the 
+(dataflow diagram)[2-pipeline-overview] in order to visualise the overall process.
 
 __Usage__
 
@@ -404,7 +406,8 @@ Be sure to re-generate the shortcut if you move the project folder.
 
 
 ### 4.2 Chessboard Extractor
-Tracks through a video file and extracts selected images to a folder.
+Tracks through a video file and extracts selected images to a folder. The user
+navigates through the video and can tag the frames they wish to use.
 
 __Command line Usage__
 
@@ -499,9 +502,11 @@ aren't explicitly used in any tool.
 
 ### 5.3 Trainer XML
 This represents the extrinsic values in their most raw form. To calcuate a useable
-extrinsic, these training values are combined with the intrinsic values. Each frame
-is a manually matched points between 2D and 3D positions. This XML contains 
-extrinsics for both lenses.
+extrinsic, these training values are combined with the intrinsic values. The data 
+is a set of point pairs. These are the same position represented in two different 
+dimensions, 2D and 3D. These points are run through a solver in order to determine
+a single translation and rotation vector - know as the extrinsic paramters. 
+This XML contains extrinsics for both lenses.
 
 ``` xml
 <?xml version='1.0'?>
@@ -559,7 +564,7 @@ extrinsics for both lenses.
 - The mean value of differences in this set in pixels
 - Frames contains all the compared frames
 - Frames compared shows the number of compared frames
-- Frames total is the totl number of frames in the video
+- Frames total is the total number of frames in the video
 - Frame contains all compared objects compared within the frame
 - Object name is the ID being used to distinguish objects
 - Object lens dictates the side (buttonside or backside) that this object is visible in
