@@ -1078,15 +1078,15 @@ class Wizard(QMainWindow):
         # browse for save path
         if self.evaluation_edit.text() == "":
             path = QFileDialog.getSaveFileName(self, "Save Evaluation Output", "./data",
-                                               "XML File (*.xml)", options=QFileDialog.DontConfirmOverwrite)
+                                               "CSV File (*.csv)", options=QFileDialog.DontConfirmOverwrite)
         else:
             path = self.evaluation_edit.text()
         
         # run tests
         if path == "": return
         path = os.path.normpath(str(path))
-        if not path.lower().endswith(".xml"):
-            path += ".xml"
+        if not path.lower().endswith(".csv"):
+            path += ".csv"
         self.evaluation_edit.setText(path)
         
         if os.path.isfile(path):

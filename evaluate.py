@@ -4,7 +4,7 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.2
+# version 0.1.3
 #
 # Compares mapped centroid to annotated centroid produced by annotation tool
 # And calculate reprojction error frame by frame
@@ -14,7 +14,7 @@ import sys, os, cv2, csv, numpy as np
 from eagleeye import Xmlset, EasyArgs, EasyConfig, Theta
 from elementtree.SimpleXMLWriter import XMLWriter
 import matplotlib
-matplotlib.use('Qt4Agg')
+matplotlib.use('tkAgg')
 from matplotlib import pyplot as plt
 
 def usage():
@@ -60,8 +60,8 @@ def main(sysargs):
     print "Evaluating Mapper: {} | Annoated: {}".format(os.path.basename(args[1]), os.path.basename(args[2]))
     print ""
 
-    if(mapper_xml.total != annotated_xml.total):
-        print "Warning: Mismatched size of Mapper and Annotated: Mapper {} | Annotated{}".format(mapper_xml.total, annotated_xml.total)
+    if mapper_xml.total != annotated_xml.total:
+        print "Warning: Mismatched size of Mapper and Annotated: Mapper: {} | Annotated: {}".format(mapper_xml.total, annotated_xml.total)
 
     # Compare frames, start from the frame after 1st flash
     frameStart = mark_in +1
@@ -80,9 +80,9 @@ def main(sysargs):
         sys.stdout.flush()
         
         # check if frame exists in xml, if not skip to next
-        if (mapper_xml.data(f) == None):
+        if mapper_xml.data(f) is None:
             continue
-        if (annotated_xml.data(f) == None):
+        if annotated_xml.data(f) is None:
             continue
         
         mapper_data = mapper_xml.data(f)
