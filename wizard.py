@@ -540,12 +540,13 @@ class Wizard(QMainWindow):
     
     @pyqtSlot()
     def clear_data(self):
-        dialog = QMessageBox(self)
-        dialog.setWindowTitle("Wait a second!")
-        dialog.setText("You haven't saved this session,\nare you sure?")
-        dialog.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-        dialog.setDefaultButton(QMessageBox.Save)
-        res = dialog.exec_()
+        if not self.saved:
+            dialog = QMessageBox(self)
+            dialog.setWindowTitle("Wait a second!")
+            dialog.setText("You haven't saved this session,\nare you sure?")
+            dialog.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            dialog.setDefaultButton(QMessageBox.Save)
+            res = dialog.exec_()
         
         if res == QMessageBox.Discard:
             pass
@@ -583,6 +584,10 @@ class Wizard(QMainWindow):
         self.check_compare_enable()
         self.check_trainer_compare_enable()
         self.check_trainer_mapping_enable()
+        
+        # clear marks
+        self.dataset_marks = [0,0]
+        self.trainer_marks = [0,0]
         
         return True
     
@@ -988,7 +993,8 @@ class Wizard(QMainWindow):
         elif back_b == click_b:
             args += ['-side', 'backside']
         elif both_b == click_b:
-            args += ['-side', 'nondual']
+            print "Not supported"
+            return
         else:
             print "Cancelled"
             return
