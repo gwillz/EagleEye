@@ -83,6 +83,8 @@ class Wizard(QMainWindow):
         self.dataset_mov_edit.textChanged.connect(self.set_unsaved)
         self.dataset_map_edit.textChanged.connect(self.set_unsaved)
         self.dataset_ann_edit.textChanged.connect(self.set_unsaved)
+        self.comparison_edit.textChanged.connect(self.set_unsaved)
+        self.evaluation_edit.textChanged.connect(self.set_unsaved)
         
         self.trainer_mov_edit.textEdited.connect(self.reset_trainer_marks)
         self.dataset_mov_edit.textEdited.connect(self.reset_dataset_marks)
@@ -136,7 +138,9 @@ class Wizard(QMainWindow):
         self.dataset_ann_edit.clicked.connect(self.browse_annotation_data)
         
         self.comparison_button.clicked.connect(self.run_comparison)
+        self.comparison_edit.clicked.connect(self.browse_comparison)
         self.evaluation_button.clicked.connect(self.run_evaluation)
+        self.evaluation_edit.clicked.connect(self.browse_evaluation)
     
     ## save, open, load stuff
     @pyqtSlot()
@@ -572,6 +576,7 @@ class Wizard(QMainWindow):
         self.dataset_mov_edit.clear()
         self.dataset_map_edit.clear()
         self.dataset_ann_edit.clear()
+        self.comparison_edit.clear()
         self.evaluation_edit.clear()
         
         # re-check the button dealios
@@ -1235,6 +1240,23 @@ class Wizard(QMainWindow):
             self.dataset_ann_edit.setText(path)
             self.check_compare_enable()
             self.check_evaluate_enable()
+    
+    @pyqtSlot()
+    def browse_comparison(self):
+        path = QFileDialog.getOpenFileName(self, "Open Comparison Video", 
+                                           self.comparison_edit.text(), 
+                                           "Video File (*.mov;*.avi;*.mp4);;All Files (*.*)")
+        if path != "":
+            path = os.path.normpath(str(path))
+            self.comparison_edit.setText(path)
+    
+    @pyqtSlot()
+    def browse_evaluation(self):
+        path = QFileDialog.getOpenFileName(self, "Open Evaluation CSV", 
+                                           self.evaluation_edit.text(), "CSV File (*.csv)")
+        if path != "":
+            path = os.path.normpath(str(path))
+            self.evaluation_edit.setText(path)
     
     ## button checker dealios (to ensure a correct pipeline workflow)
     @pyqtSlot()
