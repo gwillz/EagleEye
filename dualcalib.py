@@ -1,8 +1,8 @@
 # Project Eagle Eye
 # Group 15 - UniSA 2015
 # Kin Kuen, Liu
-ver = '1.4.23'
-# Last Updated: 2015-09-14
+ver = '1.4.24'
+# Last Updated: 2015-10-28
 # 
 # Camera Calibration and Image Undistortion using OpenCV standard pinhole camera functions.
 # Rational model flag is enabled to compensate radial and tangential effect present in fish-eye lens
@@ -55,9 +55,9 @@ Coding Reference:
 http://opencv-python-tutroals.readthedocs.org/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html#calibration
 '''
 
-def stdCalib(imagesArr, patternSize=(9,6), squareSize=1.0, preview_path=False):
+def stdCalib(imagesArr, patternSize=(9,6), squareSize=1.0, preview_path=False, flags=[]):
     print '\n------- Camera Calibration (Standard - Pinhole Camera) --------'
-    
+
     # termination criteria  used in detecting pattern
     t_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -66,7 +66,7 @@ def stdCalib(imagesArr, patternSize=(9,6), squareSize=1.0, preview_path=False):
     p_pts = np.zeros((np.prod(p_size), 3), np.float32)
     p_pts[:, :2] = np.indices(p_size).T.reshape(-1, 2)
     p_pts *= squareSize
-
+    
     # Arrays to store object points and image points of all images
     objpts = [] # 3d points of chessboard corners in object plane
     imgpts = [] # 2d points of chessboard corners in image plane
@@ -139,14 +139,38 @@ def stdCalib(imagesArr, patternSize=(9,6), squareSize=1.0, preview_path=False):
 
     print'\n---------------------------------------------\n'
 
-    print 'Calculating intrinsic values ...........'
+    print 'Calculating intrinsic values using the following flags:'
 
+    
     # Camera Calibration flags
-    cali_flags = cv2.CALIB_RATIONAL_MODEL # enables k4, k5, k6 to better suit lens with large distortion
-    #| cv2.cv.CV_CALIB_FIX_K1 | cv2.cv.CV_CALIB_FIX_K2
+    # see: http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#calibratecamera
+    
+    calib_flags = 0     # initialise cv2 calib flags
+    added_flags = []    # recognised in opencv
+    
+    if len(flags) > 0:
+        flags = flags.replace(' ', '') # clean whitespaces
+        flags = flags.split(',')        # list of flags
+        for f in flags:
+            if len(f) == 0 or f.isspace():             # if its whitespace only, skip
+                continue
+            if f.startswith('CV_'):
+                f = f.replace('CV_', '') # delete CV_ prefix
+            if not f.startswith('CALIB_'):  # add CALIB_ prefix
+                f = 'CALIB_' + f
+
+            # search if passed flag is in cv2 dictionary of flags
+            if f in cv2.__dict__:
+                calib_flags |= cv2.__dict__.get(f)
+                added_flags.append(f)
+            else:
+                print f, ' is not found in cv2.__dict__'
+    if len(added_flags) == 0:
+        added_flags = 'default'    
+    print added_flags, '\n' 
 
     # Perform camera calibration (standard function for pinhole camera)
-    rms, camera_matrix, dist_coefs, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, (w, h), None, None, None, None, cali_flags)
+    rms, camera_matrix, dist_coefs, rvecs, tvecs = cv2.calibrateCamera(objpts, imgpts, (w, h), None, None, None, None, calib_flags)
 
     # Calculate sum of error of all images specified
     imgs_error = [] # Array of images with error assigned
@@ -331,10 +355,10 @@ def main(sysargs):
     cfg = EasyConfig(args.config, group="calib")
     
     # argument sanity checks
-    if args.usage:
+    if 'help' in args:
         usage()
         return 0
-    elif args.version:
+    elif 'version' in args:
         version()
         return 0
     elif 'output' not in args:
@@ -352,7 +376,8 @@ def main(sysargs):
         p_size = ast.literal_eval("({})".format(args.chess_size))
     else:
         p_size = cfg.default_chess
-
+        
+    
     # camera intrinsics
     buttonside_cam, buttonside_dist, buttonside_err = np.asarray([]), np.asarray([]), {}
     backside_cam, backside_dist, backside_err = np.asarray([]), np.asarray([]), {}
@@ -362,10 +387,10 @@ def main(sysargs):
         # find chessboard images from prefixes
         if args.buttonside:
             buttonside_images = glob.glob(args.buttonside + "*")
-            buttonside_cam, buttonside_dist, buttonside_err = stdCalib(buttonside_images, p_size, s_size, args.preview)
+            buttonside_cam, buttonside_dist, buttonside_err = stdCalib(buttonside_images, p_size, s_size, args.preview, cfg.calib_flags)
         if args.backside:
             backside_images = glob.glob(args.backside + "*")
-            backside_cam, backside_dist, backside_err = stdCalib(backside_images, p_size, s_size, args.preview)
+            backside_cam, backside_dist, backside_err = stdCalib(backside_images, p_size, s_size, args.preview, cfg.calib_flags)
         
         # create preview folder if specified
         if args.preview and not os.path.exists(args.preview):

@@ -3,29 +3,58 @@
 # Project Eagle Eye
 # Group 3 - UniSA 2015
 # Gwilyn Saunders & Kin Kuen Liu
-# version 0.2.11
+# version 0.3.15
 # 
 
 import cv2, xml.etree.ElementTree as ET, numpy as np
+from theta_sides import Theta
+from xml_trainer import Xmltrainer
+
+magnitude = lambda x: np.sqrt(np.vdot(x, x))
+unit = lambda x: x / magnitude(x)
 
 class Mapper:
-    def __init__(self, intrinsic, trainer, cfg):
+    
+    def __init__(self, intrinsic, trainer, cfg, mode=Theta.NonDual):
         # variables
         self.rv = np.asarray([], dtype=np.float32)  # rotation
         self.tv = np.asarray([], dtype=np.float32)  # translation
+        self.mode = mode
         
         # load some configs, required by solvePnP eventually
-        #self.cfg = cfg
+        self.cfg = cfg
+        self.halfcos_fov = np.cos(np.radians(cfg.camera_fov) / 2)
+        self.half_fov = np.radians(cfg.camera_fov) / 2
         
         # open intrinsic, trainer files
         self.cam, self.distort = self.parseCamIntr(intrinsic)
         self.img_pts, self.obj_pts = self.parseTrainer(trainer)
         
+        print "Camera Matrix\n", self.cam
+        
+        print "\nside:", Theta.name(mode)
         print "img_pts {}".format(len(self.img_pts))
         print "obj_pts {}".format(len(self.obj_pts))
         
         #calculate pose
-        self.rv, self.tv = self.calPose(mode=0)
+        self.rv, self.tv = self.calPose(cfg.pnp_flags)
+        
+        #canon pose
+        #self.tv = np.array((-14092.8, -5203.8, -9875.6)).reshape(3,1)
+        #self.rv = np.array((-1.8478, -0.92707, -2.61688)).reshape(3,1)
+        
+        # fake pose
+        #self.tv = np.array((4250, 1550, 400), np.float32).reshape(3,1)
+        #self.rv = np.array((1, 0, 0), np.float32).reshape(3,1)
+        
+        self.rv_unit = unit(self.rv)
+        
+        self.R = cv2.Rodrigues(self.rv)[0]
+        #Rt = -np.matrix(self.R).T
+        #self.tv = Rt * np.matrix(self.tv)
+        #self.rv = cv2.Rodrigues(Rt)[0]
+        
+        #self.tv = self.tv.reshape(3,1)
     
     # opens the Intrinsic calib xml file
     def parseCamIntr(self, xmlpath):
@@ -49,10 +78,17 @@ class Mapper:
         if len(root) == 0:
             raise IOError('XML file is empty.')
         
-        if root.tag != "StdIntrinsic":
+        if root.tag != "StdIntrinsic" and self.mode == Theta.NonDual:
             raise IOError("Wrong input file, needs a StdIntrinsic xml file.")
+        elif root.tag != "dual_intrinsic" and self.mode != Theta.NonDual:
+            raise IOError("Wrong input file, needs a dual_intrinsic xml file.")
         
-        for elem in root.iter():
+        if self.mode == Theta.Buttonside:
+            root = root.find("Buttonside")
+        elif self.mode == Theta.Backside:
+            root = root.find("Backside")
+        
+        for elem in root:
             if elem.tag == 'CamMat':
                 cm_dict.update(elem.attrib)
             if elem.tag =='DistCoe':
@@ -85,80 +121,72 @@ class Mapper:
     
     
     def parseTrainer(self, xmlpath):
-        if xmlpath is None:
-            raise IOError('Invalid file path to XML file.')
+        trainer = Xmltrainer(xmlpath, self.mode)
+        self.num_training = trainer.total
         
-        tree = ET.parse(xmlpath)
-        root = tree.getroot()
+        img_pts = np.asarray(trainer.img_pts(), np.float32)
+        obj_pts = np.asarray(trainer.obj_pts(), np.float32)
         
-        if len(root) == 0:
-            raise IOError('XML file is empty.')
-        
-        if root.tag != "TrainingSet":
-            raise IOError("Wrong input file, needs a TrainingSet xml file.")
-        
-        frames = root.find('frames')
-        if "num" not in frames.attrib:
-            raise Exception("Outdated trainer file, missing frame num attrib.")
-        
-        self.num_training = int(frames.attrib["num"])
-        
-        img_pos = []
-        obj_pos = []
-        
-        for f in frames:
-            # TODO: inconsistent get attrib names ??
-            plane = f.find('plane').attrib
-            vicon = f.find('vicon').attrib
-            visibility = f.find('visibility').attrib
-            
-            x = float(plane['x'])
-            y = float(plane['y'])
-            vicon_x = float(vicon['x'])
-            vicon_y = float(vicon['y'])
-            vicon_z = float(vicon['z'])
-            
-            img_pos.append((x, y))
-            obj_pos.append((vicon_x, vicon_y, vicon_z))
-        
-        return np.asarray(img_pos, dtype=np.float32), np.asarray(obj_pos, dtype=np.float32)
+        return img_pts, obj_pts
     
     
-    def calPose(self, mode=0):
+    def calPose(self, flags=[]):
         if len(self.img_pts) < 4 or len(self.obj_pts) < 4:
             raise Exception("Must have at least 4 training points.")
             
         if len(self.img_pts) != len(self.obj_pts):
             raise Exception("Training image points and object points must be equal in size. "
                             "image pts {}, obj pts {}".format(len(self.img_pts), len(self.obj_pts)))
+
+        print "Calculating Camera Pose using the following flags:"
+
+        # solvePnP flags
+        # other flags won't work without fiddling with the code!
+        # MUST see flag desc: http://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#solvepnp
         
-        # TODO: customised solvePnP flags from config
-        # levenberg-marquardt iterative method
-        if mode == 0:
-            retval, rv, tv = cv2.solvePnP(
-                                self.obj_pts, self.img_pts, 
-                                self.cam, self.distort,
-                                None, None, cv2.SOLVEPNP_ITERATIVE)
-            '''
-            NOT RUNNING
-            http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
-            rv, tv, inliners = cv2.solvePnPRansac(
-                                self.obj_pts, self.img_pts, 
-                                self.cam, self.distort)
-            '''
-        # alternate, loopy style iterative method (could be the same, idk)
-        else:
-            rv, tv = None, None
-            for i in range(0, len(data)):
-                retval, _rv, _tv = cv2.solvePnP(
-                                    self.obj_pts[i], self.img_pts[i],
-                                    self.cam, self.distort,
-                                    rv, tv, useExtrinsicGuess=True)
-                #append if 'good'
-                if retval: 
-                    rv, tv = _rv, _tv
+        pnp_flag = 0     # initialise cv2 calib flags
+        # if use extrinsic guess, need valid rv tv
+        # rv, tv = np.asarray([[0],[0],[0]], np.float32), np.asarray([[0],[0],[0]], np.float32) # dummy rv, tv
         
-        # check, print, return
+        if len(flags) > 0:
+            flags = flags.replace(" ", "") # clean whitespaces
+            f = flags.split(",")[0]        # get first flag only if more is found
+            
+            if len(f) > 0 or not f.isspace():             # if its whitespace only, skip 
+                if not f.startswith("SOLVEPNP_"):  # add SOLVEPNP_ prefix if not found
+                    f = "SOLVEPNP_" + f
+
+                # search if passed flag is in cv2 dictionary of flags
+                if f in cv2.__dict__:
+                    pnp_flag = cv2.__dict__.get(f)
+                else:
+                    print f, " is not found in cv2.__dict__"
+                    f = "Default : levenberg-marquardt iterative method"
+                 
+                print f, "\n" 
+
+        # default: cv2.SOLVEPNP_ITERATIVE - levenberg-marquardt iterative method
+        retval, rv, tv = cv2.solvePnP(
+                            self.obj_pts, self.img_pts, 
+                            self.cam, self.distort,
+                            None, None, False, pnp_flag)
+        #'''
+        #NOT RUNNING
+        #http://stackoverflow.com/questions/30271556/opencv-error-through-calibration-tutorial-solvepnpransac
+        #iterations = 100
+        #reproj_error = 20.0
+        #min_inliers = max(4, int(len(self.obj_pts) * 0.9))
+        #print self.cam
+        #retval, rv, tv, inliers = cv2.solvePnPRansac(
+                                      #self.obj_pts, self.img_pts, 
+                                      #self.cam, self.distort)#, 
+                                   ##None, None, False,
+                                   ##iterations, reproj_error, min_inliers)
+        ##'''
+        
+        #print rv, tv, inliers
+        
+        ## check, print, return
         if rv is None or rv is None or not retval:
             raise Exception("Error occurred when calculating rotation and translation vectors.")
         
@@ -167,17 +195,49 @@ class Mapper:
         
         return rv, tv
     
+    def isVisible1(self, pt):
+        pt = np.array(pt).reshape(3, 1)
+        #obj = (obj + self.tv) * self.rv
+        
+        # determine line and direction to object
+        cam_to_obj = pt - self.tv
+        obj_dir = unit(cam_to_obj)
+        
+        # test within FOV
+        cosTheta = np.vdot(self.rv_unit, obj_dir)
+        #print np.rad2deg(np.arccos(cosTheta)), "<", np.rad2deg(np.arccos(self.halfcos_fov))
+        
+        # are 'cos' comparisons backwards?
+        #return np.arccos(cosTheta) < self.half_fov
+        return cosTheta > self.halfcos_fov
+    
+    def isVisible(self, pt):
+        pt = np.array(pt).reshape(3, 1)
+        
+        RxPt = self.R.dot(pt)
+        tv = np.array(self.tv).reshape(3,1)
+        pt_cam = np.add(RxPt, tv).reshape(1,3)[0]
+        
+        #print "R x pt", RxPt
+        #print "tv", tv
+        #print "pt_cam", pt_cam
+        
+        # spherical model
+        r = np.linalg.norm(pt_cam)
+        theta = np.arctan2(pt_cam[1], pt_cam[0])
+        phi = np.arccos(-pt_cam[2]/r)
+        inv_phi = phi
+        
+        #print np.degrees(inv_phi), "<", np.degrees(self.half_fov)
+        return inv_phi < self.half_fov
+        
     
     def reprojpts(self, obj_pts):
-        #if len(obj_pts) == 0:
-        #    raise Error('No points to project.')
+        if len(obj_pts) == 0:
+            raise Exception('No points to project.')
         
         proj_imgpts, jac = cv2.projectPoints(np.asarray([obj_pts], dtype=np.float32), self.rv, self.tv, self.cam, self.distort)
         proj_imgpts = proj_imgpts.reshape((len(proj_imgpts), -1))
-        
-        #print 'Project Point Coordinates:'
-        #for n in range(0, len(proj_imgpts)):
-        #    print 'Point', n+1, ':', proj_imgpts[n]
         
         return proj_imgpts[0]
 
