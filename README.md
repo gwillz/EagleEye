@@ -225,6 +225,12 @@ First collect a set of chessboard images, taken by the camera, in varying positi
 around the lens. For the best calibration; be sure all the checkers are visible in 
 each image and that the whole lens is covered by at least one image.
 
+
+A detected pattern in OpenCV is illustrated below, specify pattern size as 
+described in "default_chess" in 6.4.
+
+![Detected Chessboard Pattern](assets/Buttonside_3_pattern.jpg)
+
 __Procedure__
 
 - Use VLC or the (Extract Tool)[4-2-chessboard-extractor] to gather images from the camera video
