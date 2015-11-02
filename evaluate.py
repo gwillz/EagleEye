@@ -4,16 +4,14 @@
 # Group 15 - UniSA 2015
 # 
 # Gwilyn Saunders, Kin Kuen Liu
-# version 0.1.1
+# version 0.1.2
 #
 # Compares mapped centroid to annotated centroid produced by annotation tool
 # And calculate reprojction error frame by frame
 #
 
-import sys, os, cv2
-import csv
-import numpy as np
-from eagleeye import Xmlset, EasyArgs, EasyConfig
+import sys, os, cv2, csv, numpy as np
+from eagleeye import Xmlset, EasyArgs, EasyConfig, Theta
 from elementtree.SimpleXMLWriter import XMLWriter
 import matplotlib
 matplotlib.use('Qt4Agg')
@@ -180,7 +178,7 @@ def writeXML(frames, path, args):
     for f in frames.keys():
         out_xml.start("frame", num=str(f))
         for key in frames[f]:
-            out_xml.start("object", lens=str(frames[f][key]["lens"]), name=key, err=str(frames[f][key]["err"]))
+            out_xml.start("object", lens=Theta.name(frames[f][key]["lens"]), name=key, err=str(frames[f][key]["err"]))
             out_xml.element("annotatedCentroid", x=str(frames[f][key]["ann_x"]), y=str(frames[f][key]["ann_y"]))
             out_xml.element("mappedCentroid", x=str(frames[f][key]["map_x"]), y=str(frames[f][key]["map_y"]))
             out_xml.end() # object
@@ -200,7 +198,7 @@ def writeCSV(frames, path):
                             frames[f][key]["map_y"],        # mapped centroid y
                             frames[f][key]["ann_x"],        # annotated centroid x
                             frames[f][key]["ann_y"],        # annotated centroid y
-                            frames[f][key]["lens"],         # lens - {buttonside, backside, both}
+                 Theta.name(frames[f][key]["lens"]),        # lens - {buttonside, backside, both}
                             frames[f][key]["err"]])         # reprojection error
 
 
@@ -236,6 +234,7 @@ def plot(title, xlabel="Frames", ylabel="Euclidean Distance \n (Pixels)", dict_d
             obj_plot.grid()
             obj_plot.set_title(obj)
             obj_plot.set_ylim(0, max(framesErr)+5)
+            obj_plot.set_yticks(np.arange(start=min(framesErr), stop=max(framesErr)+5, step=5))
             obj_plot.set_xlim(min(frames)-5 if min(frames) > 5 else 0,max(frames)+5)
             obj_plot.set_xticks(np.arange(start=min(frames), stop=max(frames), step=10))
             plot_index += 1
