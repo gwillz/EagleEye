@@ -44,8 +44,9 @@ __Supervisors__
 
 
 ### 1.2 Legal
--   The all-scientific CRAP License
--   <http://matt.might.net/articles/crapl/CRAPL-LICENSE.txt>
+- Creative Commons 4.0 Attribution International
+- http://creativecommons.org/licenses/by/4.0/legalcode
+
 
 
 ### 1.3 Prerequisites
