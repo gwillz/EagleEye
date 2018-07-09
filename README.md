@@ -3,6 +3,9 @@ Eagle Eye Project
 
 1 Overview
 ----------
+
+[Presented at DICTA 2017](https://ieeexplore.ieee.org/document/8227409/)
+
 Verifying the accuracy of tracking software is a common problem. Current methods
 are subjective. Here we present a novel solution to quantify annotations with a 
 Vicon Tracking System. This system will provide 'ground truth' data that is 
@@ -24,7 +27,6 @@ providing quite a challege.
 To accompany the process, tools and research; the project collected ~40 example
 datasets of varying complexity to validate the concept and to be used by the wider 
 research community.
-
 
 ### 1.1 Team
 __ITMS__
